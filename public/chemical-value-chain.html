@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ケミカルセクター バリューチェーン・マップ | Chemical Sector Value Chain</title>
+<meta name="description" content="ケミカルセクターのバリューチェーンと主要プレイヤーをインタラクティブに可視化。各社の会社概要・直近決算説明資料へのリンク付き。">
+<style>
+:root{
+  --bg:#0b0f14; --bg2:#111820; --panel:#141c26; --panel2:#1a2431;
+  --line:#233043; --line2:#2e3f56;
+  --fg:#e6edf5; --fg2:#a8b8cc; --fg3:#6f8299;
+  --acc:#4dd0e1; --acc2:#7c9cff; --acc3:#ffb454;
+  --up:#3ddc97; --down:#ff6b6b;
+  --l0:#8d6e63; --l1:#5c8fd6; --l2:#4dd0e1; --l3:#7bd88f; --l4:#e0b25c; --l5:#e07a9c;
+  --radius:10px;
+  --mono:'SFMono-Regular',Menlo,Consolas,'Courier New',monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Helvetica Neue','Hiragino Kaku Gothic ProN','Noto Sans JP','Yu Gothic',Meiryo,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:var(--acc);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:1520px;margin:0 auto;padding:0 20px 80px}
+
+/* ---------- header ---------- */
+header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#0e1620,#0b0f14);position:relative;overflow:hidden}
+header::after{content:'';position:absolute;inset:0;background:radial-gradient(900px 300px at 15% 0%,rgba(77,208,225,.10),transparent 60%),radial-gradient(700px 260px at 85% 10%,rgba(124,156,255,.09),transparent 60%);pointer-events:none}
+.hd{max-width:1520px;margin:0 auto;padding:26px 20px 22px;position:relative;z-index:1}
+.eyebrow{font:600 11px/1 var(--mono);letter-spacing:.22em;color:var(--acc);text-transform:uppercase}
+h1{margin:10px 0 6px;font-size:29px;letter-spacing:.01em;font-weight:700}
+h1 span{color:var(--fg3);font-weight:400;font-size:17px;margin-left:10px}
+.sub{color:var(--fg2);max-width:1000px;margin:0}
+.kpis{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:9px 14px;min-width:132px}
+.kpi b{display:block;font:700 19px/1.25 var(--mono);color:var(--fg)}
+.kpi small{display:block;color:var(--fg3);font-size:10.5px;letter-spacing:.06em}
+.backlink{position:absolute;top:24px;right:20px;font-size:12px;color:var(--fg3);z-index:2}
+
+/* ---------- controls ---------- */
+.toolbar{position:sticky;top:0;z-index:40;background:rgba(11,15,20,.93);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:10px 0}
+.tb{max-width:1520px;margin:0 auto;padding:0 20px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tab{background:var(--panel);border:1px solid var(--line);color:var(--fg2);padding:6px 13px;border-radius:99px;cursor:pointer;font-size:12.5px;font-weight:600;transition:.15s;white-space:nowrap}
+.tab:hover{border-color:var(--line2);color:var(--fg)}
+.tab.on{background:linear-gradient(180deg,#1d3a4a,#162c3a);border-color:var(--acc);color:#dffaff;box-shadow:0 0 0 1px rgba(77,208,225,.25),0 4px 16px -6px rgba(77,208,225,.5)}
+.spacer{flex:1}
+.search{background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:6px 14px;color:var(--fg);width:210px;font-size:12.5px;font-family:inherit}
+.search:focus{outline:none;border-color:var(--acc)}
+.btn{background:var(--panel);border:1px solid var(--line);color:var(--fg2);padding:6px 11px;border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit}
+.btn:hover{color:var(--fg);border-color:var(--line2)}
+
+/* ---------- graph ---------- */
+.stage{position:relative;margin-top:14px}
+.canvas{background:
+   linear-gradient(var(--bg2),var(--bg2)),
+   radial-gradient(1200px 500px at 50% -10%,rgba(124,156,255,.07),transparent);
+  border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative;height:760px}
+@media(max-width:820px){.canvas{height:560px}}
+.canvas svg{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
+.canvas svg.drag{cursor:grabbing}
+.hint{position:absolute;left:12px;bottom:10px;font-size:11px;color:var(--fg3);background:rgba(11,15,20,.8);padding:4px 9px;border-radius:6px;border:1px solid var(--line);pointer-events:none}
+.zoombar{position:absolute;right:12px;bottom:10px;display:flex;gap:6px;z-index:3}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--fg2);padding:8px 4px 10px;align-items:center}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:middle}
+.lgd-edge{display:flex;gap:10px;align-items:center}
+.lgd-edge svg{width:34px;height:8px;display:inline-block}
+
+.node rect{transition:fill .18s,stroke .18s,opacity .18s}
+.node{cursor:pointer}
+.node text{pointer-events:none;user-select:none}
+.dim{opacity:.13}
+.link{fill:none;stroke:var(--line2);stroke-width:1.3;transition:stroke .2s,stroke-width .2s,opacity .2s}
+.link.est{stroke-dasharray:4 4}
+.link.cap{stroke:#c792ea}
+.link.hot{stroke:var(--acc);stroke-width:2.2;filter:drop-shadow(0 0 5px rgba(77,208,225,.55))}
+.link.flow{stroke-dasharray:7 9;animation:flow 1.1s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-32}}
+.colhead{font:700 11px/1 var(--mono);letter-spacing:.1em;fill:var(--fg3)}
+.colsub{font-size:10px;fill:var(--fg3);opacity:.75}
+.edgelabel{font-size:9.5px;fill:var(--fg3);pointer-events:none}
+.pulse{animation:pulse 1.8s ease-out infinite}
+@keyframes pulse{0%{opacity:.75;transform:scale(1)}70%{opacity:0;transform:scale(1.9)}100%{opacity:0}}
+
+/* ---------- side panel ---------- */
+.side{position:absolute;top:0;right:0;bottom:0;width:376px;background:rgba(17,24,33,.97);backdrop-filter:blur(12px);
+  border-left:1px solid var(--line2);border-radius:0 14px 14px 0;overflow-y:auto;z-index:20;
+  transform:translateX(102%);transition:transform .28s cubic-bezier(.4,0,.2,1);box-shadow:-24px 0 50px -30px #000}
+.side.open{transform:none}
+.side .close{position:sticky;top:0;float:right;margin:10px 10px 0 0;background:var(--panel2);border:1px solid var(--line2);
+  color:var(--fg2);width:26px;height:26px;border-radius:7px;cursor:pointer;font-size:14px;line-height:1;z-index:5}
+.side .close:hover{color:var(--fg);border-color:var(--acc)}
+@media(max-width:820px){.side{width:100%;border-radius:14px}}
+.side::-webkit-scrollbar{width:9px}.side::-webkit-scrollbar-thumb{background:var(--line2);border-radius:9px}
+.sp{padding:16px 16px 22px}
+.sp .empty{color:var(--fg3);font-size:13px;padding:34px 6px;text-align:center}
+.sp h2{margin:2px 0 2px;font-size:19px;line-height:1.35}
+.sp .en{color:var(--fg3);font-size:11px;font-family:var(--mono);letter-spacing:.04em}
+.badges{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 12px}
+.badge{font-size:10.5px;padding:2px 9px;border-radius:99px;border:1px solid var(--line2);color:var(--fg2);background:var(--panel2)}
+.badge.layer{color:#0b0f14;font-weight:700;border:none}
+.sec h4{margin:16px 0 6px;font-size:11px;letter-spacing:.14em;color:var(--acc);font-weight:700;font-family:var(--mono);text-transform:uppercase}
+.sec p{margin:0;color:var(--fg2);font-size:12.8px}
+.tags{display:flex;gap:5px;flex-wrap:wrap}
+.tag{font-size:11px;background:var(--panel2);border:1px solid var(--line);padding:2px 8px;border-radius:6px;color:var(--fg2)}
+.fin{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:6px}
+.fin div{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 8px}
+.fin b{display:block;font:700 14px/1.3 var(--mono)}
+.fin small{color:var(--fg3);font-size:9.5px;letter-spacing:.04em}
+.rel{display:flex;flex-direction:column;gap:5px}
+.relrow{display:flex;gap:7px;align-items:flex-start;font-size:12px}
+.arrow{font-family:var(--mono);color:var(--fg3);flex:0 0 auto}
+.chip{background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:1px 8px;cursor:pointer;font-size:11.5px;color:var(--fg)}
+.chip:hover{border-color:var(--acc);color:var(--acc)}
+.rl{color:var(--fg3);font-size:11px}
+.links a{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 11px;margin-bottom:6px;font-size:12.5px;color:var(--fg)}
+.links a:hover{border-color:var(--acc);color:var(--acc);text-decoration:none}
+.links a span.k{color:var(--fg3);font-size:10px;font-family:var(--mono)}
+
+/* ---------- content sections ---------- */
+section{margin-top:52px;scroll-margin-top:76px}
+h2.st{font-size:20px;margin:0 0 4px;display:flex;align-items:baseline;gap:10px}
+h2.st em{font:600 10.5px/1 var(--mono);letter-spacing:.18em;color:var(--acc);font-style:normal}
+.lead{color:var(--fg2);margin:0 0 18px;max-width:1080px;font-size:13px}
+.grid{display:grid;gap:12px}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+@media(max-width:980px){.g3,.g2{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px 16px}
+.card h3{margin:0 0 8px;font-size:14.5px;display:flex;align-items:center;gap:8px}
+.card h3 i{width:8px;height:8px;border-radius:2px;display:inline-block}
+.card p{margin:0 0 8px;color:var(--fg2);font-size:12.6px}
+.pn{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+@media(max-width:640px){.pn{grid-template-columns:1fr}}
+.pn div{border-radius:8px;padding:9px 11px;font-size:12px}
+.pos{background:rgba(61,220,151,.07);border:1px solid rgba(61,220,151,.28)}
+.neg{background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.26)}
+.pn b{display:block;font-size:10.5px;letter-spacing:.1em;margin-bottom:4px;font-family:var(--mono)}
+.pos b{color:var(--up)} .neg b{color:var(--down)}
+.pn ul{margin:0;padding-left:16px;color:var(--fg2)}
+.pn li{margin:3px 0}
+
+table{width:100%;border-collapse:collapse;font-size:12.4px}
+.tbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:auto}
+th{position:sticky;top:0;background:var(--panel2);text-align:right;padding:9px 10px;font-size:10.5px;letter-spacing:.08em;color:var(--fg3);border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;font-family:var(--mono)}
+th:first-child,td:first-child{text-align:left}
+th:hover{color:var(--acc)}
+td{padding:8px 10px;text-align:right;border-bottom:1px solid rgba(35,48,67,.55);font-family:var(--mono);white-space:nowrap}
+td.nm{font-family:var(--sans);font-weight:600}
+tr:hover td{background:rgba(124,156,255,.05)}
+tr.med td{background:rgba(255,180,84,.09);color:var(--acc3);font-weight:700;border-top:1px solid rgba(255,180,84,.3)}
+.bar{position:relative;display:inline-block;width:52px;height:7px;background:var(--panel2);border-radius:4px;vertical-align:middle;margin-left:7px;overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:linear-gradient(90deg,var(--acc2),var(--acc))}
+.bar i.n{background:linear-gradient(90deg,#ff6b6b,#ff9b6b)}
+.mark{color:var(--fg3);font-size:11px}
+ol.method{counter-reset:m;list-style:none;padding:0;margin:0;display:grid;gap:10px}
+ol.method li{counter-increment:m;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 16px 13px 52px;position:relative;font-size:12.7px;color:var(--fg2)}
+ol.method li::before{content:counter(m);position:absolute;left:15px;top:12px;width:24px;height:24px;border-radius:7px;background:var(--panel2);border:1px solid var(--line2);color:var(--acc);font:700 12px/24px var(--mono);text-align:center}
+ol.method b{color:var(--fg);display:block;margin-bottom:2px;font-size:13px}
+@media(max-width:640px){
+  h1{font-size:22px}
+  h1 span{display:block;margin-left:0;font-size:13px}
+  .toolbar{position:static}
+  section{scroll-margin-top:12px}
+  .search{width:100%}
+}
+footer{margin-top:56px;border-top:1px solid var(--line);padding-top:18px;color:var(--fg3);font-size:11.5px}
+footer ul{padding-left:18px;margin:6px 0}
+.note{background:rgba(255,180,84,.06);border:1px solid rgba(255,180,84,.25);border-radius:10px;padding:11px 14px;font-size:12px;color:var(--fg2);margin-top:14px}
+.note b{color:var(--acc3)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd">
+    <a class="backlink" href="../index.html">← Portfolio Top</a>
+    <div class="eyebrow">Sector Deep Dive / Chemicals</div>
+    <h1>ケミカルセクター バリューチェーン・マップ<span>Chemical Sector Value Chain &amp; Player Landscape</span></h1>
+    <p class="sub">
+      原燃料から基礎化学品・中間体・機能材・部品／デバイス・最終需要までを 6 レイヤーに構造分解し、
+      サプライチェーン上でつながるプレイヤーを線で結んだインタラクティブ・マップです。
+      ノードをクリックすると、会社概要・ポジショニング・財務指標と、公式サイト／直近決算説明資料へのリンクが表示されます。
+      財務数値は EDINET（有価証券報告書 XBRL）ベースの実データです。
+    </p>
+    <div class="kpis">
+      <div class="kpi"><b id="kpiNodes">–</b><small>掲載プレイヤー</small></div>
+      <div class="kpi"><b id="kpiLinks">–</b><small>取引・供給リレーション</small></div>
+      <div class="kpi"><b>6</b><small>バリューチェーン層</small></div>
+      <div class="kpi"><b>5</b><small>サブセクター</small></div>
+      <div class="kpi"><b>6.8<small style="display:inline;font-size:11px">%</small></b><small>化学 営業利益率 中央値</small></div>
+      <div class="kpi"><b>6.5<small style="display:inline;font-size:11px">%</small></b><small>化学 ROE 中央値</small></div>
+      <div class="kpi"><b>8.1<small style="display:inline;font-size:11px">%</small></b><small>化学 ROIC 中央値</small></div>
+    </div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="tb">
+    <div class="tabs" id="tabs"></div>
+    <div class="spacer"></div>
+    <input class="search" id="q" placeholder="企業名・製品で検索…">
+    <button class="btn" id="fit">全体表示</button>
+    <button class="btn" id="reset">選択解除</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="legend" id="legend"></div>
+  <div class="stage">
+    <div class="canvas" id="canvas">
+      <svg id="svg"></svg>
+      <div class="hint">ノード＝クリックで詳細 ／ ドラッグで移動 ／ 背景ドラッグでパン ／ ホイールでズーム ／ ◯印はご指定の重点企業</div>
+      <div class="zoombar">
+        <button class="btn" data-z="1.25">＋</button>
+        <button class="btn" data-z="0.8">－</button>
+      </div>
+      <aside class="side" id="side"><button class="close" id="closeSide">×</button><div class="sp" id="panel"></div></aside>
+    </div>
+  </div>
+
+  <section id="market">
+    <h2 class="st"><em>02</em>市場概観 — サブセクターと地域トレンド</h2>
+    <p class="lead">
+      日本の化学セクターは「汎用石化（構造不況・再編局面）」と「機能材・電子材料（AI 需要で拡大）」「産業ガス（安定成長・高マージン）」の
+      三極に完全に分化しています。以下は当マップに掲載したサブセクターごとの需給・収益ドライバーの整理です。
+    </p>
+    <div class="grid g2" id="sectorCards"></div>
+    <div class="note">
+      <b>全体観：</b>川上（石化・汎用樹脂）は中国の大規模増設による世界的供給過剰と国内需要減少で稼働率が低迷し、
+      設備集約・共同事業体化が同時多発。一方で川下の機能材は、AI／データセンター向け半導体・パワー半導体・電池という
+      3 本の需要柱で二桁成長領域が生まれており、<b>同じ「化学」でも収益率の分散が過去最大</b>になっています。
+      投資判断上は「セクター」ではなく「サブセクター × 顧客産業」での分解が必須です。
+    </div>
+  </section>
+
+  <section id="chain">
+    <h2 class="st"><em>03</em>サブセクター構造分解 — 最終製品から素材へ</h2>
+    <p class="lead">最終製品を部品・部材・素材に分解し、その逆順で製造プロセス／サプライチェーンを組み直したものです（マップの経路と対応）。</p>
+    <div class="grid g2" id="chainCards"></div>
+  </section>
+
+  <section id="bench">
+    <h2 class="st"><em>04</em>ベンチマーク分析 — マージン・資本収益性・規模</h2>
+    <p class="lead">
+      EDINET（有価証券報告書 XBRL）から取得した各社の直近本決算実績。列見出しクリックでソートできます。
+      オレンジ行は化学セクター 158 社の中央値（FY2026）。決算期は会社ごとに異なるため <span class="mark">期</span> 列を併記しています。
+    </p>
+    <div class="tbox"><table id="bt"><thead></thead><tbody></tbody></table></div>
+    <div class="note">
+      <b>読み方：</b>①<b>営業利益率 15% 超</b>＝信越化学・東京応化・日東電工・日本酸素HD・日産化学…電子材料／産業ガスの寡占ポジション組。
+      ②<b>営業利益率 3〜7%・ROE 5% 前後</b>＝三菱ケミカル・三井化学・東レ・レゾナックなど石化比率の高い総合化学（PBR 1 倍割れ改善が最大論点）。
+      ③<b>中堅専業（大阪有機・住友精化・東亞合成・住友ベークライト）</b>は自己資本比率 67〜78% と過剰資本で、
+      ROE はマージンではなく<b>レバレッジ／株主還元の設計</b>で決まる構造。ネットキャッシュ調整後 ROIC で見ると評価が反転しやすい領域です。
+    </div>
+  </section>
+
+  <section id="ma">
+    <h2 class="st"><em>05</em>主要 M&amp;A・事業再編案件</h2>
+    <p class="lead">当マップのプレイヤーが関与した近年の主要案件。出典リンク付き。</p>
+    <div class="tbox"><table id="mt"><thead><tr>
+      <th style="cursor:default">時期</th><th style="cursor:default;text-align:left">案件</th><th style="cursor:default;text-align:left">内容・含意</th><th style="cursor:default">出典</th>
+    </tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section id="val">
+    <h2 class="st"><em>06</em>業界特有のバリュエーション指標</h2>
+    <div class="grid g3" id="valCards"></div>
+  </section>
+
+  <section id="method">
+    <h2 class="st"><em>07</em>調査アプローチ</h2>
+    <p class="lead">本マップの作成プロセス（初期資料 → 市場概要 → サブセクター → プレイヤー → アウトプット）。</p>
+    <ol class="method" id="methodList"></ol>
+  </section>
+
+  <footer>
+    <b>データ出典・注記</b>
+    <ul>
+      <li>財務数値：EDINET DB（有価証券報告書 XBRL、Cabocia Inc. 提供）。各社の直近本決算実績。売上＝売上収益／売上高、営業利益率＝営業利益÷売上、ROE・自己資本比率は開示ベース。単位は億円（四捨五入）。</li>
+      <li>業界中央値：EDINET DB「化学」業種 158 社（FY2026）の中央値。ROE 6.5%／営業利益率 6.8%／ROIC 8.1%／自己資本比率 64.4%／売上成長率 1.6%／3 年 CAGR 2.4%／配当利回り 3.0%。</li>
+      <li>プロテリアルは 2023 年 1 月に上場廃止（ベインキャピタル連合傘下）のため、財務数値は上場最終期（2022 年 3 月期）、リンクは同社が継続開示する財務ページです。JSR は 2024 年 6 月に上場廃止（JIC 傘下）のため非開示。</li>
+      <li>取引関係（線）は各社の製品構成・公開情報から構成した代表的なサプライチェーン経路であり、実際の取引量・契約関係を示すものではありません。破線は業界構造上の推定経路、紫線は資本関係です。</li>
+      <li>本ページは産業構造の理解を目的とした情報整理であり、投資勧誘・投資助言を目的とするものではありません。</li>
+    </ul>
+    <div style="margin-top:10px">主要参照：各社 IR ページ（各ノードのリンク先）／
+      <a href="https://www.nikkei.com/article/DGXZQOUF243S00U6A720C2000000/" target="_blank" rel="noopener">日本経済新聞</a>・
+      <a href="https://www.jiji.com/jc/article?k=2026073101324&amp;g=eco" target="_blank" rel="noopener">時事通信</a>（エア・ウォーター決算）／
+      <a href="https://jp.mitsuichemicals.com/jp/release/2026/2026_0512_2/index.htm" target="_blank" rel="noopener">三井化学リリース</a>（西日本エチレン統合）／
+      <a href="https://www.sumitomo-chem.co.jp/news/detail/20250401_3.html" target="_blank" rel="noopener">住友化学リリース</a>（千葉地区エチレン最適化）／
+      <a href="https://www.nihon-ma.co.jp/news/20240417_4185-8/" target="_blank" rel="noopener">JSR TOB 成立</a>／
+      <a href="https://www.jbic.go.jp/ja/information/press/press-2019/1105-012721.html" target="_blank" rel="noopener">JBIC</a>（Praxair 欧州事業買収）。
+    </div>
+  </footer>
+</div>
+
+<script>
+/* =======================================================================
+   DATA
+   ======================================================================= */
+const LAYERS=[
+ {id:0,name:'川上・原燃料',sub:'Feedstock / Resources',color:'var(--l0)',hex:'#8d6e63'},
+ {id:1,name:'基礎化学品・産業ガス',sub:'Basic Chemicals / Gases',color:'var(--l1)',hex:'#5c8fd6'},
+ {id:2,name:'中間体・モノマー',sub:'Intermediates / Monomers',color:'var(--l2)',hex:'#4dd0e1'},
+ {id:3,name:'機能材・部材',sub:'Functional Materials',color:'var(--l3)',hex:'#7bd88f'},
+ {id:4,name:'部品・デバイス',sub:'Components / Devices',color:'var(--l4)',hex:'#e0b25c'},
+ {id:5,name:'最終製品・需要家',sub:'End Products / Demand',color:'var(--l5)',hex:'#e07a9c'}
+];
+const SECTORS=[
+ {id:'all',name:'全体マップ'},
+ {id:'hvac',name:'空調・フッ素化学'},
+ {id:'semi',name:'半導体・電子材料'},
+ {id:'mob',name:'モビリティ・電池'},
+ {id:'life',name:'ヘルスケア・衛生材'},
+ {id:'pack',name:'パッケージ・機能フィルム'}
+];
+// fin: [売上億円, 営業利益率%, ROE%, 自己資本比率%, PER倍, 従業員, 決算期]
+const F=(a,b,c,d,e,f,g)=>({rev:a,opm:b,roe:c,eq:d,per:e,emp:f,fy:g});
+const N=[
+/* ---- L0 ---- */
+{id:'naphtha',n:'原油・ナフサ',l:0,t:'m',s:['all','hvac','semi','mob','life','pack'],d:'石油化学の基幹原料。ナフサ価格（円建て）が国内エチレンセンターの原価を規定し、製品価格へのラグ転嫁がスプレッド変動＝収益変動の主因になる。'},
+{id:'ngas',n:'天然ガス・シェールガス',l:0,t:'m',s:['all','hvac','mob','pack'],d:'エタンクラッカー（北米・中東）の原料。ナフサ由来の日本勢に対しコスト優位を持ち、汎用オレフィンの国際競争力格差の根源。'},
+{id:'fluorspar',n:'蛍石（ホタル石／CaF₂）',l:0,t:'m',s:['all','hvac','semi'],d:'フッ酸（HF）→冷媒・フッ素樹脂・半導体エッチング液に至るフッ素チェーンの起点。産出は中国に偏在し、供給リスクとサプライチェーン確保が戦略課題。'},
+{id:'salt',n:'岩塩・海水塩',l:0,t:'m',s:['all','semi','life','pack'],d:'電解（クロールアルカリ）による苛性ソーダ・塩素の原料。塩素は塩ビ／ウレタン／半導体薬液へ、苛性ソーダはアルミナ・紙・化学全般へ展開。'},
+{id:'air',n:'空気（O₂ / N₂ / Ar）',l:0,t:'m',s:['all','semi','life','mob'],d:'深冷分離により産業ガスへ。原料コストはほぼ電力で、オンサイト長期契約（15〜20年）によりインフラ的な収益構造を生む。'},
+{id:'rare',n:'レアアース（Nd / Dy / Tb）',l:0,t:'m',s:['all','hvac','mob'],d:'ネオジム磁石の原料。中国依存度が高く輸出管理の対象。省ディスプロシウム・省レアアース磁石技術が競争軸。'},
+{id:'eneos',n:'ENEOS ホールディングス',en:'ENEOS Holdings',code:'5020',l:0,t:'c',s:['all','hvac','mob','pack'],
+ d:'国内最大の石油精製・元売り。ナフサ／基礎化学品を石化各社へ供給する起点であり、川崎地区では自社石化と機能材（材料事業）も保有。エネルギートランジション下で製油所再編と水素・SAF に軸足を移しつつある。',
+ p:['石油精製','ナフサ','パラキシレン','潤滑油','機能材'],pos:'原燃料供給の最上流。石化各社の原価と直結。',
+ fin:F(117655,4.0,8.0,37.1,14.7,34099,'FY2025（26/3期）'),
+ u:{home:'https://www.hd.eneos.co.jp/',about:'https://www.hd.eneos.co.jp/company/',ir:'https://www.hd.eneos.co.jp/ir/'}},
+{id:'idemitsu',n:'出光興産',en:'Idemitsu Kosan',code:'5019',l:0,t:'c',s:['all','mob','semi','pack'],
+ d:'精製・元売り第 2 位。徳山／千葉で石化を保有し、有機 EL 材料・全固体電池向け固体電解質（硫化リチウム）など機能材料に投資。石油の減益を機能材と資源で埋める構造転換途上。',
+ p:['石油精製','エチレン','有機EL材料','固体電解質','潤滑油'],pos:'原燃料＋機能材のハイブリッド。電池材料で川下に進出。',
+ fin:F(81059,2.6,9.4,36.0,11.0,14392,'FY2025（26/3期）'),
+ u:{home:'https://www.idemitsu.com/jp/',about:'https://www.idemitsu.com/jp/company/',ir:'https://www.idemitsu.com/jp/ir/'}},
+/* ---- L1 ---- */
+{id:'sumitomo_chem',n:'住友化学',en:'Sumitomo Chemical',code:'4005',l:1,t:'c',s:['all','semi','mob','life','pack'],
+ d:'エッセンシャルケミカルズ（石化）・エネルギー機能材料・IT 関連化学・健康農業関連・医薬の 5 本柱を持つ総合化学。石化はサウジのペトロ・ラービグ改革と千葉地区のエチレン集約（丸善石油化学との京葉エチレンへの集約、2026 年度目途）で抜本改革中。一方で偏光フィルム・タッチセンサーパネル・半導体プロセス材料、リチウムイオン電池セパレータなど機能材が収益柱に育っている。',
+ p:['エチレン・オレフィン','偏光フィルム','半導体プロセス材料','LiB セパレータ','農薬','メチオニン'],
+ pos:'石化のダウンサイジングと機能材・農薬・医薬へのポートフォリオ転換が同時進行。ROE 8% を必達目標に掲げる再建局面。',
+ fin:F(23285,6.5,6.4,29.6,13.4,27491,'FY2025（26/3期）'),
+ u:{home:'https://www.sumitomo-chem.co.jp/',about:'https://www.sumitomo-chem.co.jp/company/',ir:'https://www.sumitomo-chem.co.jp/ir/library/'},
+ star:1},
+{id:'mitsui_chem',n:'三井化学',en:'Mitsui Chemicals',code:'4183',l:1,t:'c',s:['all','mob','semi','life','pack'],
+ d:'ライフ＆ヘルスケア（メガネレンズ材料・不織布・歯科材料）、モビリティ（PP コンパウンド・エラストマー）、ICT（半導体加工用テープ）、ベーシック＆グリーンの 4 領域。フェノールチェーンの世界的プレイヤーで、住友ベークライトなど川下へフェノール／ビスフェノール A を供給。西日本エチレン統合では大阪拠点を受け皿とし出資比率 45%。',
+ p:['フェノール','ビスフェノールA','PP コンパウンド','エラストマー','不織布','半導体加工用テープ'],
+ pos:'汎用縮小×ソリューション型（モビリティ／ヘルスケア）拡大。エチレン集約の受け皿として構造改革の中心。',
+ fin:F(16688,4.4,4.0,40.2,20.3,16967,'FY2025（26/3期）'),
+ u:{home:'https://jp.mitsuichemicals.com/jp/',about:'https://jp.mitsuichemicals.com/jp/corporate/',ir:'https://jp.mitsuichemicals.com/jp/ir/'}},
+{id:'mcg',n:'三菱ケミカルグループ',en:'Mitsubishi Chemical Group',code:'4188',l:1,t:'c',s:['all','semi','mob','pack','life'],
+ d:'国内最大の総合化学。旧三菱レイヨン（2017 年に三菱化学・三菱樹脂と統合し三菱ケミカルへ、2022 年に持株会社が三菱ケミカルグループへ商号変更）を源流とする MMA（メタクリル酸メチル）／アクリル樹脂で世界首位級。炭素・素材、スペシャリティマテリアルズ、産業ガス（日本酸素HD）、ファーマ（田辺三菱）を抱えるが、石化・コークスの構造改革と事業ポートフォリオ再編（産業ガス・ファーマの位置づけ）が最大の論点。',
+ p:['MMA・アクリル樹脂（旧三菱レイヨン）','炭素繊維','エンプラ','光学フィルム','食品包装材','産業ガス（日本酸素HD）'],
+ pos:'MMA は世界トップシェア級だが市況変動が大きい。西日本エチレン統合に出資比率 45% で参画、水島の設備停止を決定。',
+ fin:F(37040,0.8,0.7,30.0,104.2,56678,'FY2025（26/3期）'),
+ u:{home:'https://www.mcgc.com/',about:'https://www.mcgc.com/company/',ir:'https://www.mcgc.com/ir/library/operating_summaries.html'},
+ star:1,alias:'三菱レイヨン'},
+{id:'asahi',n:'旭化成',en:'Asahi Kasei',code:'3407',l:1,t:'c',s:['all','mob','semi','life'],
+ d:'マテリアル・住宅・ヘルスケアの 3 領域。LiB セパレータ「ハイポア」で世界上位、イオン交換膜法食塩電解システム、水電解システムなど電気化学に強み。西日本エチレン統合には出資比率 10% で参画し、バイオエタノール由来のグリーン基礎化学品技術「Revolefin」を水島に設置予定。',
+ p:['LiB セパレータ','エンプラ','食塩電解システム','水電解','住宅（ヘーベルハウス）','医薬・医療機器'],
+ pos:'住宅・ヘルスケアがキャッシュ源。素材はセパレータ・電子材料に選択集中。',
+ fin:F(30745,7.5,8.0,50.5,12.9,47895,'FY2025（26/3期）'),
+ u:{home:'https://www.asahi-kasei.com/jp/',about:'https://www.asahi-kasei.com/jp/company/',ir:'https://www.asahi-kasei.com/jp/ir/'}},
+{id:'tosoh',n:'東ソー',en:'Tosoh',code:'4042',l:1,t:'c',s:['all','semi','life','pack','hvac'],
+ d:'クロールアルカリ（苛性ソーダ・塩ビ・ウレタン原料）を基盤に、石化、スペシャルティ（ジルコニア・高機能ポリマー・バイオサイエンス）を展開。南陽の一貫生産体制によるコスト競争力が特徴で、汎用市況の下でも二桁近いマージンを維持。',
+ p:['苛性ソーダ・塩素','塩ビ','ウレタン原料（MDI 原料）','ジルコニア','石英ガラス','診断薬'],
+ pos:'塩から始まる無機チェーンの垂直統合。半導体向け石英・薬液も供給。',
+ fin:F(10199,9.4,5.0,59.0,17.5,14850,'FY2025（26/3期）'),
+ u:{home:'https://www.tosoh.co.jp/',about:'https://www.tosoh.co.jp/company/',ir:'https://www.tosoh.co.jp/ir/'}},
+{id:'tokuyama',n:'トクヤマ',en:'Tokuyama',code:'4043',l:1,t:'c',s:['all','semi','life'],
+ d:'苛性ソーダ・セメントの化成品基盤に、半導体用多結晶シリコン・高純度 IPA・シリカ・BN フィラーなど電子先端材料を展開。データセンター向け需要と自家発電コスト管理が収益ドライバー。',
+ p:['多結晶シリコン','高純度 IPA','乾式シリカ','苛性ソーダ','セメント','歯科材料'],
+ pos:'電子材料比率の上昇でマージン改善が進む転換銘柄。',
+ fin:F(3495,10.6,8.2,50.8,12.1,6390,'FY2025（26/3期）'),
+ u:{home:'https://www.tokuyama.co.jp/',about:'https://www.tokuyama.co.jp/company/',ir:'https://www.tokuyama.co.jp/ir/'}},
+{id:'maruzen',n:'丸善石油化学',en:'Maruzen Petrochemical',l:1,t:'c',s:['all','pack','mob'],
+ d:'コスモエネルギー系の石油化学専業（非上場）。住友化学との合弁「京葉エチレン」を運営し、2026 年度を目途に自社エチレン装置を停止して京葉エチレンへ生産を集約することで合意。千葉地区再編の当事者。',
+ p:['エチレン','プロピレン','スチレンモノマー','ブタジエン'],pos:'千葉地区エチレン集約の中核。非上場のため財務は非開示。',
+ u:{home:'https://www.chemiway.co.jp/',about:'https://www.chemiway.co.jp/company/',ir:'https://www.sumitomo-chem.co.jp/news/detail/20250401_3.html'}},
+{id:'nippon_sanso',n:'日本酸素ホールディングス',en:'Nippon Sanso Holdings',code:'4091',l:1,t:'c',s:['all','semi','life','mob'],
+ d:'国内首位の産業ガス大手（旧大陽日酸、2020 年 10 月に持株会社化し商号変更。事業会社は 2026 年 4 月に「日本酸素」へ改称）。三菱ケミカルグループが親会社。2018〜19 年の Praxair 欧州事業買収で日米欧アジアの 4 極体制を確立し、エレクトロニクス（半導体向け特殊ガス・オンサイト供給）が高収益を牽引。営業利益率は 14% 台と当マップ最上位クラス。',
+ p:['酸素・窒素・アルゴン','半導体向け特殊ガス（NF₃, WF₆ 等）','オンサイト供給','医療用ガス','ガス機器・エンジニアリング'],
+ pos:'長期オンサイト契約に基づくインフラ型収益。AI データセンター／先端ファブ増設の直接受益。',
+ fin:F(13596,14.6,11.3,44.0,19.3,20411,'FY2025（26/3期）'),
+ u:{home:'https://www.nipponsanso-hd.co.jp/',about:'https://www.nipponsanso-hd.co.jp/company/',ir:'https://www.nipponsanso-hd.co.jp/ir/financial/financial_results.html'},
+ star:1},
+{id:'air_water',n:'エア・ウォーター',en:'AIR WATER',code:'4088',l:1,t:'c',s:['all','semi','life','mob'],
+ d:'産業ガス国内 2 位。デジタル＆インダストリー、エネルギーソリューション、ヘルス＆セーフティ、アグリ＆フーズなど多角化が特徴で、M&A による事業拡大を成長エンジンとしてきた。2026 年 3 月期は過年度の不適切会計（20/3〜25/3 期で営業利益ベース 763 億円の減額修正）と海外のれん減損等により純損益 639 億円の赤字（初の赤字転落）。ガバナンス再構築と M&A 戦略の見直しが当面の焦点。',
+ p:['産業ガス','医療用ガス・在宅医療','電子材料ガス','エネルギー（LPG）','農業・食品'],
+ pos:'多角化と M&A で成長してきたが、のれんの質と管理体制が問われる局面。ガス本業自体の需要基盤は堅い。',
+ fin:F(10668,-3.5,-15.4,32.1,null,21824,'FY2025（26/3期）'),
+ flag:'2026/3 期は不適切会計・減損により営業損失 372 億円／純損失 639 億円。',
+ u:{home:'https://www.awi.co.jp/ja/',about:'https://www.awi.co.jp/ja/company.html',ir:'https://www.awi.co.jp/ja/ir/library/presentation.html'},
+ star:1},
+{id:'linde',n:'Linde / Air Liquide',en:'Linde plc / Air Liquide S.A.',l:1,t:'g',s:['all','semi','life'],
+ d:'産業ガスのグローバル 2 強。世界市場は Linde・Air Liquide・Air Products・日本酸素HD の 4 社で大半を占める寡占構造で、地域独占＋長期契約に基づく高 ROIC が特徴。半導体ファブへのオンサイト供給と水素インフラで日本勢と競合。',
+ p:['産業ガス','オンサイト供給','水素・CCUS'],pos:'寡占による価格規律。日本勢のバリュエーションのベンチマーク。',
+ u:{home:'https://www.linde.com/',ir:'https://www.linde.com/investors'}},
+{id:'china',n:'中国・中東 大型石化（Sinopec / 万華 / 恒力 等）',en:'Chinese & Middle-East Petrochemicals',l:1,t:'g',s:['all','pack','mob'],
+ d:'2020 年代の大規模エチレン・PP・PX 新増設により世界的な供給過剰を生み、日本の汎用石化のスプレッドを構造的に圧迫している最大の外部要因。エタン／原油直接分解のコスト優位も持つ。',
+ p:['エチレン','PP/PE','PX・MEG','MDI（万華）'],pos:'日本の石化再編を促した供給側ドライバー。',
+ u:{home:'http://www.sinopec.com/'}},
+/* ---- L2 ---- */
+{id:'shokubai',n:'日本触媒',en:'Nippon Shokubai',code:'4114',l:2,t:'c',s:['all','life','mob','semi'],
+ d:'触媒技術を核に、アクリル酸／高吸水性樹脂（SAP）で世界トップシェア級。SAP は紙おむつ向けが主用途で、中国勢の増設と原料市況に左右される一方、電子情報材料（電池電解質 LiFSI、ヨウ素化合物、放熱材）を第二の柱として育成中。エチレンオキサイド（EO）誘導品も基幹事業。',
+ p:['アクリル酸・アクリル酸エステル','高吸水性樹脂（SAP）','エチレンオキサイド／EO 誘導品','電池材料（LiFSI）','排ガス処理触媒'],
+ pos:'SAP のグローバルリーダーだが成熟・価格競争。電子材料・電池材料への転換速度が評価の分岐点。',
+ fin:F(3999,4.4,4.3,68.4,20.2,4880,'FY2025（26/3期）'),
+ u:{home:'https://www.shokubai.co.jp/ja/',about:'https://www.shokubai.co.jp/ja/company/',ir:'https://www.shokubai.co.jp/ja/ir/'},
+ star:1,alias:'日蝕'},
+{id:'toagosei',n:'東亞合成',en:'Toagosei',code:'4045',l:2,t:'c',s:['all','semi','pack','mob'],
+ d:'苛性ソーダ・塩素などの基礎化学品から、アクリル酸エステル、瞬間接着剤「アロンアルフア」、粘接着剤ポリマー、そして半導体・電子材料向け高純度無機化学品（高純度過酸化水素・アンモニア水等）まで展開。電子材料と接着剤という高付加価値領域の比率上昇でマージンが改善。',
+ p:['アクリル酸エステル','高純度無機化学品（半導体薬液）','アロンアルフア（瞬間接着剤）','粘接着ポリマー','苛性ソーダ・塩素'],
+ pos:'基礎化学品のキャッシュ創出力＋電子材料のグロース。自己資本比率 74% と財務は極めて保守的。',
+ fin:F(1623,8.7,6.0,74.3,14.0,2680,'FY2025（25/12期）'),
+ u:{home:'https://www.toagosei.co.jp/',about:'https://www.toagosei.co.jp/company/',ir:'https://www.toagosei.co.jp/ir/library/presentations/index.html'},
+ star:1},
+{id:'mgc',n:'三菱ガス化学',en:'Mitsubishi Gas Chemical',code:'4182',l:2,t:'c',s:['all','semi','pack','life'],
+ d:'天然ガス由来のメタノールチェーン（メタノール・過酸化水素・ポリカーボネート原料）と、半導体パッケージ基板用 BT レジン（世界首位級）・超純過酸化水素・脱酸素剤「エージレス」などの機能化学品。JSP の筆頭株主でもあり、発泡樹脂チェーンにも資本関係を持つ。',
+ p:['BT レジン（半導体基板材料）','過酸化水素','メタノール','ポリカーボネート','MXDA','脱酸素剤エージレス'],
+ pos:'AI サーバー向け高多層パッケージ基板材料で構造成長。汎用（メタノール・PC）の市況リスクと二面性。',
+ fin:F(7382,6.1,-6.1,58.1,null,8319,'FY2025（26/3期）'),
+ flag:'2026/3 期は減損等により最終赤字（純損失 403 億円）。営業利益は黒字。',
+ u:{home:'https://www.mgc.co.jp/',about:'https://www.mgc.co.jp/corporate/',ir:'https://www.mgc.co.jp/ir/library/'}},
+{id:'osaka_organic',n:'大阪有機化学工業',en:'Osaka Organic Chemical Industry',code:'4187',l:2,t:'c',s:['all','semi','life','pack'],
+ d:'アクリル酸エステルモノマーの専業メーカー。①電子情報材料（半導体フォトレジスト用モノマー、ディスプレイ材料）②化粧品原料 ③工業用材料の 3 本柱で、特に ArF／EUV レジスト用モノマーで高いシェアを持つニッチトップ。営業利益率 17%、ROE 14.5%、自己資本比率 78% と当マップでも屈指の高収益・高財務健全性。',
+ p:['ArF/EUV レジスト用モノマー','ディスプレイ材料','化粧品原料（アクリル系）','特殊アクリルモノマー'],
+ pos:'半導体材料チェーンの「モノマー」段に位置する川上ニッチトップ。レジストメーカー（JSR・東京応化・信越等）が主要顧客。',
+ fin:F(363,17.1,14.5,78.0,11.8,467,'FY2025（25/11期）'),
+ u:{home:'https://www.ooc.co.jp/',about:'https://www.ooc.co.jp/company/',ir:'https://www.ooc.co.jp/ir/material/briefing_doc/'},
+ star:1,alias:'有機材',assume:'ご指定の「有機材」は、他の指定企業（住友精化・日本触媒・東亞合成）との並びから大阪有機化学工業と解釈しています。'},
+{id:'sumitomo_seika',n:'住友精化',en:'Sumitomo Seika Chemicals',code:'4008',l:2,t:'c',s:['all','life','semi','mob'],
+ d:'高吸水性樹脂「アクアキープ」（日本・シンガポール・フランス・韓国で生産）と、機能マテリアル（水溶性ポリマー、エマルジョン、ラテックス、粉末樹脂）、ガス・エンジニアリング（エレクトロニクスガス、高純度アンモニア、医療用ガス、ガス発生装置）の 3 領域。電池向けバインダー・電解液添加剤など蓄電材料も展開。',
+ p:['高吸水性樹脂 アクアキープ','水溶性ポリマー・エマルジョン','エレクトロニクスガス（高純度アンモニア等）','電池材料（バインダー）','医療用ガス'],
+ pos:'SAP では日本触媒に次ぐポジション。ガス・電子材料と衛生材の二本立てで景気耐性が高い。自己資本比率 68%。',
+ fin:F(1484,9.7,7.8,67.8,10.1,1438,'FY2025（26/3期）'),
+ u:{home:'https://www.sumitomoseika.co.jp/',about:'https://www.sumitomoseika.co.jp/company/outline/',ir:'https://www.sumitomoseika.co.jp/ir/zaimu/materials/'},
+ star:1},
+{id:'nissan_chem',n:'日産化学',en:'Nissan Chemical',code:'4021',l:2,t:'c',s:['all','semi','life'],
+ d:'農薬・医薬・電子材料（液晶配向膜、半導体用反射防止膜・多層レジスト材料）の高収益スペシャリティ。営業利益率 22.7%、ROE 20.3% は化学セクター最上位クラスで、機能材メーカーの収益性ベンチマークとなる存在。',
+ p:['半導体反射防止材料','液晶配向膜','農薬','医薬中間体','無機コロイド材料'],
+ pos:'R&D 型スペシャリティの収益性の上限を示す比較対象。',
+ fin:F(2796,22.7,20.3,71.9,16.3,3411,'FY2025（26/3期）'),
+ u:{home:'https://www.nissanchem.co.jp/',about:'https://www.nissanchem.co.jp/company/',ir:'https://www.nissanchem.co.jp/ir/'}},
+/* ---- L3 ---- */
+{id:'shinetsu',n:'信越化学工業',en:'Shin-Etsu Chemical',code:'4063',l:3,t:'c',s:['all','semi','mob','pack'],
+ d:'塩ビ（世界首位）、半導体シリコンウェハ（世界首位）、フォトレジスト・フォトマスクブランクス、シリコーン、希土類磁石を持つ日本化学の収益最高峰。営業利益率 24.7%・自己資本比率 79% と、規模と収益性を両立した稀有な構造。',
+ p:['半導体ウェハ','フォトレジスト（EUV/ArF）','フォトマスクブランクス','塩化ビニル樹脂','シリコーン','希土類磁石'],
+ pos:'半導体材料の複数段（ウェハ・レジスト・マスク）を押さえる垂直・水平両面の支配。',
+ fin:F(25740,24.7,10.4,78.7,24.8,27342,'FY2025（26/3期）'),
+ u:{home:'https://www.shinetsu.co.jp/jp/',about:'https://www.shinetsu.co.jp/jp/company/',ir:'https://www.shinetsu.co.jp/jp/ir/'}},
+{id:'agc',n:'AGC',en:'AGC Inc.',code:'5201',l:3,t:'c',s:['all','hvac','semi','mob','life'],
+ d:'旧旭硝子。建築用・自動車用ガラスの世界大手であると同時に、① EUV／ArF 用フォトマスクブランクス、半導体製造装置用高純度合成石英、② フッ素樹脂・フッ素製品（フルオン、旭硝子由来のフッ素チェーン）、③ ライフサイエンス（バイオ／合成医薬 CDMO）、④ 電子部材（ディスプレイ用ガラス）を持つ複合素材企業。ガラスの市況事業と電子・ライフの成長事業を「AGC plus」戦略で入れ替え中。',
+ p:['建築用・自動車用ガラス','EUV/ArF マスクブランクス','合成石英ガラス','フッ素樹脂・フッ素化学品','ディスプレイ用ガラス','医薬 CDMO'],
+ pos:'マスクブランクスは信越化学と世界を二分。フッ素チェーンでは冷媒・撥水材でダイキンと補完・競合の両面。',
+ fin:F(20588,6.2,4.7,50.3,15.9,52896,'FY2025（25/12期）'),
+ u:{home:'https://www.agc.com/',about:'https://www.agc.com/company/',ir:'https://www.agc.com/ir/library/briefing/'},
+ star:1},
+{id:'sumibe',n:'住友ベークライト',en:'Sumitomo Bakelite',code:'4203',l:3,t:'c',s:['all','semi','life','pack','mob'],
+ d:'日本初のプラスチック（フェノール樹脂）メーカーを起源とし、現在は ① 半導体封止材（エポキシ molding compound：世界トップシェア級）・半導体保護材料などの「情報通信材料」、② 食品包装フィルム・医療機器を含む「高機能プラスチック」「クオリティオブライフ」の 3 分野。AI 向け大型パッケージ／FC-BGA の普及で封止材の高機能品需要が拡大し、営業利益率 10.8% と中堅化学の上位に位置する。',
+ p:['半導体封止材（エポキシ樹脂成形材料）','液状封止材・ダイアタッチ材','フェノール樹脂','食品包装フィルム','医療機器部材','自動車向け樹脂部品'],
+ pos:'半導体後工程材料の中核サプライヤー。原料（エポキシ・フェノール・シリカフィラー）を上流各社から調達し、OSAT／半導体メーカーへ供給。',
+ fin:F(3199,10.8,8.8,71.7,15.1,7524,'FY2025（26/3期）'),
+ u:{home:'https://www.sumibe.co.jp/',about:'https://www.sumibe.co.jp/company/',ir:'https://www.sumibe.co.jp/ir/library/presentation/'},
+ star:1},
+{id:'jsp',n:'JSP',en:'JSP Corporation',code:'7942',l:3,t:'c',s:['all','mob','pack','hvac'],
+ d:'発泡樹脂のグローバル専業メーカー（三菱ガス化学が筆頭株主）。ビーズ法発泡ポリプロピレン「ピーブロック」は自動車バンパー芯材・シート芯材の定番で、EV の軽量化ニーズと親和性が高い。押出発泡ポリスチレンによる建築断熱材「ミラフォーム」、食品包装用トレー、精密機器の緩衝材まで、素材から成形品まで一貫。',
+ p:['発泡 PP ビーズ（ピーブロック）','押出発泡ポリスチレン断熱材（ミラフォーム）','発泡 PE','食品包装用シート・トレー','緩衝包装材'],
+ pos:'汎用樹脂（PP/PS/PE）を仕入れ、発泡加工技術で付加価値を付ける「加工型」ポジション。原料市況と自動車生産台数に感応。',
+ fin:F(1455,5.3,6.3,65.9,9.0,3096,'FY2025（26/3期）'),
+ u:{home:'https://www.co-jsp.co.jp/',about:'https://www.co-jsp.co.jp/company/',ir:'https://www.co-jsp.co.jp/ir/'},
+ star:1},
+{id:'proterial',n:'プロテリアル',en:'Proterial, Ltd.',code:'旧5486',l:3,t:'c',s:['all','mob','hvac','semi'],
+ d:'旧日立金属。2023 年 1 月にベインキャピタル連合の傘下となり社名変更（同時に上場廃止）。ネオジム磁石（NEOMAX）、アモルファス金属、特殊鋼（金型・工具鋼）、自動車鋳物、電線材料、半導体・産業インフラ向け機能部材を持つ「金属系素材」の中核。空調コンプレッサ用モーターや EV 駆動モーターの高性能磁石で化学チェーンと接続する。',
+ p:['ネオジム磁石 NEOMAX','アモルファス金属材料','特殊鋼・金型材','自動車鋳物部品','電線・ケーブル材料'],
+ pos:'化学ではなく金属素材だが、モーター・磁性材料経由で空調／EV バリューチェーンの要衝。レアアース調達が戦略変数。',
+ fin:F(9427,2.8,2.4,49.3,null,27771,'FY2021（22/3期・上場最終期）'),
+ flag:'2023 年 1 月上場廃止（ベインキャピタル連合傘下）。財務は上場最終期の実績。',
+ u:{home:'https://www.proterial.com/',about:'https://www.proterial.com/company/',ir:'https://www.proterial.com/corp/highlight/ir_library/ir-prsen.html'},
+ star:1},
+{id:'resonac',n:'レゾナック・ホールディングス',en:'Resonac Holdings',code:'4004',l:3,t:'c',s:['all','semi','mob'],
+ d:'2023 年に昭和電工と日立化成が統合して発足。半導体後工程材料（封止材、ダイボンディング材、CMP スラリー、感光性フィルム）で世界的ポジションを持ち、「半導体・電子材料」を中核に据えて石化・黒鉛電極などを切り離す構造改革を進行中。JOINT2 コンソーシアムで後工程の共同開発を主導。',
+ p:['CMP スラリー','半導体封止材・ダイボンディング材','感光性フィルム','黒鉛電極','石化（切り出し対象）'],
+ pos:'住友ベークライトと後工程材料で直接競合。ポートフォリオ入替の進捗が株価ドライバー。',
+ fin:F(13471,3.5,4.3,33.2,40.7,21525,'FY2025（25/12期）'),
+ u:{home:'https://www.resonac.com/jp',about:'https://www.resonac.com/jp/company',ir:'https://www.resonac.com/jp/ir'}},
+{id:'jsr',n:'JSR',en:'JSR Corporation',code:'旧4185',l:3,t:'c',s:['all','semi','life'],
+ d:'フォトレジストの世界大手。2024 年 6 月に産業革新投資機構（JIC）による TOB を経て上場廃止・非公開化。半導体材料産業の再編プラットフォームとしての役割が期待され、5〜7 年後の再上場が目標とされる。ライフサイエンス（バイオプロセス材料）も柱。',
+ p:['ArF/EUV フォトレジスト','CMP 材料','ディスプレイ材料','バイオプロセス材料'],
+ pos:'レジストでは東京応化・信越化学・住友化学と競合。大阪有機化学工業などのモノマーを調達する川下側。',
+ flag:'2024 年 6 月上場廃止（JIC 傘下）のため財務は非開示。',
+ u:{home:'https://www.jsr.co.jp/',about:'https://www.jsr.co.jp/jsr_j/company/',ir:'https://www.jsr.co.jp/ir/'}},
+{id:'tok',n:'東京応化工業',en:'Tokyo Ohka Kogyo',code:'4186',l:3,t:'c',s:['all','semi'],
+ d:'フォトレジストの専業トップ級。EUV・ArF レジストと高純度薬液（現像液・剥離液）で先端ロジック／メモリの微細化に直結。営業利益率 20%、ROE 15.6% と材料メーカーの中でも突出した収益性。',
+ p:['EUV/ArF フォトレジスト','高純度化学薬品','厚膜レジスト（パッケージング）'],
+ pos:'モノマー（大阪有機等）→レジスト→ファブという半導体材料チェーンの中核段。',
+ fin:F(2370,20.0,15.6,67.9,20.8,2132,'FY2025（25/12期）'),
+ u:{home:'https://www.tok.co.jp/',about:'https://www.tok.co.jp/company',ir:'https://www.tok.co.jp/ir'}},
+{id:'denka',n:'デンカ',en:'Denka',code:'4061',l:3,t:'c',s:['all','semi','life','mob'],
+ d:'アセチレンチェーンとカーバイド由来の無機材料に強みを持ち、球状シリカ・窒化ホウ素などの放熱／封止材向けフィラー、半導体パッケージ材料、ワクチン・診断薬（ライフイノベーション）を展開。半導体封止材メーカーへのフィラー供給者として川上に位置する。',
+ p:['球状シリカ・溶融シリカフィラー','窒化ホウ素（放熱材）','クロロプレンゴム','電子包材','ワクチン・検査試薬'],
+ pos:'封止材の性能を規定するフィラーの供給者。住友ベークライト・レゾナックの上流。',
+ fin:F(3842,6.8,5.2,45.6,19.4,6454,'FY2025（26/3期）'),
+ u:{home:'https://www.denka.co.jp/',about:'https://www.denka.co.jp/company/',ir:'https://www.denka.co.jp/ir/'}},
+{id:'nitto',n:'日東電工',en:'Nitto Denko',code:'6988',l:3,t:'c',s:['all','semi','mob','life'],
+ d:'粘着技術をコアに、光学フィルム（偏光板）、半導体・回路材料（フレキシブル基板・ダイシングテープ）、メディカル（経皮吸収型製剤）へ多角展開。営業利益率 17.9%・自己資本比率 80% と高収益・無借金体質。',
+ p:['偏光フィルム','半導体プロセス用テープ','フレキシブルプリント基板','分離膜','経皮吸収型製剤'],
+ pos:'東亞合成・大阪有機などのアクリルモノマーを調達し、粘着・光学フィルムに加工する川下側。',
+ fin:F(10282,17.9,12.2,79.6,15.5,26477,'FY2025（26/3期）'),
+ u:{home:'https://www.nitto.com/jp/ja/',about:'https://www.nitto.com/jp/ja/about_us/',ir:'https://www.nitto.com/jp/ja/ir/'}},
+{id:'toray',n:'東レ',en:'Toray Industries',code:'3402',l:3,t:'c',s:['all','mob','life','pack','semi'],
+ d:'炭素繊維（世界首位）、樹脂・ケミカル、フィルム、繊維、水処理膜、ライフサイエンス。航空機・圧力容器向け炭素繊維と、電池セパレータ・回路材料フィルムが成長領域。マージンは 3.8% と規模の割に低く、事業ポートフォリオの収益性改善が課題。',
+ p:['炭素繊維','電池セパレータ','光学・工業用フィルム','ABS・PPS 樹脂','逆浸透膜'],
+ pos:'素材の総合デパート型。フィルム経由で TOPPAN・電子部材チェーンと接続。',
+ fin:F(25851,3.8,4.5,51.8,20.8,46294,'FY2025（26/3期）'),
+ u:{home:'https://www.toray.jp/',about:'https://www.toray.jp/company/',ir:'https://www.toray.jp/ir/'}},
+{id:'kaneka',n:'カネカ',en:'Kaneka',code:'4118',l:3,t:'c',s:['all','life','mob','pack','hvac'],
+ d:'塩ビ・変成シリコーンポリマー（建築シーリング）、発泡樹脂（カネライトフォーム、EV 電池パック向け発泡材）、機能性樹脂、医療機器、バイオ・食品素材。生分解性ポリマー Green Planet は脱プラ規制の受け皿。',
+ p:['変成シリコーンポリマー','発泡樹脂（カネライト）','生分解性バイオポリマー','医療用カテーテル','機能性食品素材'],
+ pos:'発泡樹脂・断熱材で JSP と競合。素材＋医療の複合。',
+ fin:F(8116,4.1,6.4,52.0,9.6,11762,'FY2025（26/3期）'),
+ u:{home:'https://www.kaneka.co.jp/',about:'https://www.kaneka.co.jp/company/',ir:'https://www.kaneka.co.jp/ir/'}},
+{id:'sekisui',n:'積水化学工業',en:'Sekisui Chemical',code:'4204',l:3,t:'c',s:['all','mob','semi','pack','hvac'],
+ d:'住宅（セキスイハイム）、環境・ライフライン（管材）、高機能プラスチックス（合わせガラス用中間膜＝世界首位、液晶用微粒子、半導体・電子部材）。ペロブスカイト太陽電池の実装で先行。',
+ p:['合わせガラス用中間膜','導電性微粒子','半導体向けテープ','管材・パイプ','ユニット住宅','ペロブスカイト太陽電池'],
+ pos:'中間膜で AGC など板ガラスメーカーの直接の川下。',
+ fin:F(13093,8.1,9.1,59.6,14.3,26752,'FY2025（26/3期）'),
+ u:{home:'https://www.sekisui.co.jp/',about:'https://www.sekisui.co.jp/company/',ir:'https://www.sekisui.co.jp/ir/'}},
+{id:'neg',n:'日本電気硝子',en:'Nippon Electric Glass',code:'5214',l:3,t:'c',s:['all','semi','mob'],
+ d:'ディスプレイ用ガラス基板、ガラスファイバー（プリント基板用 T ガラス・低誘電ガラス）、医薬用ガラス、半導体パッケージ用ガラス基板を展開。AI サーバー向け低誘電ガラスクロスが構造成長領域。',
+ p:['ディスプレイ用ガラス基板','低誘電ガラスファイバー','医薬用ガラス','ガラスパウダー・封着材'],
+ pos:'AGC と並ぶガラス素材の要。TOPPAN・基板メーカーの上流。',
+ fin:F(3114,11.0,6.1,70.2,16.1,5218,'FY2025（25/12期）'),
+ u:{home:'https://www.neg.co.jp/',about:'https://www.neg.co.jp/company/',ir:'https://www.neg.co.jp/ir/'}},
+{id:'toppan',n:'TOPPAN ホールディングス',en:'TOPPAN Holdings',code:'7911',l:3,t:'c',s:['all','semi','pack','life'],
+ d:'印刷技術を源流に、① DX（BPO・セキュア）② 生活・産業（軟包装、バリアフィルム GL BARRIER、建材化粧シート）③ エレクトロニクス（半導体用フォトマスク、FC-BGA パッケージ基板、ディスプレイ関連部材）の 3 領域。フォトマスクは世界大手で、AGC・信越化学のマスクブランクスを加工して半導体メーカーへ供給。AI 向け FC-BGA 基板への大型投資が進行中。',
+ p:['半導体フォトマスク','FC-BGA パッケージ基板','透明バリアフィルム GL BARRIER','軟包装材','建材化粧シート','セキュア／BPO'],
+ pos:'素材（ガラス・フィルム）を受け取り、電子部材とパッケージへ変換する「加工・実装」段。保有不動産・政策保有株の圧縮と資本効率改善が株価論点。',
+ fin:F(18050,3.7,4.9,52.3,18.1,54371,'FY2025（26/3期）'),
+ u:{home:'https://www.holdings.toppan.com/ja/',about:'https://www.holdings.toppan.com/ja/about-us/',ir:'https://www.holdings.toppan.com/ja/ir/material/meeting.html'},
+ star:1},
+{id:'dic',n:'DIC',en:'DIC Corporation',code:'4631',l:3,t:'c',s:['all','pack','semi'],
+ d:'印刷インキ世界大手。有機顔料、PPS 樹脂、エポキシ樹脂、カラーフィルタ用顔料など機能材も持つ。包装インキ経由で TOPPAN 等のコンバーターと接続。',
+ p:['印刷インキ','有機顔料','エポキシ樹脂','PPS 樹脂','カラーフィルタ材料'],
+ pos:'パッケージチェーンの素材供給者。構造改革・資産圧縮が課題。',
+ fin:F(10522,5.0,7.4,37.0,10.7,20884,'FY2025（25/12期）'),
+ u:{home:'https://www.dic-global.com/ja/',about:'https://www.dic-global.com/ja/about/',ir:'https://www.dic-global.com/ja/ir/'}},
+{id:'kuraray',n:'クラレ',en:'Kuraray',code:'3405',l:3,t:'c',s:['all','pack','mob','semi'],
+ d:'ポバール（PVOH）樹脂・EVOH「エバール」で世界首位級。ガスバリア性樹脂は食品包装・燃料タンクに、光学用ポバールフィルムは偏光板に不可欠。活性炭、人工皮革、耐熱樹脂も展開。',
+ p:['EVOH（エバール）','光学用ポバールフィルム','活性炭','ジェネスタ（耐熱樹脂）','人工皮革'],
+ pos:'バリア材で TOPPAN の GL BARRIER と補完・競合。偏光板チェーンでは住友化学・日東電工の上流。',
+ fin:F(8084,7.3,1.0,57.0,67.2,12117,'FY2025（25/12期）'),
+ u:{home:'https://www.kuraray.co.jp/',about:'https://www.kuraray.co.jp/company/',ir:'https://www.kuraray.co.jp/ir/'}},
+{id:'fujifilm',n:'富士フイルムホールディングス',en:'FUJIFILM Holdings',code:'4901',l:3,t:'c',s:['all','semi','life'],
+ d:'写真フィルム由来の化学技術を、半導体材料（CMP スラリー、高純度薬液、レジスト）、ディスプレイ材料（TAC フィルム）、バイオ CDMO、メディカルへ転換した成功例。半導体材料は米国・ベルギー等で増強中。',
+ p:['半導体プロセス材料','TAC フィルム','バイオ CDMO','医療機器','記録メディア'],
+ pos:'素材から装置・サービスまで垂直に持つ複合体。AGC・住友化学とライフサイエンス CDMO で競合。',
+ fin:F(33570,null,7.7,63.4,12.9,73526,'FY2025（26/3期）'),
+ u:{home:'https://holdings.fujifilm.com/ja',about:'https://holdings.fujifilm.com/ja/about',ir:'https://holdings.fujifilm.com/ja/investors'}},
+/* ---- L4 ---- */
+{id:'foundry',n:'半導体デバイス（TSMC / Samsung / キオクシア 等）',en:'Semiconductor Devices',l:4,t:'g',s:['all','semi'],
+ d:'ロジック・メモリの製造主体。AI／データセンター向け先端ロジックと HBM の増産が、フォトレジスト・封止材・特殊ガス・マスクの需要を直接規定する。日本の材料メーカーにとって最重要の需要ドライバー。',
+ p:['先端ロジック','DRAM / HBM','NAND','ファウンドリ受託'],pos:'材料需要の「川下スイッチ」。設備投資（WFE）と稼働率が材料出荷の先行指標。',
+ u:{home:'https://www.tsmc.com/'}},
+{id:'pcb',n:'パッケージ基板・実装（イビデン / 新光電気 / OSAT）',en:'Substrates & OSAT',l:4,t:'g',s:['all','semi'],
+ d:'FC-BGA 等のパッケージ基板と後工程受託。BT レジン（三菱ガス化学）、低誘電ガラスクロス（日本電気硝子）、封止材（住友ベークライト・レゾナック）を消費する実装段。',
+ p:['FC-BGA 基板','ビルドアップ基板','後工程受託（OSAT）'],pos:'AI サーバー向け大型・多層化で材料単価が上昇する構造。',
+ u:{home:'https://www.ibiden.co.jp/'}},
+{id:'battery',n:'電池セル（パナソニックエナジー / CATL / LGES 等）',en:'Battery Cells',l:4,t:'g',s:['all','mob'],
+ d:'車載・定置用リチウムイオン電池のセルメーカー。セパレータ（旭化成・東レ・住友化学）、バインダー・添加剤（住友精化・日本触媒）、電解質を消費する。全固体電池では出光興産の固体電解質が焦点。',
+ p:['車載用 LiB','定置用蓄電池','全固体電池（開発）'],pos:'EV 販売の変動が化学素材の稼働率に直結する高ボラティリティ需要。',
+ u:{home:'https://www.panasonic.com/jp/business/energy.html'}},
+{id:'motor',n:'モーター・コンプレッサ',en:'Motors & Compressors',l:4,t:'g',s:['all','hvac','mob'],
+ d:'空調の心臓部であるコンプレッサ用モーターと EV 駆動モーター。ネオジム磁石（プロテリアル等）と電磁鋼板の性能が効率（APF・電費）を規定する。',
+ p:['空調用コンプレッサ','EV 駆動モーター','産業用モーター'],pos:'磁性材料と最終製品を橋渡しする部品段。',
+ u:{home:'https://www.proterial.com/products/magnet/'}},
+{id:'murata',n:'村田製作所',en:'Murata Manufacturing',code:'6981',l:4,t:'c',s:['all','semi','mob'],
+ d:'MLCC（積層セラミックコンデンサ）世界首位。誘電体セラミック粉末・電極材料・樹脂材料を大量消費する電子部品メーカーで、AI サーバー・車載電装化が需要ドライバー。',
+ p:['MLCC','通信モジュール','インダクタ','電池'],pos:'材料メーカーの主要顧客であり、部品段の収益性ベンチマーク。',
+ fin:F(18309,15.4,8.8,85.0,26.7,74302,'FY2025（26/3期）'),
+ u:{home:'https://www.murata.com/ja-jp',about:'https://www.murata.com/ja-jp/about',ir:'https://www.murata.com/ja-jp/ir'}},
+/* ---- L5 ---- */
+{id:'daikin',n:'ダイキン工業',en:'Daikin Industries',code:'6367',l:5,t:'c',s:['all','hvac','mob','semi'],
+ d:'空調機で世界首位。空調機メーカーとして唯一「冷媒（フッ素化学）を自社で持つ」垂直統合が最大の競争優位で、蛍石→フッ酸→冷媒／フッ素樹脂（フルオロポリマー、半導体エッチング材料、電池バインダー PVDF）まで一貫。低 GWP 冷媒 R32 は約 270 件の特許を非行使宣言して世界標準化を促し、HFC 規制（キガリ改正・フロン排出抑制法）を自社優位のルールに転換した。売上 5 兆円、営業利益率 8.3%。',
+ p:['ルームエアコン・業務用空調','ヒートポンプ暖房（欧州）','低 GWP 冷媒 R32 / HFO','フッ素樹脂・フッ素ゴム','半導体向けエッチングガス','電池用 PVDF バインダー'],
+ pos:'当マップで唯一「川上（フッ素化学）と最終製品（空調）を同時に持つ」プレイヤー。化学事業は半導体・電池向けにも展開し、川下と川上の両方から評価されるべき二面性を持つ。',
+ fin:F(50150,8.3,9.1,55.9,19.9,104095,'FY2025（26/3期）'),
+ u:{home:'https://www.daikin.co.jp/',about:'https://www.daikin.co.jp/corporate/',ir:'https://www.daikin.co.jp/investor/library/results_materials'},
+ star:1},
+{id:'toyota',n:'トヨタ自動車 ほか自動車 OEM',en:'Toyota Motor & Auto OEMs',code:'7203',l:5,t:'c',s:['all','mob','hvac'],
+ d:'自動車一台あたり樹脂・ゴム・ガラス・磁性材の消費量は大きく、化学各社の最大級の需要家。EV 化は磁石・電池材料・軽量化発泡材の需要を押し上げる一方、内燃機関向け部材を縮小させる二面性を持つ。',
+ p:['乗用車・商用車','HEV / BEV','駆動用モーター'],pos:'モビリティチェーンの最終需要。生産台数が化学素材の稼働率に直結。',
+ fin:F(506850,7.4,10.1,37.8,10.7,390927,'FY2025（26/3期）'),
+ u:{home:'https://global.toyota/jp/',about:'https://global.toyota/jp/company/',ir:'https://global.toyota/jp/ir/'}},
+{id:'dc',n:'データセンター・AI サーバー / スマートフォン',en:'Data Centers & Devices',l:5,t:'g',s:['all','semi','hvac'],
+ d:'生成 AI の学習・推論需要により先端ロジック／HBM が逼迫。半導体材料に加え、データセンターの冷却（空調・液冷）需要としてダイキンら空調メーカーにも波及する二重の受益構造を持つ。',
+ p:['AI サーバー','ハイパースケール DC','スマートフォン'],pos:'当セクター最大の成長ドライバー。材料と空調の両方に効く。',
+ u:{home:'https://www.semi.org/'}},
+{id:'hygiene',n:'紙おむつ・衛生材（ユニ・チャーム / P&G / 花王）',en:'Hygiene Products',code:'8113 他',l:5,t:'g',s:['all','life'],
+ d:'高吸水性樹脂（SAP）と不織布の最終需要。先進国は少子化で数量成長が鈍化する一方、アジア・中東の大人用おむつとペットケアが成長領域。SAP は数量よりも高機能化・薄型化で単価を守る競争。',
+ p:['ベビー／大人用紙おむつ','生理用品','ペットケア'],pos:'日本触媒・住友精化の直接的な需要側。',
+ fin:F(9453,11.5,8.3,65.0,24.0,16542,'ユニ・チャーム FY2025（25/12期）'),
+ u:{home:'https://www.unicharm.co.jp/ja/home.html',ir:'https://www.unicharm.co.jp/ja/ir.html'}},
+{id:'foodpkg',n:'食品・医薬パッケージ / 建築・住宅',en:'Packaging & Construction',l:5,t:'g',s:['all','pack','hvac'],
+ d:'軟包装・バリアフィルム・発泡トレーの需要側。脱プラ規制・モノマテリアル化・リサイクル要求が素材選定を左右する。建築側は断熱基準の強化（省エネ基準適合義務化）が断熱材・複層ガラス・高効率空調の需要を押し上げる。',
+ p:['軟包装・バリア包材','発泡トレー','建築断熱材','複層ガラス'],pos:'規制がスペックを決める需要領域。TOPPAN・JSP・AGC・カネカの出口。',
+ u:{home:'https://www.mlit.go.jp/'}}
+];
+const L=[
+ // 原燃料 → 基礎
+ ['naphtha','eneos','原油精製','s'],['naphtha','idemitsu','原油精製','s'],
+ ['eneos','sumitomo_chem','ナフサ','s'],['eneos','mitsui_chem','ナフサ','s'],['eneos','mcg','ナフサ','s'],
+ ['idemitsu','maruzen','ナフサ','s'],['idemitsu','asahi','ナフサ','s'],
+ ['ngas','mgc','天然ガス（メタノール原料）','s'],['ngas','china','エタン・原油直接分解','s'],
+ ['salt','tosoh','塩（電解）','s'],['salt','tokuyama','塩（電解）','s'],['salt','agc','塩（電解）','s'],['salt','toagosei','塩（電解）','s'],
+ ['air','nippon_sanso','空気分離','s'],['air','air_water','空気分離','s'],['air','linde','空気分離','s'],
+ ['fluorspar','daikin','蛍石→フッ酸→冷媒（自社一貫）','s'],['fluorspar','agc','蛍石→フッ素樹脂','s'],
+ ['rare','proterial','レアアース（Nd/Dy）','s'],
+ // 基礎 → 中間体
+ ['sumitomo_chem','shokubai','エチレン／プロピレン','s'],
+ ['mitsui_chem','sumibe','フェノール・ビスフェノールA','s'],
+ ['mitsui_chem','jsp','PP・ポリオレフィン','s'],
+ ['mcg','jsp','資本関係・PS 系原料','c'],
+ ['mgc','jsp','筆頭株主（資本関係）','c'],
+ ['mcg','nippon_sanso','親会社（資本関係）','c'],
+ ['maruzen','jsp','スチレンモノマー','s'],
+ ['sumitomo_chem','jsp','PP・PE','s'],
+ ['asahi','battery','LiB セパレータ','s'],
+ ['tosoh','toagosei','塩素系原料','est'],
+ ['sumitomo_chem','osaka_organic','アクリル系原料','est'],
+ ['shokubai','sumitomo_seika','アクリル酸（SAP 原料）','est'],
+ ['shokubai','toagosei','アクリル酸','est'],
+ ['china','sumitomo_chem','汎用市況の下押し','est'],['china','mcg','汎用市況の下押し','est'],
+ // 中間体 → 機能材
+ ['osaka_organic','jsr','レジスト用モノマー','s'],
+ ['osaka_organic','tok','レジスト用モノマー','s'],
+ ['osaka_organic','shinetsu','レジスト用モノマー','est'],
+ ['osaka_organic','nitto','アクリルモノマー（粘着剤）','est'],
+ ['toagosei','nitto','アクリル酸エステル','s'],
+ ['toagosei','foundry','高純度薬液（過酸化水素等）','s'],
+ ['toagosei','sumibe','接着・粘接着材料','est'],
+ ['mgc','pcb','BT レジン','s'],
+ ['mgc','foodpkg','脱酸素剤エージレス','s'],
+ ['sumitomo_seika','battery','電池用バインダー・添加剤','s'],
+ ['sumitomo_seika','foundry','エレクトロニクスガス','s'],
+ ['sumitomo_seika','hygiene','高吸水性樹脂 アクアキープ','s'],
+ ['shokubai','hygiene','高吸水性樹脂（SAP）','s'],
+ ['shokubai','battery','電池材料 LiFSI','s'],
+ ['nissan_chem','foundry','反射防止膜・多層レジスト','s'],
+ ['tokuyama','foundry','多結晶シリコン・高純度 IPA','s'],
+ ['denka','sumibe','球状シリカフィラー','s'],
+ ['denka','resonac','放熱・封止フィラー','est'],
+ // 機能材 → 部品/デバイス
+ ['sumibe','pcb','半導体封止材','s'],
+ ['resonac','pcb','封止材・CMP スラリー','s'],
+ ['shinetsu','foundry','ウェハ・フォトレジスト','s'],
+ ['jsr','foundry','フォトレジスト','s'],
+ ['tok','foundry','EUV/ArF レジスト','s'],
+ ['agc','toppan','マスクブランクス','s'],
+ ['shinetsu','toppan','マスクブランクス','s'],
+ ['toppan','foundry','フォトマスク','s'],
+ ['toppan','pcb','FC-BGA パッケージ基板','s'],
+ ['neg','pcb','低誘電ガラスクロス','s'],
+ ['fujifilm','foundry','CMP・高純度薬液','s'],
+ ['nippon_sanso','foundry','特殊ガス・オンサイト供給','s'],
+ ['air_water','foundry','電子材料ガス','s'],
+ ['linde','foundry','オンサイト供給（競合）','s'],
+ ['nitto','murata','粘着・回路材料','est'],
+ ['proterial','motor','ネオジム磁石 NEOMAX','s'],
+ ['toray','battery','電池セパレータ','s'],
+ ['sumitomo_chem','battery','LiB セパレータ','s'],
+ ['pcb','foundry','パッケージ実装','s'],
+ // → 最終需要
+ ['foundry','dc','先端ロジック・HBM','s'],
+ ['murata','dc','MLCC・モジュール','s'],
+ ['motor','daikin','コンプレッサ用モーター','s'],
+ ['motor','toyota','駆動モーター','s'],
+ ['battery','toyota','車載電池','s'],
+ ['jsp','toyota','発泡 PP バンパー芯材・シート芯材','s'],
+ ['jsp','foodpkg','発泡トレー・建築断熱材','s'],
+ ['jsp','daikin','断熱・緩衝部材','est'],
+ ['sumibe','toyota','自動車向け樹脂部品','s'],
+ ['agc','toyota','自動車用ガラス','s'],
+ ['agc','foodpkg','建築用ガラス','s'],
+ ['agc','daikin','フッ素樹脂・化成品','est'],
+ ['daikin','dc','データセンター空調・液冷','s'],
+ ['daikin','foodpkg','業務用・住宅用空調','s'],
+ ['toppan','foodpkg','軟包装・バリアフィルム','s'],
+ ['kuraray','foodpkg','EVOH バリア樹脂','s'],
+ ['dic','toppan','印刷インキ・顔料','s'],
+ ['sekisui','agc','合わせガラス用中間膜','est'],
+ ['kaneka','foodpkg','断熱材・生分解性樹脂','s'],
+ ['toray','toyota','炭素繊維・樹脂部材','s'],
+ ['sumitomo_chem','foundry','半導体プロセス材料','s'],
+ ['nitto','dc','偏光フィルム・回路材料','s'],
+ ['proterial','foundry','半導体・産業インフラ部材','est'],
+ ['idemitsu','battery','固体電解質（全固体電池）','s'],
+ ['air_water','hygiene','医療用ガス・在宅医療','s']
+];
+const SECTOR_CARDS=[
+ {id:'hvac',t:'空調・フッ素化学',c:'#e07a9c',
+  p:'蛍石→フッ酸→冷媒／フッ素樹脂→空調機という、化学と機械が一体化した垂直チェーン。低 GWP 冷媒への転換（キガリ改正・フロン排出抑制法の指定製品制度）が需要をリセットし、R32 → HFO 系への移行が次の争点。欧州のヒートポンプ暖房、米国の SEER 規制、そしてデータセンター冷却が数量を押し上げる。',
+  pos:['ヒートポンプ暖房・DC 冷却という新規需要が同時に立ち上がり','低 GWP 規制が買い替えサイクルを強制的に発生させる','冷媒内製による原価・供給安定性の優位（ダイキン）','高効率化＝高性能磁石・断熱材の単価上昇'],
+  neg:['蛍石の中国偏在による原料調達リスク','欧州 PFAS 規制の対象範囲拡大がフッ素樹脂事業に不確実性','中国空調メーカーとの価格競争・住宅着工の減速','冷媒転換に伴う旧規格在庫・設備の陳腐化']},
+ {id:'semi',t:'半導体・電子材料',c:'#4dd0e1',
+  p:'モノマー →レジスト／封止材／特殊ガス→ウェハ工程・パッケージ→デバイスという多段チェーン。日本勢はウェハ、レジスト、マスクブランクス、封止材、CMP、特殊ガスの各段で高シェアを持つ。AI・データセンター向け先端ロジックと HBM が需要を牽引し、後工程（FC-BGA、大型パッケージ）の材料単価上昇が中堅材料メーカーの利益率を押し上げている。',
+  pos:['AI／DC 向け先端ロジック・HBM の増産が材料消費量を押し上げ','後工程の高機能化（大型パッケージ・多層基板）で単価上昇','国内ファブ新設（ロジック・パワー）による地産地消需要','各段が寡占的で価格転嫁力が高い'],
+  neg:['設備投資サイクルの振れが大きく在庫調整が周期的に発生','地政学リスク（輸出管理・中国の国産化政策）','スマホ・PC など汎用エンドの回復が鈍い','顧客の内製化・材料認定の長期化']},
+ {id:'mob',t:'モビリティ・電池',c:'#e0b25c',
+  p:'車体軽量化（発泡樹脂・炭素繊維）、電動化（磁石・セパレータ・バインダー・電解質）、電装化（樹脂部品・接着剤）の三面で化学素材が入り込む。EV 販売の伸び鈍化がセパレータ・電池材料の稼働率を直撃する一方、HEV 比率の上昇は磁石・パワー半導体に追い風。',
+  pos:['1 台あたり樹脂・磁性材の使用量が電動化で増加','全固体電池・次世代電池での日本勢の材料ポジション','HEV 好調によるパワー半導体・磁石需要','軽量化ニーズによる発泡樹脂の採用拡大'],
+  neg:['EV 減速による電池材料の稼働率低下と価格下落','中国電池・材料メーカーの価格攻勢','レアアース輸出管理リスク','OEM の内製化・コストダウン圧力']},
+ {id:'life',t:'ヘルスケア・衛生材',c:'#7bd88f',
+  p:'アクリル酸→高吸水性樹脂（SAP）→紙おむつという明快なチェーンに、医療用ガス・在宅医療、医薬中間体、バイオ CDMO が並走する。SAP は成熟市場で中国増設の影響を受けやすいが、薄型・高機能品でのスペックイン競争が価格を支える。',
+  pos:['アジア・中東の衛生材需要とペットケアの拡大','医療用ガス・在宅医療の安定成長（高齢化）','バイオ医薬 CDMO の構造的成長（AGC・富士フイルム）','高機能 SAP の単価維持力'],
+  neg:['先進国の少子化による数量成長の頭打ち','SAP の世界的供給過剰と原料アクリル酸の市況変動','原燃料・物流コストの転嫁ラグ','薬価・医療費抑制圧力']},
+ {id:'pack',t:'パッケージ・機能フィルム',c:'#5c8fd6',
+  p:'汎用樹脂→フィルム・発泡体→軟包装・容器という加工チェーン。脱プラ規制、モノマテリアル化、リサイクル適性が素材選定を規定し、バリア性能（EVOH・透明蒸着）と単一素材化の両立が技術競争の中心。',
+  pos:['モノマテリアル化・バリア高機能品への置換需要','食品ロス削減・長期保存ニーズ','ケミカルリサイクル関連の新規事業機会','日本勢のバリア技術の優位'],
+  neg:['汎用樹脂の供給過剰と価格下落','脱プラ規制によるプラスチック使用量そのものの抑制','国内食品・日用品需要の人口減による縮小','原料市況の転嫁ラグ']}
+];
+const CHAIN_CARDS=[
+ {t:'エアコン（ルームエアコン／業務用）',c:'#e07a9c',
+  s:'最終製品 → 熱交換器・コンプレッサ・制御基板・冷媒・断熱材',
+  rows:[['部品','コンプレッサ／モーター、熱交換器、インバータ基板'],
+        ['部材','ネオジム磁石、電磁鋼板、銅管・アルミフィン、冷媒、断熱・緩衝材、基板・封止材'],
+        ['素材','レアアース（Nd/Dy）、蛍石→フッ酸→冷媒、発泡 PP/PS、フッ素樹脂、エポキシ'],
+        ['主要プレイヤー','ダイキン（空調＋冷媒内製）／プロテリアル（磁石）／JSP（断熱・緩衝）／AGC（フッ素化成品）／村田（電子部品）']]},
+ {t:'先端半導体（ロジック／HBM）',c:'#4dd0e1',
+  s:'最終製品 → デバイス → パッケージ → 前工程材料 → モノマー・ガス',
+  rows:[['部品','パッケージ基板（FC-BGA）、ダイ、インターポーザ'],
+        ['部材','フォトマスク、フォトレジスト、封止材、CMP スラリー、BT レジン、低誘電ガラスクロス、特殊ガス'],
+        ['素材','レジスト用アクリルモノマー、球状シリカ、高純度過酸化水素・アンモニア、多結晶シリコン、合成石英'],
+        ['主要プレイヤー','大阪有機（モノマー）／東京応化・JSR・信越（レジスト）／住友ベークライト・レゾナック（封止材）／AGC・信越（ブランクス）→ TOPPAN（マスク）／三菱ガス化学（BT）／日本酸素HD・エア・ウォーター・住友精化・東亞合成（ガス・薬液）']]},
+ {t:'EV・車載（軽量化＋電動化）',c:'#e0b25c',
+  s:'最終製品 → 駆動系・電池パック・内外装',
+  rows:[['部品','駆動モーター、電池セル・パック、バンパー、シート'],
+        ['部材','ネオジム磁石、セパレータ、バインダー・電解液添加剤、発泡 PP 芯材、合わせガラス中間膜、接着剤'],
+        ['素材','レアアース、ポリオレフィン、アクリル酸誘導体、CMC、炭素繊維'],
+        ['主要プレイヤー','プロテリアル（磁石）／住友化学・旭化成・東レ（セパレータ）／住友精化・日本触媒（電池材料）／JSP（発泡芯材）／住友ベークライト（樹脂部品）／AGC（ガラス）／出光（固体電解質）']]},
+ {t:'紙おむつ・衛生材',c:'#7bd88f',
+  s:'最終製品 → 吸収体・不織布・フィルム',
+  rows:[['部品','吸収体コア、トップシート、バックシート、伸縮材'],
+        ['部材','高吸水性樹脂（SAP）、不織布（PP スパンボンド）、通気性フィルム、ホットメルト接着剤'],
+        ['素材','アクリル酸／アクリル酸ソーダ、ポリプロピレン、粘着ポリマー'],
+        ['主要プレイヤー','日本触媒・住友精化（SAP）／三井化学・旭化成（不織布）／東亞合成（粘接着ポリマー）→ ユニ・チャーム／P&G／花王']]},
+ {t:'食品パッケージ',c:'#5c8fd6',
+  s:'最終製品 → 軟包装・容器',
+  rows:[['部品','パウチ、トレー、キャップ、ラベル'],
+        ['部材','バリアフィルム（透明蒸着／EVOH）、シーラントフィルム、発泡シート、印刷インキ'],
+        ['素材','PET・PP・PE、EVOH、アルミナ／シリカ蒸着材、顔料'],
+        ['主要プレイヤー','TOPPAN（GL BARRIER・軟包装）／クラレ（EVOH）／JSP（発泡トレー）／DIC（インキ・顔料）／三菱ガス化学（脱酸素剤）']]},
+ {t:'建築・住宅（省エネ規制対応）',c:'#8d6e63',
+  s:'最終製品 → 開口部・断熱・空調',
+  rows:[['部品','サッシ・複層ガラス、断熱パネル、空調機'],
+        ['部材','Low-E ガラス、押出発泡ポリスチレン、ウレタンフォーム、シーリング材'],
+        ['素材','板ガラス、ポリスチレン、イソシアネート／ポリオール、変成シリコーンポリマー'],
+        ['主要プレイヤー','AGC（ガラス）／JSP・カネカ（断熱材）／ダイキン（空調）／東ソー（ウレタン原料）／積水化学（中間膜・住宅）']]}
+];
+const MA=[
+ ['2026/5','西日本エチレン設備の統合（旭化成・三井化学・三菱ケミカル）',
+  '共同事業体の出資比率を三井化学 45%／三菱ケミカル 45%／旭化成 10% と決定。2030 年度を目途に AMEC 水島のエチレン設備を停止し、大阪石油化学（高石）へ集約。旭化成のバイオエタノール由来技術 Revolefin による 2034 年度のグリーン基礎化学品商用生産も目指す。国内石化の「2〜3 の塊への集約」の象徴的案件。',
+  'https://jp.mitsuichemicals.com/jp/release/2026/2026_0512_2/index.htm'],
+ ['2025/4','千葉地区エチレン生産最適化（住友化学・丸善石油化学）',
+  '丸善石油化学が 2026 年度を目途に自社エチレン装置を停止し、両社の合弁「京葉エチレン」へ生産を集約することで合意。稼働率と競争力の引き上げが狙いで、住友化学の抜本的構造改革の一環。',
+  'https://www.sumitomo-chem.co.jp/news/detail/20250401_3.html'],
+ ['2024/6','JSR の非公開化（産業革新投資機構＝JIC）',
+  'JIC 傘下 JICC-02 による TOB が 2024 年 4 月に成立（買付価格 4,350 円）、6 月に上場廃止。半導体材料産業の再編プラットフォーム化が狙いとされ、5〜7 年後の再上場が目標。国策ファンドによる基幹素材企業の取り込みという新しい再編類型。',
+  'https://www.nihon-ma.co.jp/news/20240417_4185-8/'],
+ ['2023/1','日立金属 → プロテリアル（ベインキャピタル連合）',
+  '日立の上場子会社再編の総仕上げとしてベインキャピタル連合が取得、社名をプロテリアルへ変更し上場廃止。磁性材・特殊鋼という戦略素材が PE の手に渡り、以後の再上場・事業売却の行方が磁石サプライチェーンの論点に。',
+  'https://www.proterial.com/'],
+ ['2023/1','昭和電工＋日立化成 → レゾナック・ホールディングス',
+  '石化と電子材料の統合体として発足。半導体後工程材料を中核に据え、石化・黒鉛電極など非中核事業の切り出しを進める。住友ベークライトと封止材で直接競合する体制が固まった。',
+  'https://www.resonac.com/jp/ir'],
+ ['2020/10','大陽日酸 → 日本酸素ホールディングス（持株会社化）',
+  '2018〜19 年の Praxair 欧州事業買収（JBIC の融資を活用）で日米欧アジアの 4 極体制を構築した後、2020 年 10 月に持株会社体制へ移行し商号変更。国内事業会社は 2026 年 4 月に「日本酸素」へ改称。産業ガスのグローバル寡占への参入を決定づけた案件。',
+  'https://www.jbic.go.jp/ja/information/press/press-2019/1105-012721.html'],
+ ['2026/7','エア・ウォーター：過年度決算訂正と大型減損（再編の逆側の事例）',
+  'グループ 37 社で 20/3〜25/3 期に営業利益ベース 763 億円の減額修正、海外のれん減損等により 26/3 期は純損失 639 億円。M&A 主導の多角化戦略における PMI とガバナンスの限界を示した事例として、産業ガス業界の M&A 評価軸に影響。',
+  'https://www.nikkei.com/article/DGXZQOUF243S00U6A720C2000000/']
+];
+const VAL=[
+ {t:'スプレッド分析（ナフサ – 製品）',d:'汎用石化は「原料価格」ではなく「原料と製品の価格差×稼働率」で利益が決まる。エチレン・ベンゼン・MMA・SM のスプレッドと、円建てナフサの在庫評価差（ラグ）を分離して見るのが基本。在庫要因を除いた実力ベース営業利益で比較する。'},
+ {t:'稼働率・エチレン換算能力',d:'国内エチレン装置の稼働率 90% が損益分岐の目安とされ、これを下回る期間が続くと固定費負担で赤字化。再編案件の評価は「停止する能力 ÷ 業界総能力」で需給改善効果を測る。'},
+ {t:'EV/EBITDA と設備集約度',d:'装置産業のため減価償却負担が大きく、PER より EV/EBITDA が比較に適する。産業ガスのようなインフラ型（長期契約・高稼働）は 10 倍超、汎用石化は 5〜6 倍と評価倍率が構造的に分かれる。'},
+ {t:'ROIC – WACC スプレッド',d:'化学の ROIC 中央値は 8.1%（FY2026・158 社）。WACC を 6〜7% とすると中央値の企業でようやく価値創造圏。事業別 ROIC 開示の有無が、ポートフォリオ改革の本気度を測る実務的なシグナルになる。'},
+ {t:'ネットキャッシュ調整後の資本効率',d:'当マップの中堅専業（東亞合成 74%、大阪有機 78%、日東電工 80%、住友ベークライト 72% の自己資本比率）は過剰資本が ROE を押し下げる。現金・政策保有株を除いた事業 ROIC で見ると評価が反転しやすい。'},
+ {t:'研究開発費率・設備投資／減価償却',d:'機能材は売上高 R&D 比率 4〜6% が競争力の目安。設備投資／減価償却が 1.5 倍超なら能力増強局面（将来の稼働リスク）、0.8 倍以下なら縮小均衡と読む。半導体材料では顧客のファブ投資に 1〜2 年先行する。'},
+ {t:'顧客集中度とスペックイン期間',d:'電子材料は 1 度採用されると数世代（3〜5 年）続く一方、認定に 2〜3 年かかる。顧客集中度（上位 3 社比率）と認定済みノード数が、将来収益の可視性を規定する。'},
+ {t:'為替感応度と海外生産比率',d:'輸出型（機能材）は円安メリット、輸入原料型（汎用）はコスト増。海外生産比率が高いと為替影響は換算差が中心となり、実質的な感応度は下がる。1 円あたりの営業利益感応度の開示を確認する。'},
+ {t:'規制・環境の織り込み',d:'PFAS 規制（フッ素）、脱プラ、キガリ改正（冷媒 GWP）、CBAM。規制は需要を消す側面と、買い替え・スペック更新を強制的に発生させる側面の両方を持つため、単純なネガティブ要因として扱わない。'}
+];
+const METHOD=[
+ ['初期資料の収集','Market report・IHS/S&P Global・アナリストレポート（ANR）・デスクトップサーチ・記事検索で、市場規模、成長率、主要プレイヤーの当たりを付ける。一次情報として各社の有価証券報告書・決算説明資料を必ず突き合わせる。'],
+ ['市場概要の把握','Market report からサブセクター、主要地域、当該市場の主要プレイヤーの動向を抽出。本マップでは 5 サブセクター（空調・フッ素／半導体・電子／モビリティ・電池／ヘルスケア・衛生材／パッケージ）に分解した。'],
+ ['サブセクター概要の構造分解','主要な最終製品を特定し、部品→部材→素材へ構造分解。その結果を逆順に組み直して製造プロセス／サプライチェーンを再構成し、各段のプレイヤーを対応付ける（セクション 03）。'],
+ ['プレイヤー概要（川上への遡上）','化学では特に川上へ遡り、部材を構成する素材のプレイヤーリストを作る（例：レジスト → アクリルモノマー → アクリル酸 → プロピレン）。各社のポジショニングを整理したうえで、部品・部材・素材ごとのトレンドと業界特有のバリュエーション指標を特定する（セクション 06）。'],
+ ['アウトプット','全体トレンド／サブセクター・地域別トレンドと Positive・Negative 要因（セクション 02）、プレイヤーのカオスマップとサプライチェーン全体像（マップ）、主要 M&A 案件の整理（セクション 05）、マージン・資本収益性・成長性のベンチマーク（セクション 04）を成果物として構成する。']
+];
+
+/* =======================================================================
+   GRAPH RENDERING
+   ======================================================================= */
+const svg=document.getElementById('svg');
+const NS='http://www.w3.org/2000/svg';
+const byId=Object.fromEntries(N.map(n=>[n.id,n]));
+const links=L.map(([s,t,label,kind])=>({s,t,label,kind:kind||'s'}));
+document.getElementById('kpiNodes').textContent=N.filter(n=>n.t!=='m').length;
+document.getElementById('kpiLinks').textContent=links.length;
+
+const COLW=286,NODEW=198,NODEH=40,VGAP=12,TOP=62;
+let sector='all',selected=null,hovered=null,query='';
+let view={x:0,y:0,k:1};
+
+const gRoot=document.createElementNS(NS,'g');
+const gHead=document.createElementNS(NS,'g');
+const gLink=document.createElementNS(NS,'g');
+const gNode=document.createElementNS(NS,'g');
+gRoot.append(gHead,gLink,gNode);svg.append(gRoot);
+
+// build legend
+document.getElementById('legend').innerHTML=
+ LAYERS.map(l=>`<span><i style="background:${l.hex}"></i>${l.name}</span>`).join('')+
+ `<span class="lgd-edge"><svg viewBox="0 0 34 8"><line x1="0" y1="4" x2="34" y2="4" stroke="#2e3f56" stroke-width="1.6"/></svg>供給</span>`+
+ `<span class="lgd-edge"><svg viewBox="0 0 34 8"><line x1="0" y1="4" x2="34" y2="4" stroke="#2e3f56" stroke-width="1.6" stroke-dasharray="4 4"/></svg>推定経路</span>`+
+ `<span class="lgd-edge"><svg viewBox="0 0 34 8"><line x1="0" y1="4" x2="34" y2="4" stroke="#c792ea" stroke-width="1.6"/></svg>資本関係</span>`;
+
+// tabs
+document.getElementById('tabs').innerHTML=SECTORS.map(s=>
+  `<button class="tab${s.id==='all'?' on':''}" data-s="${s.id}">${s.name}</button>`).join('');
+document.getElementById('tabs').onclick=e=>{
+  const b=e.target.closest('.tab'); if(!b)return;
+  [...document.querySelectorAll('.tab')].forEach(t=>t.classList.toggle('on',t===b));
+  sector=b.dataset.s;
+  N.forEach(n=>n.pin=false);
+  layout(true);
+  if(selected&&!byId[selected]._v){selected=null;panel(null)}
+  render(); fit();
+};
+
+// element cache
+const el={};
+function build(){
+  links.forEach((l,i)=>{
+    const p=document.createElementNS(NS,'path');
+    p.setAttribute('class','link'+(l.kind==='est'?' est':l.kind==='c'?' cap':''));
+    gLink.appendChild(p); l._el=p;
+  });
+  LAYERS.forEach(l=>{
+    const g=document.createElementNS(NS,'g');
+    const t1=document.createElementNS(NS,'text');
+    t1.setAttribute('class','colhead');t1.setAttribute('x',NODEW/2);t1.setAttribute('text-anchor','middle');t1.setAttribute('y',22);
+    t1.textContent='L'+l.id+' · '+l.name;t1.setAttribute('fill',l.hex);
+    const t2=document.createElementNS(NS,'text');
+    t2.setAttribute('class','colsub');t2.setAttribute('x',NODEW/2);t2.setAttribute('text-anchor','middle');t2.setAttribute('y',38);
+    t2.textContent=l.sub;
+    g.append(t1,t2);gHead.appendChild(g);l._g=g;
+  });
+  N.forEach(n=>{
+    const g=document.createElementNS(NS,'g');g.setAttribute('class','node');
+    const r=document.createElementNS(NS,'rect');
+    r.setAttribute('width',NODEW);r.setAttribute('height',NODEH);r.setAttribute('rx',9);
+    const hex=LAYERS[n.l].hex;
+    r.setAttribute('fill','#141c26');r.setAttribute('stroke',hex);r.setAttribute('stroke-width',n.star?2:1.1);
+    const stripe=document.createElementNS(NS,'rect');
+    stripe.setAttribute('width',4);stripe.setAttribute('height',NODEH-14);stripe.setAttribute('y',7);stripe.setAttribute('x',0);
+    stripe.setAttribute('rx',2);stripe.setAttribute('fill',hex);
+    const t=document.createElementNS(NS,'text');
+    t.setAttribute('x',13);t.setAttribute('y',n.code||n.en?18:24);t.setAttribute('fill','#e6edf5');
+    t.setAttribute('font-size',n.n.length>16?'11':'12.5');t.setAttribute('font-weight','600');
+    t.textContent=n.n.length>22?n.n.slice(0,21)+'…':n.n;
+    const t2=document.createElementNS(NS,'text');
+    t2.setAttribute('x',13);t2.setAttribute('y',31);t2.setAttribute('fill','#6f8299');t2.setAttribute('font-size','9.5');
+    t2.setAttribute('font-family','Menlo,Consolas,monospace');
+    t2.textContent=(n.code?n.code+'  ':'')+(n.t==='m'?'RAW MATERIAL':n.t==='g'?'GROUP':(n.en||''));
+    g.append(r,stripe,t,t2);
+    if(n.star){
+      const s=document.createElementNS(NS,'circle');
+      s.setAttribute('cx',NODEW-11);s.setAttribute('cy',11);s.setAttribute('r',3.2);s.setAttribute('fill',hex);
+      g.appendChild(s);
+    }
+    g.addEventListener('click',ev=>{ev.stopPropagation();select(n.id)});
+    g.addEventListener('mouseenter',()=>{if(!dragNode){hovered=n.id;render()}});
+    g.addEventListener('mouseleave',()=>{if(!dragNode){hovered=null;render()}});
+    g.addEventListener('pointerdown',ev=>startDragNode(ev,n));
+    gNode.appendChild(g);el[n.id]=g;n._el=g;
+  });
+}
+function visible(n){return sector==='all'||n.s.includes(sector)}
+function linkVisible(l){return visible(byId[l.s])&&visible(byId[l.t])}
+
+let W=0,H=0;
+function layout(animate){
+  const cols=LAYERS.map(()=>[]);
+  N.forEach(n=>{ n._v=visible(n); if(n._v)cols[n.l].push(n); });
+  // barycenter ordering (3 sweeps)
+  const idx={};cols.forEach(c=>c.forEach((n,i)=>idx[n.id]=i));
+  for(let s=0;s<4;s++){
+    cols.forEach((c,li)=>{
+      c.forEach(n=>{
+        const nb=links.filter(l=>linkVisible(l)&&(l.s===n.id||l.t===n.id))
+          .map(l=>byId[l.s===n.id?l.t:l.s]).filter(m=>m._v&&m.l!==li);
+        n._b=nb.length?nb.reduce((a,m)=>a+(idx[m.id]??0),0)/nb.length:(idx[n.id]??0);
+      });
+      c.sort((a,b)=>a._b-b._b);
+      c.forEach((n,i)=>idx[n.id]=i);
+    });
+  }
+  const maxRows=Math.max(...cols.map(c=>c.length),1);
+  H=TOP+maxRows*(NODEH+VGAP)+30;
+  // compact: drop empty columns so filtered views stay tight
+  let ci=0;
+  cols.forEach((c,li)=>{
+    const lay=LAYERS[li];
+    if(!c.length){lay._g.style.display='none';return}
+    lay._g.style.display='';
+    const cx=ci*COLW+20;ci++;
+    lay._g.setAttribute('transform',`translate(${cx},0)`);
+    const colH=c.length*(NODEH+VGAP);
+    const off=TOP+((maxRows*(NODEH+VGAP))-colH)/2;
+    c.forEach((n,i)=>{
+      n.tx=cx; n.ty=off+i*(NODEH+VGAP);
+      if(n.x===undefined){n.x=n.tx;n.y=n.ty-40;}
+    });
+  });
+  W=ci*COLW-(COLW-NODEW)+40;
+  if(!animate){N.forEach(n=>{if(n._v){n.x=n.tx;n.y=n.ty}})}
+  animating=true;
+}
+let animating=false;
+function tick(){
+  if(animating){
+    let moving=false;
+    N.forEach(n=>{
+      if(!n._v||n.pin)return;
+      const dx=n.tx-n.x,dy=n.ty-n.y;
+      if(Math.abs(dx)>.4||Math.abs(dy)>.4){n.x+=dx*.16;n.y+=dy*.16;moving=true}
+      else{n.x=n.tx;n.y=n.ty}
+    });
+    place();
+    if(!moving)animating=false;
+  }
+  requestAnimationFrame(tick);
+}
+function place(){
+  N.forEach(n=>{ if(n._el)n._el.setAttribute('transform',`translate(${n.x},${n.y})`) });
+  links.forEach(l=>{
+    const a=byId[l.s],b=byId[l.t];
+    if(!a._v||!b._v){l._el.setAttribute('d','');return}
+    let x1=a.x+NODEW,y1=a.y+NODEH/2,x2=b.x,y2=b.y+NODEH/2;
+    if(b.l<=a.l){x1=a.x+NODEW/2;x2=b.x+NODEW/2;
+      l._el.setAttribute('d',`M${x1},${a.y+NODEH} C${x1+70},${a.y+NODEH+50} ${x2-70},${b.y+NODEH+50} ${x2},${b.y+NODEH}`);
+      return;}
+    const mx=(x1+x2)/2;
+    l._el.setAttribute('d',`M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`);
+  });
+}
+function neighbors(id){
+  const set=new Set([id]);
+  links.forEach(l=>{if(l.s===id)set.add(l.t);if(l.t===id)set.add(l.s)});
+  return set;
+}
+function render(){
+  const focus=hovered||selected;
+  const nb=focus?neighbors(focus):null;
+  N.forEach(n=>{
+    if(!n._el)return;
+    const vis=n._v;
+    n._el.style.display=vis?'':'none';
+    let dim=false;
+    if(focus&&!nb.has(n.id))dim=true;
+    if(query&&!(n.n+(n.en||'')+(n.p||[]).join('')+(n.alias||'')).toLowerCase().includes(query))dim=true;
+    n._el.classList.toggle('dim',dim);
+    const r=n._el.querySelector('rect');
+    const on=(n.id===selected);
+    r.setAttribute('fill',on?'#1d2c3b':(focus&&nb.has(n.id)?'#18222e':'#141c26'));
+    r.setAttribute('stroke-width',on?2.4:(n.star?2:1.1));
+  });
+  links.forEach(l=>{
+    const hot=focus&&(l.s===focus||l.t===focus);
+    l._el.classList.toggle('hot',!!hot);
+    l._el.classList.toggle('flow',!!hot);
+    l._el.classList.toggle('dim',!!(focus&&!hot));
+  });
+}
+/* ---- pan / zoom ---- */
+function applyView(){gRoot.setAttribute('transform',`translate(${view.x},${view.y}) scale(${view.k})`)}
+function fit(){
+  const r=svg.getBoundingClientRect();
+  const k=Math.min(r.width/(W+40),r.height/(H+20),1.15);
+  view.k=k;view.x=(r.width-W*k)/2;view.y=8;applyView();
+}
+let panning=false,ps={};
+svg.addEventListener('pointerdown',e=>{
+  if(e.target.closest('.node'))return;
+  panning=true;ps={x:e.clientX,y:e.clientY,vx:view.x,vy:view.y};svg.classList.add('drag');
+  svg.setPointerCapture(e.pointerId);
+});
+svg.addEventListener('pointermove',e=>{
+  if(dragNode){
+    const r=svg.getBoundingClientRect();
+    dragNode.x=(e.clientX-r.left-view.x)/view.k-dragOff.x;
+    dragNode.y=(e.clientY-r.top-view.y)/view.k-dragOff.y;
+    dragNode.pin=true;place();return;
+  }
+  if(!panning)return;
+  view.x=ps.vx+(e.clientX-ps.x);view.y=ps.vy+(e.clientY-ps.y);applyView();
+});
+['pointerup','pointercancel','pointerleave'].forEach(ev=>svg.addEventListener(ev,e=>{
+  panning=false;svg.classList.remove('drag');
+  if(dragNode){dragNode=null}
+}));
+svg.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const r=svg.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  const f=e.deltaY<0?1.12:1/1.12,nk=Math.max(.35,Math.min(2.2,view.k*f));
+  view.x=mx-(mx-view.x)*(nk/view.k);view.y=my-(my-view.y)*(nk/view.k);view.k=nk;applyView();
+},{passive:false});
+let dragNode=null,dragOff={x:0,y:0};
+function startDragNode(e,n){
+  e.stopPropagation();dragNode=n;
+  const r=svg.getBoundingClientRect();
+  dragOff={x:(e.clientX-r.left-view.x)/view.k-n.x,y:(e.clientY-r.top-view.y)/view.k-n.y};
+  svg.setPointerCapture(e.pointerId);
+}
+document.querySelectorAll('[data-z]').forEach(b=>b.onclick=()=>{
+  const r=svg.getBoundingClientRect(),f=+b.dataset.z;
+  const nk=Math.max(.35,Math.min(2.2,view.k*f));
+  view.x=r.width/2-(r.width/2-view.x)*(nk/view.k);
+  view.y=r.height/2-(r.height/2-view.y)*(nk/view.k);view.k=nk;applyView();
+});
+document.getElementById('fit').onclick=()=>{N.forEach(n=>n.pin=false);layout(true);fit()};
+document.getElementById('reset').onclick=()=>{selected=null;hovered=null;render();panel(null)};
+svg.addEventListener('click',e=>{if(!e.target.closest('.node')){selected=null;render();panel(null)}});
+document.getElementById('q').oninput=e=>{query=e.target.value.trim().toLowerCase();render()};
+
+/* =======================================================================
+   SIDE PANEL
+   ======================================================================= */
+function num(v,suf,dec){return v===null||v===undefined?'—':(dec!==undefined?v.toFixed(dec):v.toLocaleString())+(suf||'')}
+const sideEl=document.getElementById('side');
+document.getElementById('closeSide').onclick=()=>{selected=null;render();panel(null)};
+function ensureVisible(n){
+  const r=svg.getBoundingClientRect();
+  const drawer=r.width<820?0:sideEl.offsetWidth+22;
+  const right=n.x*view.k+NODEW*view.k+view.x, limit=r.width-drawer;
+  let dx=0;
+  if(right>limit)dx=limit-right;
+  if(n.x*view.k+view.x+dx<12)dx=12-(n.x*view.k+view.x);
+  if(!dx)return;
+  const from=view.x,t0=performance.now();
+  (function step(t){
+    const k=Math.min(1,(t-t0)/280);
+    view.x=from+dx*(k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2);applyView();
+    if(k<1)requestAnimationFrame(step);
+  })(t0);
+}
+function select(id){selected=id;hovered=null;render();panel(byId[id]);sideEl.scrollTop=0;ensureVisible(byId[id])}
+function panel(n){
+  const box=document.getElementById('panel');
+  if(!n){sideEl.classList.remove('open');return}
+  sideEl.classList.add('open');
+  const lay=LAYERS[n.l];
+  const up=links.filter(l=>l.t===n.id).map(l=>({o:byId[l.s],l}));
+  const dn=links.filter(l=>l.s===n.id).map(l=>({o:byId[l.t],l}));
+  const f=n.fin;
+  box.innerHTML=`
+    <h2>${n.n}</h2>
+    <div class="en">${n.en||''}${n.code?' · '+n.code:''}</div>
+    <div class="badges">
+      <span class="badge layer" style="background:${lay.hex}">L${lay.id} ${lay.name}</span>
+      ${n.s.filter(s=>s!=='all').map(s=>`<span class="badge">${SECTORS.find(x=>x.id===s).name}</span>`).join('')}
+      ${n.alias?`<span class="badge" style="border-color:var(--acc);color:var(--acc)">別称: ${n.alias}</span>`:''}
+    </div>
+    ${n.assume?`<div class="note" style="margin:0 0 12px">${n.assume}</div>`:''}
+    ${n.flag?`<div class="note" style="margin:0 0 12px"><b>注記：</b>${n.flag}</div>`:''}
+    <div class="sec"><h4>概要</h4><p>${n.d}</p></div>
+    ${n.p?`<div class="sec"><h4>主要製品・技術</h4><div class="tags">${n.p.map(x=>`<span class="tag">${x}</span>`).join('')}</div></div>`:''}
+    ${n.pos?`<div class="sec"><h4>バリューチェーン上のポジション</h4><p>${n.pos}</p></div>`:''}
+    ${f?`<div class="sec"><h4>財務ハイライト <span style="color:var(--fg3);font-weight:400">${f.fy}</span></h4>
+      <div class="fin">
+        <div><b>${num(f.rev)}</b><small>売上（億円）</small></div>
+        <div><b style="color:${f.opm===null?'var(--fg)':f.opm<0?'var(--down)':f.opm>=15?'var(--up)':'var(--fg)'}">${num(f.opm,'%',1)}</b><small>営業利益率</small></div>
+        <div><b style="color:${f.roe===null?'var(--fg)':f.roe<0?'var(--down)':f.roe>=10?'var(--up)':'var(--fg)'}">${num(f.roe,'%',1)}</b><small>ROE</small></div>
+        <div><b>${num(f.eq,'%',1)}</b><small>自己資本比率</small></div>
+        <div><b>${num(f.per,'x',1)}</b><small>PER</small></div>
+        <div><b>${num(f.emp)}</b><small>従業員</small></div>
+      </div></div>`:''}
+    ${up.length?`<div class="sec"><h4>上流（調達・供給元）</h4><div class="rel">${up.map(x=>
+      `<div class="relrow"><span class="arrow">→</span><span><span class="chip" data-go="${x.o.id}">${x.o.n}</span> <span class="rl">${x.l.label}${x.l.kind==='c'?'（資本）':x.l.kind==='est'?'（推定）':''}</span></span></div>`).join('')}</div></div>`:''}
+    ${dn.length?`<div class="sec"><h4>下流（供給先・顧客）</h4><div class="rel">${dn.map(x=>
+      `<div class="relrow"><span class="arrow">←</span><span><span class="chip" data-go="${x.o.id}">${x.o.n}</span> <span class="rl">${x.l.label}${x.l.kind==='c'?'（資本）':x.l.kind==='est'?'（推定）':''}</span></span></div>`).join('')}</div></div>`:''}
+    ${n.u?`<div class="sec links"><h4>リンク</h4>
+      ${n.u.home?`<a href="${n.u.home}" target="_blank" rel="noopener">公式サイト<span class="k">HOME ↗</span></a>`:''}
+      ${n.u.about?`<a href="${n.u.about}" target="_blank" rel="noopener">会社概要<span class="k">ABOUT ↗</span></a>`:''}
+      ${n.u.ir?`<a href="${n.u.ir}" target="_blank" rel="noopener">決算説明資料・IR<span class="k">IR ↗</span></a>`:''}
+    </div>`:''}
+  `;
+  box.querySelectorAll('[data-go]').forEach(c=>c.onclick=()=>select(c.dataset.go));
+}
+
+/* =======================================================================
+   SECTIONS
+   ======================================================================= */
+document.getElementById('sectorCards').innerHTML=SECTOR_CARDS.map(s=>`
+  <div class="card">
+    <h3><i style="background:${s.c}"></i>${s.t}</h3>
+    <p>${s.p}</p>
+    <div class="pn">
+      <div class="pos"><b>POSITIVE</b><ul>${s.pos.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+      <div class="neg"><b>NEGATIVE</b><ul>${s.neg.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+    </div>
+  </div>`).join('');
+
+document.getElementById('chainCards').innerHTML=CHAIN_CARDS.map(c=>`
+  <div class="card">
+    <h3><i style="background:${c.c}"></i>${c.t}</h3>
+    <p style="color:var(--fg3);font-size:11.5px;font-family:var(--mono)">${c.s}</p>
+    <table style="margin-top:4px">
+      ${c.rows.map(r=>`<tr><td class="nm" style="width:88px;color:var(--acc);font-size:11.5px;vertical-align:top">${r[0]}</td>
+      <td style="text-align:left;font-family:var(--sans);white-space:normal;color:var(--fg2)">${r[1]}</td></tr>`).join('')}
+    </table>
+  </div>`).join('');
+
+const BENCH=N.filter(n=>n.fin&&n.t==='c').map(n=>({n:n.n,id:n.id,l:n.l,...n.fin}));
+BENCH.push({n:'化学セクター中央値（158社・FY2026）',med:1,rev:null,opm:6.8,roe:6.5,eq:64.4,per:null,emp:null,fy:'EDINET 業種中央値'});
+const COLS=[['n','企業',0],['fy','期',0],['rev','売上（億円）',1],['opm','営業利益率',1],['roe','ROE',1],['eq','自己資本比率',1],['per','PER（倍）',1],['emp','従業員',1]];
+let sortKey='rev',sortDir=-1;
+function drawBench(){
+  const th=document.querySelector('#bt thead'),tb=document.querySelector('#bt tbody');
+  th.innerHTML='<tr>'+COLS.map(c=>`<th data-k="${c[0]}">${c[1]}${sortKey===c[0]?(sortDir<0?' ▼':' ▲'):''}</th>`).join('')+'</tr>';
+  const rows=[...BENCH].sort((a,b)=>{
+    if(a.med)return 1; if(b.med)return -1;
+    const x=a[sortKey],y=b[sortKey];
+    if(x===null||x===undefined)return 1; if(y===null||y===undefined)return -1;
+    return typeof x==='string'?x.localeCompare(y)*-sortDir:(x-y)*sortDir;
+  });
+  const maxOpm=25,maxRoe=21;
+  tb.innerHTML=rows.map(r=>`<tr class="${r.med?'med':''}">
+    <td class="nm" ${r.id?`style="cursor:pointer;color:var(--fg)" data-go="${r.id}"`:''}>${r.n}</td>
+    <td class="mark" style="font-size:10.5px">${r.fy||'—'}</td>
+    <td>${r.rev===null?'—':r.rev.toLocaleString()}</td>
+    <td>${r.opm===null?'—':r.opm.toFixed(1)+'%'}${r.opm===null?'':`<span class="bar"><i class="${r.opm<0?'n':''}" style="width:${Math.min(100,Math.abs(r.opm)/maxOpm*100)}%"></i></span>`}</td>
+    <td>${r.roe===null?'—':r.roe.toFixed(1)+'%'}${r.roe===null?'':`<span class="bar"><i class="${r.roe<0?'n':''}" style="width:${Math.min(100,Math.abs(r.roe)/maxRoe*100)}%"></i></span>`}</td>
+    <td>${r.eq===null?'—':r.eq.toFixed(1)+'%'}</td>
+    <td>${r.per===null||r.per===undefined?'—':r.per.toFixed(1)}</td>
+    <td>${r.emp?r.emp.toLocaleString():'—'}</td></tr>`).join('');
+  th.querySelectorAll('th').forEach(h=>h.onclick=()=>{
+    const k=h.dataset.k; if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=-1} drawBench();
+  });
+  tb.querySelectorAll('[data-go]').forEach(c=>c.onclick=()=>{
+    select(c.dataset.go);document.getElementById('canvas').scrollIntoView({behavior:'smooth',block:'center'});
+  });
+}
+drawBench();
+
+document.querySelector('#mt tbody').innerHTML=MA.map(m=>`<tr>
+  <td style="white-space:nowrap;color:var(--acc)">${m[0]}</td>
+  <td class="nm" style="text-align:left;white-space:normal;min-width:210px">${m[1]}</td>
+  <td style="text-align:left;white-space:normal;font-family:var(--sans);color:var(--fg2)">${m[2]}</td>
+  <td><a href="${m[3]}" target="_blank" rel="noopener">出典↗</a></td></tr>`).join('');
+
+document.getElementById('valCards').innerHTML=VAL.map(v=>`
+  <div class="card"><h3>${v.t}</h3><p style="margin:0">${v.d}</p></div>`).join('');
+document.getElementById('methodList').innerHTML=METHOD.map(m=>`<li><b>${m[0]}</b>${m[1]}</li>`).join('');
+
+/* ---- boot ---- */
+build();layout(false);place();render();fit();panel(null);tick();
+window.addEventListener('resize',()=>fit());
+</script>
+</body>
+</html>
