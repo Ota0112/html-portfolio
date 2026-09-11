@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ICE Supplier Ledger ｜ 自動車部品メーカーの業績と株価</title>
+<meta name="description" content="ICE Powertrain Atlas に登場する日本の主要サプライヤー11社について、有価証券報告書（EDINET）由来の10年分の売上高・営業利益・純利益と時価総額／期末株価を並べて見るページ。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" media="print" onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"></noscript>
+<style>
+  /* 単一テーマ。Atlas と同じ計器盤の世界に合わせ、暗い面に振り切る */
+  :root{
+    --void:#05080e;
+    --surface:#0c1320;        /* チャート面。パレット検証はこの色に対して実施 */
+    --surface-2:#0a101b;
+    --rail:rgba(126,166,214,.14);
+    --rail-2:rgba(126,166,214,.32);
+    --ink:#e9f0fa;
+    --ink-2:#9db0c8;
+    --ink-3:#64758c;
+
+    /* 検証済みカテゴリカル 3色（dark / surface #0c1320）
+       node scripts/validate_palette.js "#2f9fd8,#d9772a,#8d7ae0" --mode dark --surface "#0c1320" → 全項目 PASS */
+    --s-rev:#2f9fd8;          /* 売上高 */
+    --s-op:#d9772a;           /* 営業利益 */
+    --s-cap:#8d7ae0;          /* 時価総額 */
+    --neg:#e05c5c;            /* 赤字 */
+
+    --disp:"Chakra Petch",system-ui,-apple-system,"Segoe UI",sans-serif;
+    --body:"Noto Sans JP",system-ui,-apple-system,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
+    --shadow:0 18px 46px rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  body{
+    margin:0;background:var(--void);color:var(--ink);font-family:var(--body);
+    -webkit-font-smoothing:antialiased;line-height:1.7;
+  }
+  button,select,input{font-family:inherit;color:inherit}
+  :focus-visible{outline:2px solid var(--s-rev);outline-offset:2px}
+  a{color:#7fc7ec}
+
+  .wrap{max-width:1180px;margin:0 auto;padding-inline:20px}
+  header.top{border-bottom:1px solid var(--rail);background:linear-gradient(180deg,#0b1220,#080d16);position:sticky;top:0;z-index:10}
+  header .wrap{display:flex;align-items:center;gap:14px;padding-block:11px;flex-wrap:wrap}
+  .mark h1{font-family:var(--disp);font-size:15px;letter-spacing:.09em;margin:0;text-transform:uppercase;white-space:nowrap}
+  .mark .jp{font-size:11px;color:var(--ink-2)}
+  header .grow{flex:1}
+  .ghost{
+    font-family:var(--disp);font-size:11.5px;letter-spacing:.06em;text-decoration:none;white-space:nowrap;
+    background:transparent;border:1px solid var(--rail);border-radius:3px;padding:7px 12px;cursor:pointer;color:var(--ink-2);
+  }
+  .ghost:hover{border-color:var(--rail-2);color:var(--ink)}
+
+  .hero{padding-block:34px 22px;border-bottom:1px solid var(--rail)}
+  .eyebrow{font-family:var(--disp);font-size:9.5px;letter-spacing:.22em;color:var(--ink-3);text-transform:uppercase}
+  .hero h2{font-size:25px;margin:10px 0 12px;line-height:1.4;text-wrap:balance}
+  .hero p{max-width:66ch;font-size:13px;color:var(--ink-2);margin:0 0 10px}
+  .hero b{color:var(--ink)}
+  .method{
+    margin-top:16px;border:1px solid var(--rail);border-radius:8px;padding:13px 15px;
+    background:rgba(126,166,214,.04);font-size:11.5px;color:var(--ink-2);max-width:78ch;line-height:1.9;
+  }
+  .method h3{font-family:var(--disp);font-size:10px;letter-spacing:.18em;color:var(--ink-3);margin:0 0 7px;text-transform:uppercase}
+
+  /* controls */
+  .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-block:16px;border-bottom:1px solid var(--rail);position:sticky;top:49px;background:var(--void);z-index:8}
+  .controls label{font-family:var(--disp);font-size:10px;letter-spacing:.14em;color:var(--ink-3);text-transform:uppercase}
+  select,input[type=search]{
+    background:var(--surface);border:1px solid var(--rail);border-radius:5px;padding:7px 10px;font-size:12.5px;
+  }
+  .chips{display:flex;gap:5px;flex-wrap:wrap}
+  .chip{font-size:11px;padding:5px 10px;border-radius:999px;border:1px solid var(--rail);background:transparent;color:var(--ink-2);cursor:pointer}
+  .chip[aria-pressed="true"]{background:rgba(47,159,216,.16);border-color:rgba(47,159,216,.55);color:#9ad4f2}
+
+  /* overview */
+  section.block{padding-block:26px}
+  .block > h3{font-family:var(--disp);font-size:11px;letter-spacing:.18em;color:var(--ink-3);margin:0 0 4px;text-transform:uppercase}
+  .block > .sub{font-size:12px;color:var(--ink-2);margin:0 0 16px}
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .panel{background:var(--surface);border:1px solid var(--rail);border-radius:10px;padding:16px 18px}
+  .panel h4{margin:0 0 2px;font-size:13px}
+  .panel .unit{font-size:10.5px;color:var(--ink-3);font-family:var(--disp);letter-spacing:.08em}
+
+  /* company cards */
+  .cards{display:flex;flex-direction:column;gap:16px}
+  .card{background:var(--surface);border:1px solid var(--rail);border-radius:12px;overflow:hidden;scroll-margin-top:110px}
+  .card.hidden{display:none}
+  .card-head{display:flex;gap:14px;align-items:flex-start;padding:16px 18px 13px;border-bottom:1px solid var(--rail);flex-wrap:wrap}
+  .card-head .id{min-width:0;flex:1}
+  .card-head h3{margin:0;font-size:17px;line-height:1.4}
+  .card-head .sub{font-family:var(--disp);font-size:11px;color:var(--ink-3);letter-spacing:.06em;margin-top:3px}
+  .sys{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}
+  .sys span{font-size:10.5px;padding:3px 8px;border-radius:3px;background:rgba(126,166,214,.07);border:1px solid var(--rail);color:var(--ink-2)}
+  .role{padding:12px 18px;font-size:12.5px;color:#cfdaea;border-bottom:1px solid var(--rail)}
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--rail)}
+  .kpi{background:var(--surface-2);padding:11px 14px}
+  .kpi .l{font-family:var(--disp);font-size:9.5px;letter-spacing:.12em;color:var(--ink-3);text-transform:uppercase}
+  .kpi .v{font-size:17px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+  .kpi .d{font-size:10.5px;color:var(--ink-3);margin-top:2px;font-variant-numeric:tabular-nums}
+  .kpi .v.neg{color:var(--neg)}
+  .charts{display:grid;grid-template-columns:1.25fr 1fr;gap:0}
+  .chart{padding:16px 18px 12px}
+  .chart + .chart{border-left:1px solid var(--rail)}
+  .chart h4{margin:0 0 1px;font-size:12.5px}
+  .chart .unit{font-family:var(--disp);font-size:10px;color:var(--ink-3);letter-spacing:.08em}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0 4px}
+  .legend span{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-2)}
+  .legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
+  svg{display:block;width:100%;height:auto;overflow:visible}
+  .tbl-toggle{
+    display:block;width:100%;text-align:left;padding:9px 18px;background:transparent;border:0;border-top:1px solid var(--rail);
+    font-family:var(--disp);font-size:10.5px;letter-spacing:.12em;color:var(--ink-3);cursor:pointer;text-transform:uppercase;
+  }
+  .tbl-toggle:hover{color:var(--ink)}
+  .tbl-wrap{overflow-x:auto;border-top:1px solid var(--rail)}
+  table{border-collapse:collapse;width:100%;min-width:640px;font-size:11.5px}
+  th,td{padding:7px 12px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  th:first-child,td:first-child{text-align:left}
+  thead th{font-family:var(--disp);font-size:10px;letter-spacing:.1em;color:var(--ink-3);border-bottom:1px solid var(--rail);text-transform:uppercase}
+  tbody tr + tr td{border-top:1px solid rgba(126,166,214,.08)}
+  td.neg{color:var(--neg)}
+
+  /* tooltip */
+  #tt{
+    position:fixed;z-index:40;pointer-events:none;display:none;background:rgba(6,10,17,.96);
+    border:1px solid var(--rail-2);border-radius:6px;padding:8px 11px;font-size:11.5px;box-shadow:var(--shadow);
+    min-width:150px;
+  }
+  #tt .t{font-family:var(--disp);font-size:10px;letter-spacing:.1em;color:var(--ink-3);margin-bottom:5px}
+  #tt .r{display:flex;align-items:center;gap:7px;justify-content:space-between}
+  #tt .r i{width:8px;height:8px;border-radius:2px;flex:none}
+  #tt .r b{font-variant-numeric:tabular-nums;font-weight:600}
+
+  footer{border-top:1px solid var(--rail);padding-block:26px 40px;color:var(--ink-3);font-size:11.5px;line-height:1.9}
+  footer a{color:var(--ink-2)}
+
+  @media (max-width:960px){
+    .duo{grid-template-columns:1fr}
+    .charts{grid-template-columns:1fr}
+    .chart + .chart{border-left:0;border-top:1px solid var(--rail)}
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .controls{position:static}
+    .mark .jp{display:none}
+  }
+  @media (max-width:560px){
+    .kpis{grid-template-columns:1fr}
+    .hero h2{font-size:20px}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="mark">
+      <h1>ICE Supplier Ledger</h1>
+      <div class="jp">部品メーカーの業績と株価 — 有価証券報告書10年分</div>
+    </div>
+    <span class="grow"></span>
+    <a class="ghost" href="./ice-parts-3d.html">← 3D Atlas へ</a>
+    <a class="ghost" href="../index.html">Portfolio</a>
+  </div>
+</header>
+
+<div class="wrap hero">
+  <div class="eyebrow">Financials &amp; Market Value</div>
+  <h2>部品をつくる会社は、どれくらいの規模で、どう変化してきたのか</h2>
+  <p><b>ICE Powertrain Atlas</b> に登場する日本の主要サプライヤー11社について、有価証券報告書（EDINET）に基づく<b>10年分</b>の売上高・営業利益・当期純利益と、<b>時価総額・決算期末株価</b>を並べています。3Dモデルで見た部品が、企業としてどれくらいの事業規模なのかを確かめるためのページです。</p>
+  <div class="method">
+    <h3>数字の読み方と限界</h3>
+    ・出典は<b>EDINETの有価証券報告書</b>（連結）で、EDINET DB（Cabocia Inc.）経由で取得しています。EDINET DBは金融庁・EDINETとは独立した第三者サービスです。<br>
+    ・株価は<b>決算期末時点の1点</b>（時価総額 ÷ 発行済株式数）です。日次の株価チャートではありません。<br>
+    ・株式分割・併合があると1株あたりの金額は不連続になるため、<b>推移の比較には分割の影響を受けない時価総額</b>を用いています。期末株価は表で各年の実額を参照してください。<br>
+    ・赤字の年や分割の端境期など、開示から時価総額が取れない年は欠測として線を切っています。<br>
+    ・投資判断の材料として提供するものではありません。
+  </div>
+</div>
+
+<div class="wrap controls">
+  <label for="sort">Sort</label>
+  <select id="sort">
+    <option value="rev">売上規模が大きい順</option>
+    <option value="cap">時価総額が大きい順</option>
+    <option value="opm">営業利益率が高い順</option>
+    <option value="growth">10年の売上成長率が高い順</option>
+  </select>
+  <label for="q">Filter</label>
+  <input type="search" id="q" placeholder="社名・システムで絞り込み" style="min-width:200px">
+  <div class="chips" id="sysChips"></div>
+</div>
+
+<div class="wrap block">
+  <h3>Overview — 最新期</h3>
+  <p class="sub">左が事業の規模（売上高）、右が市場からの評価（時価総額）。同じ会社でも並び順が変わります。</p>
+  <div class="duo">
+    <div class="panel">
+      <h4>売上高</h4><div class="unit">LATEST FISCAL YEAR</div>
+      <div id="ovRev"></div>
+    </div>
+    <div class="panel">
+      <h4>時価総額</h4><div class="unit">AT FISCAL YEAR END</div>
+      <div id="ovCap"></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap block">
+  <h3>Companies</h3>
+  <p class="sub" id="count"></p>
+  <div class="cards" id="cards"></div>
+</div>
+
+<div class="wrap"><footer>
+  出典: EDINET（金融庁）に提出された有価証券報告書。データ取得は EDINET DB（Cabocia Inc.）経由、2026年9月時点。<br>
+  掲載企業は <a href="./ice-parts-3d.html">ICE Powertrain Atlas</a> に登場する日本の上場サプライヤーからの抜粋であり、網羅的なものではありません。
+  Bosch・ZF・Continental などの非上場／海外企業、および非上場化した企業（豊田自動織機など）はこのデータソースの対象外です。<br>
+  本ページは情報提供のみを目的としており、投資勧誘・投資助言ではありません。
+</footer></div>
+
+<div id="tt" role="status" aria-live="polite"></div>
+
+<script type="module">
+const SYS = {
+  engine:'エンジン本体', crank:'ピストン・クランク', fuel:'燃料噴射', turbo:'吸気・過給',
+  ignition:'点火', exhaust:'排気・触媒', cooling:'冷却', transmission:'トランスミッション',
+  electrical:'始動・充電', harness:'ハーネス・ECU', suspension:'サスペンション', brake:'ブレーキ',
+  steering:'ステアリング', tire:'タイヤ', body:'車体', chassis:'シャシー',
+  interior:'内装', hvac:'空調', lamp:'ランプ', glass:'ガラス'
+};
+const C = { rev:'#2f9fd8', op:'#d9772a', cap:'#8d7ae0', neg:'#e05c5c', grid:'rgba(126,166,214,.13)', ink3:'#64758c' };
+const F = { Y:0, REV:1, OP:2, NI:3, CAP:4, SH:5, SPLIT:6 };
+
+/* ---------- 表記 ---------- */
+const nf = n => n.toLocaleString('ja-JP');
+function yen(m){
+  if(m === null || m === undefined) return '—';
+  const a = Math.abs(m);
+  if(a >= 1000000) return (m/1000000).toFixed(a >= 10000000 ? 1 : 2) + '兆円';
+  if(a >= 100)     return nf(Math.round(m/100)) + '億円';
+  return nf(Math.round(m)) + '百万円';
+}
+const axisUnit = max => max >= 1000000 ? {div:1000000, label:'兆円'} : {div:100, label:'億円'};
+const price = r => (r[F.CAP] == null || !r[F.SH]) ? null : r[F.CAP] / r[F.SH];
+const opm   = r => (r[F.OP] == null || !r[F.REV]) ? null : r[F.OP] / r[F.REV];
+
+/* ---------- tooltip ---------- */
+const tt = document.getElementById('tt');
+function showTip(ev, title, rows){
+  tt.innerHTML = `<div class="t">${title}</div>` + rows.map(r =>
+    `<div class="r"><span style="display:flex;align-items:center;gap:7px">
+       <i style="background:${r.c}"></i>${r.k}</span><b style="color:${r.neg?C.neg:'#e9f0fa'}">${r.v}</b></div>`).join('');
+  tt.style.display = 'block';
+  const pad = 14, w = tt.offsetWidth, h = tt.offsetHeight;
+  let x = ev.clientX + pad, y = ev.clientY - h/2;
+  if(x + w > innerWidth - 8) x = ev.clientX - w - pad;
+  tt.style.left = Math.max(8, x) + 'px';
+  tt.style.top  = Math.min(Math.max(8, y), innerHeight - h - 8) + 'px';
+}
+const hideTip = () => { tt.style.display = 'none'; };
+document.addEventListener('scroll', hideTip, {passive:true});
+
+/* ---------- SVG helpers ---------- */
+const NS = 'http://www.w3.org/2000/svg';
+const el = (n, a={}) => { const e = document.createElementNS(NS, n); for(const k in a) e.setAttribute(k, a[k]); return e; };
+function svgRoot(w, h){
+  const s = el('svg', {viewBox:`0 0 ${w} ${h}`, role:'img'});
+  s.style.maxWidth = '100%';
+  return s;
+}
+
+/* 横棒ランキング（一覧用） */
+function rankBars(host, items, color, fmt){
+  host.innerHTML = '';
+  const rowH = 26, w = 560, h = items.length * rowH + 6;
+  const max = Math.max(...items.map(i => i.v || 0)) || 1;
+  const labelW = 168, barW = w - labelW - 96;
+  const s = svgRoot(w, h);
+  items.forEach((it, i) => {
+    const y = i * rowH + 4;
+    const t = el('text', {x:0, y:y + 13, fill:'#9db0c8', 'font-size':11.5});
+    t.textContent = it.name; s.appendChild(t);
+    const len = Math.max(2, (it.v || 0) / max * barW);
+    s.appendChild(el('rect', {x:labelW, y:y + 3, width:len, height:13, rx:4, fill:color}));
+    const v = el('text', {x:labelW + len + 8, y:y + 14, fill:'#e9f0fa', 'font-size':11.5, 'font-variant-numeric':'tabular-nums'});
+    v.textContent = fmt(it.v); s.appendChild(v);
+    const hit = el('rect', {x:0, y:y, width:w, height:rowH - 2, fill:'transparent'});
+    hit.addEventListener('mousemove', e => showTip(e, it.name, [{c:color, k:it.k, v:fmt(it.v)}, {c:'transparent', k:'決算期', v:it.fy}]));
+    hit.addEventListener('mouseleave', hideTip);
+    s.appendChild(hit);
+  });
+  host.appendChild(s);
+}
+
+/* 売上高／営業利益 — 桁が違うので同じ軸に載せず、小さな倍数（別スケール）で並べる */
+function seriesBars(s, rows, key, color, geom){
+  const {x0, y0, w, h} = geom;
+  const vals = rows.map(r => r[key]).filter(v => v != null);
+  const max = Math.max(...vals, 0), min = Math.min(...vals, 0);
+  const yOf = v => y0 + h - (v - min) / (max - min || 1) * h;
+  const u = axisUnit(Math.max(Math.abs(max), Math.abs(min)));
+  for(const v of [max, min].filter((v, i, a) => i === 0 || v !== a[0])){
+    const y = yOf(v);
+    s.appendChild(el('line', {x1:x0, x2:x0 + w, y1:y, y2:y, stroke:C.grid, 'stroke-width':1}));
+    const t = el('text', {x:x0 - 6, y:y + 3.5, fill:C.ink3, 'font-size':9.5, 'text-anchor':'end', 'font-variant-numeric':'tabular-nums'});
+    t.textContent = (v / u.div).toFixed(u.div === 100 ? 0 : 1);
+    s.appendChild(t);
+  }
+  const zero = yOf(Math.max(0, min));
+  if(min < 0) s.appendChild(el('line', {x1:x0, x2:x0 + w, y1:zero, y2:zero, stroke:'rgba(126,166,214,.3)', 'stroke-width':1}));
+  const slot = w / rows.length, bw = Math.min(15, slot - 5);
+  rows.forEach((r, i) => {
+    const v = r[key]; if(v == null) return;
+    const y = yOf(v), hh = Math.max(2, Math.abs(zero - y));
+    s.appendChild(el('rect', {x:x0 + slot*i + (slot - bw)/2, y:Math.min(y, zero), width:bw, height:hh,
+                              rx:4, fill:v < 0 ? C.neg : color}));
+  });
+  return u;
+}
+function barsChart(host, rows){
+  host.innerHTML = '';
+  const w = 520, h = 224, padL = 44, padR = 8;
+  const iw = w - padL - padR;
+  const s = svgRoot(w, h);
+  const uRev = seriesBars(s, rows, F.REV, C.rev, {x0:padL, y0:14, w:iw, h:86});
+  const uOp  = seriesBars(s, rows, F.OP,  C.op,  {x0:padL, y0:132, w:iw, h:66});
+  const cap = (txt, y) => { const t = el('text', {x:padL, y, fill:C.ink3, 'font-size':9.5, 'font-family':'Chakra Petch, sans-serif', 'letter-spacing':'.08em'}); t.textContent = txt; s.appendChild(t); };
+  cap(`売上高 — ${uRev.label}`, 8);
+  cap(`営業利益 — ${uOp.label}`, 126);
+  const slot = iw / rows.length;
+  rows.forEach((r, i) => {
+    if(i % 2 === 0 || i === rows.length - 1){
+      const t = el('text', {x:padL + slot*i + slot/2, y:h - 4, fill:C.ink3, 'font-size':9.5, 'text-anchor':'middle'});
+      t.textContent = String(r[F.Y]).slice(2); s.appendChild(t);
+    }
+    const hit = el('rect', {x:padL + slot*i, y:0, width:slot, height:h - 12, fill:'transparent'});
+    hit.addEventListener('mousemove', e => showTip(e, `FY${r[F.Y]}`, [
+      {c:C.rev, k:'売上高', v:yen(r[F.REV])},
+      {c:C.op,  k:'営業利益', v:yen(r[F.OP]), neg:r[F.OP] < 0},
+      {c:'transparent', k:'営業利益率', v:opm(r) == null ? '—' : (opm(r)*100).toFixed(1) + '%'},
+      {c:'transparent', k:'当期純利益', v:yen(r[F.NI]), neg:r[F.NI] < 0}
+    ]));
+    hit.addEventListener('mouseleave', hideTip);
+    s.appendChild(hit);
+  });
+  host.appendChild(s);
+}
+
+/* 時価総額の推移（面＋線、欠測は線を切る） */
+function capChart(host, rows){
+  host.innerHTML = '';
+  const w = 380, h = 224, padL = 46, padR = 10, padT = 18, padB = 26;
+  const iw = w - padL - padR, ih = h - padT - padB;
+  const vals = rows.map(r => r[F.CAP]).filter(v => v != null);
+  if(!vals.length){ host.innerHTML = '<div style="font-size:11.5px;color:#64758c;padding:30px 0">開示から時価総額を取得できませんでした。</div>'; return; }
+  const max = Math.max(...vals) * 1.08, u = axisUnit(max);
+  const xOf = i => padL + (rows.length === 1 ? iw/2 : iw * i / (rows.length - 1));
+  const yOf = v => padT + ih - v / max * ih;
+  const s = svgRoot(w, h);
+  for(let i = 0; i <= 3; i++){
+    const v = max * i / 3, y = yOf(v);
+    s.appendChild(el('line', {x1:padL, x2:w - padR, y1:y, y2:y, stroke:C.grid, 'stroke-width':1}));
+    const t = el('text', {x:padL - 7, y:y + 3.5, fill:C.ink3, 'font-size':9.5, 'text-anchor':'end', 'font-variant-numeric':'tabular-nums'});
+    t.textContent = (v / u.div).toFixed(u.div === 100 ? 0 : 1); s.appendChild(t);
+  }
+  const ul = el('text', {x:padL, y:7, fill:C.ink3, 'font-size':9.5, 'font-family':'Chakra Petch, sans-serif', 'letter-spacing':'.08em'});
+  ul.textContent = `時価総額 — ${u.label}`; s.appendChild(ul);
+
+  // 欠測で分割したセグメント
+  let seg = [];
+  const flush = () => {
+    if(seg.length > 1){
+      const d = seg.map((p, i) => `${i ? 'L' : 'M'}${p.x} ${p.y}`).join(' ');
+      const area = `${d} L${seg[seg.length-1].x} ${padT+ih} L${seg[0].x} ${padT+ih} Z`;
+      s.appendChild(el('path', {d:area, fill:C.cap, opacity:.14}));
+      s.appendChild(el('path', {d, fill:'none', stroke:C.cap, 'stroke-width':2, 'stroke-linejoin':'round', 'stroke-linecap':'round'}));
+    }
+    seg = [];
+  };
+  rows.forEach((r, i) => {
+    if(r[F.CAP] == null){ flush(); return; }
+    seg.push({x:xOf(i), y:yOf(r[F.CAP])});
+  });
+  flush();
+  rows.forEach((r, i) => {
+    if(r[F.CAP] == null) return;
+    const last = i === rows.length - 1;
+    s.appendChild(el('circle', {cx:xOf(i), cy:yOf(r[F.CAP]), r:last ? 5 : 3.2, fill:C.cap, stroke:'#0c1320', 'stroke-width':2}));
+    if(i % 3 === 0 || last){
+      const t = el('text', {x:xOf(i), y:h - 7, fill:C.ink3, 'font-size':9.5, 'text-anchor':'middle'});
+      t.textContent = String(r[F.Y]).slice(2); s.appendChild(t);
+    }
+    const hit = el('rect', {x:xOf(i) - iw/(rows.length*2), y:padT, width:iw/rows.length, height:ih, fill:'transparent'});
+    hit.addEventListener('mousemove', e => showTip(e, `FY${r[F.Y]}`, [
+      {c:C.cap, k:'時価総額', v:yen(r[F.CAP])},
+      {c:'transparent', k:'期末株価', v:price(r) == null ? '—' : nf(Math.round(price(r))) + '円'},
+      {c:'transparent', k:'発行済株式', v:nf(Math.round(r[F.SH])) + '百万株'}
+    ]));
+    hit.addEventListener('mouseleave', hideTip);
+    s.appendChild(hit);
+  });
+  host.appendChild(s);
+}
+
+/* ---------- データ読み込みと描画 ---------- */
+const res = await fetch('../assets/data/suppliers.json');
+const DB = await res.json();
+const COS = DB.companies.map(c => {
+  const last = c.rows[c.rows.length - 1];
+  const first = c.rows[0];
+  return {
+    ...c, last, first,
+    rev:last[F.REV], cap:last[F.CAP] ?? 0, ni:last[F.NI],
+    opm:opm(last) ?? -Infinity,
+    growth:(first[F.REV] ? last[F.REV] / first[F.REV] - 1 : 0)
+  };
+});
+
+/* システム絞り込みチップ */
+const usedSys = [...new Set(COS.flatMap(c => c.systems))];
+const chipsEl = document.getElementById('sysChips');
+chipsEl.innerHTML = `<button class="chip" data-sys="all" aria-pressed="true">すべて</button>` +
+  usedSys.map(s => `<button class="chip" data-sys="${s}" aria-pressed="false">${SYS[s] || s}</button>`).join('');
+
+/* 会社カード */
+const cardsEl = document.getElementById('cards');
+function cardHtml(c){
+  const l = c.last, p = price(l);
+  const m = opm(l);
+  return `<article class="card" id="${c.code}" data-code="${c.code}">
+    <div class="card-head">
+      <div class="id">
+        <h3>${c.name}</h3>
+        <div class="sub">${c.en} ／ 証券コード ${c.sec} ／ ${c.fy} ／ FY${c.first[F.Y]}–FY${l[F.Y]}</div>
+        <div class="sys">${c.systems.map(s => `<span>${SYS[s] || s}</span>`).join('')}</div>
+      </div>
+    </div>
+    <div class="role">${c.role}</div>
+    <div class="kpis">
+      <div class="kpi"><div class="l">売上高 FY${l[F.Y]}</div><div class="v">${yen(l[F.REV])}</div>
+        <div class="d">10年で ${(c.growth*100 >= 0 ? '+' : '')}${(c.growth*100).toFixed(0)}%</div></div>
+      <div class="kpi"><div class="l">営業利益</div><div class="v ${l[F.OP] < 0 ? 'neg' : ''}">${yen(l[F.OP])}</div>
+        <div class="d">営業利益率 ${m == null ? '—' : (m*100).toFixed(1) + '%'}</div></div>
+      <div class="kpi"><div class="l">当期純利益</div><div class="v ${l[F.NI] < 0 ? 'neg' : ''}">${yen(l[F.NI])}</div></div>
+      <div class="kpi"><div class="l">時価総額</div><div class="v">${yen(l[F.CAP])}</div>
+        <div class="d">期末時点</div></div>
+      <div class="kpi"><div class="l">期末株価</div><div class="v">${p == null ? '—' : nf(Math.round(p)) + '円'}</div>
+        <div class="d">分割調整なしの実額</div></div>
+    </div>
+    <div class="charts">
+      <div class="chart">
+        <h4>売上高と営業利益</h4><div class="unit">FY${c.first[F.Y]}–FY${l[F.Y]}</div>
+        <div class="legend"><span><i style="background:${C.rev}"></i>売上高</span><span><i style="background:${C.op}"></i>営業利益</span><span style="color:#64758c">※桁が違うため上下で別スケール</span></div>
+        <div class="c-bars"></div>
+      </div>
+      <div class="chart">
+        <h4>時価総額</h4><div class="unit">株式分割の影響を受けない指標</div>
+        <div class="legend"><span><i style="background:${C.cap}"></i>時価総額（期末）</span></div>
+        <div class="c-cap"></div>
+      </div>
+    </div>
+    <button class="tbl-toggle" aria-expanded="false">▸ 数値を表で見る</button>
+    <div class="tbl-wrap" hidden>
+      <table>
+        <thead><tr><th>決算期</th><th>売上高</th><th>営業利益</th><th>営業利益率</th><th>当期純利益</th><th>時価総額</th><th>期末株価</th><th>発行済株式</th></tr></thead>
+        <tbody>${c.rows.map(r => {
+          const pm = opm(r), pr = price(r);
+          return `<tr><td>FY${r[F.Y]}</td><td>${yen(r[F.REV])}</td>
+            <td class="${r[F.OP] < 0 ? 'neg' : ''}">${yen(r[F.OP])}</td>
+            <td class="${pm != null && pm < 0 ? 'neg' : ''}">${pm == null ? '—' : (pm*100).toFixed(1) + '%'}</td>
+            <td class="${r[F.NI] < 0 ? 'neg' : ''}">${yen(r[F.NI])}</td>
+            <td>${yen(r[F.CAP])}</td>
+            <td>${pr == null ? '—' : nf(Math.round(pr)) + '円'}</td>
+            <td>${nf(Math.round(r[F.SH]))}百万株</td></tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>
+  </article>`;
+}
+
+let sortKey = 'rev', query = '', sysFilter = 'all';
+function visible(){
+  return COS.filter(c => {
+    if(sysFilter !== 'all' && !c.systems.includes(sysFilter)) return false;
+    if(!query) return true;
+    const hay = (c.name + c.en + c.sec + c.role + c.systems.map(s => SYS[s] || '').join('')).toLowerCase();
+    return hay.includes(query);
+  }).sort((a, b) => ({
+    rev:    b.rev - a.rev,
+    cap:    b.cap - a.cap,
+    opm:    b.opm - a.opm,
+    growth: b.growth - a.growth
+  })[sortKey]);
+}
+function render(){
+  const list = visible();
+  document.getElementById('count').textContent =
+    `${list.length}社を表示中（全${COS.length}社）。カードの数値は最新の有価証券報告書に基づきます。`;
+  cardsEl.innerHTML = list.map(cardHtml).join('');
+  list.forEach(c => {
+    const card = cardsEl.querySelector(`[data-code="${c.code}"]`);
+    barsChart(card.querySelector('.c-bars'), c.rows);
+    capChart(card.querySelector('.c-cap'), c.rows);
+    const btn = card.querySelector('.tbl-toggle'), box = card.querySelector('.tbl-wrap');
+    btn.addEventListener('click', () => {
+      const open = box.hidden;
+      box.hidden = !open;
+      btn.setAttribute('aria-expanded', String(open));
+      btn.textContent = (open ? '▾' : '▸') + ' 数値を表で見る';
+    });
+  });
+  // 一覧チャート
+  rankBars(document.getElementById('ovRev'),
+    list.map(c => ({name:c.name, v:c.rev, k:'売上高', fy:`FY${c.last[F.Y]}`})), C.rev, yen);
+  rankBars(document.getElementById('ovCap'),
+    [...list].sort((a, b) => b.cap - a.cap).map(c => ({name:c.name, v:c.last[F.CAP], k:'時価総額', fy:`FY${c.last[F.Y]}`})), C.cap, yen);
+}
+document.getElementById('sort').addEventListener('change', e => { sortKey = e.target.value; render(); });
+document.getElementById('q').addEventListener('input', e => { query = e.target.value.trim().toLowerCase(); render(); });
+chipsEl.addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if(!b) return;
+  sysFilter = b.dataset.sys;
+  chipsEl.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(c === b)));
+  render();
+});
+render();
+if(location.hash){
+  const t = document.querySelector(location.hash);
+  if(t) t.scrollIntoView({block:'start'});
+}
+</script>
+</body>
+</html>
