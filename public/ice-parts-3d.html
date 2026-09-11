@@ -1,0 +1,2040 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ICE Powertrain Atlas ｜ 内燃機関の動きと部品バリューチェーン</title>
+<meta name="description" content="内燃機関(ICE)自動車の主要19システムを流線形の3Dモデルで可視化。エンジンを実際に動かして4ストロークの動きを見ながら、各パーツの代表メーカーとバリューチェーンを確認できます。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- フォントは描画をブロックしない: 届かない/遅い環境でも即座に代替フォントで表示する -->
+<link rel="stylesheet" media="print" onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"></noscript>
+<style>
+  /* ============================================================
+     単一テーマの設計。ウインドトンネルの計測室をモチーフにした
+     暗い計器盤の世界に振り切っているため、明暗の切替は持たない。
+     背景・文字色はすべて明示的に塗る。
+     ============================================================ */
+  :root{
+    --void:#05080e;
+    --ground:#0a0f18;
+    --panel:rgba(12,19,30,.82);
+    --panel-solid:#0c1320;
+    --rail:rgba(126,166,214,.14);
+    --rail-2:rgba(126,166,214,.30);
+    --ink:#e9f0fa;
+    --ink-dim:#8fa2ba;
+    --ink-faint:#5d6e84;
+
+    --intake:#4fd6ff;   /* 吸気・冷却 */
+    --burn:#ff9a3c;     /* 燃焼・点火 */
+    --ember:#ff6a5a;    /* 排気 */
+    --fuel:#5fe3a1;     /* 燃料 */
+    --drive:#b18cff;    /* 動力伝達 */
+    --volt:#ff8ad4;     /* 電気 */
+
+    --disp:"Chakra Petch",system-ui,-apple-system,"Segoe UI",sans-serif;
+    --body:"Noto Sans JP",system-ui,-apple-system,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
+    --shadow:0 24px 60px rgba(0,0,0,.55);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--void);color:var(--ink);font-family:var(--body);
+    -webkit-font-smoothing:antialiased;overflow:hidden;
+  }
+  button,input,select{font-family:inherit;color:inherit}
+  :focus-visible{outline:2px solid var(--intake);outline-offset:2px}
+
+  /* ---------------- shell ---------------- */
+  #app{display:flex;flex-direction:column;height:100dvh}
+  header.top{
+    display:flex;align-items:center;gap:16px;padding:11px 18px;z-index:8;
+    background:linear-gradient(180deg,#0b1220 0%,#080d16 100%);
+    border-bottom:1px solid var(--rail);
+  }
+  .mark{display:flex;align-items:center;gap:11px;min-width:0;overflow:hidden}
+  .mark .glyph{
+    width:26px;height:26px;flex:none;border-radius:50%;
+    background:conic-gradient(from 210deg,var(--burn),var(--ember),var(--intake),var(--burn));
+    mask:radial-gradient(circle at 50% 50%,transparent 41%,#000 43%);
+    -webkit-mask:radial-gradient(circle at 50% 50%,transparent 41%,#000 43%);
+    animation:spin 9s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){ .mark .glyph{animation:none} }
+  .mark h1{
+    font-family:var(--disp);font-size:15px;font-weight:600;letter-spacing:.09em;margin:0;
+    text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .mark .jp{font-size:11px;color:var(--ink-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  header .grow{flex:1}
+  .ghost-btn{
+    font-family:var(--disp);font-size:11.5px;letter-spacing:.06em;
+    background:transparent;border:1px solid var(--rail);border-radius:3px;
+    padding:7px 12px;cursor:pointer;white-space:nowrap;
+  }
+  .ghost-btn:hover{border-color:var(--rail-2);background:rgba(126,166,214,.07)}
+  header a.ghost-btn{text-decoration:none;color:var(--ink-dim)}
+
+  main{flex:1;display:grid;grid-template-columns:252px 1fr 372px;min-height:0;overflow:hidden}
+  main > *{min-width:0;max-width:100%}
+
+  /* ---------------- index rail ---------------- */
+  aside.index{
+    background:var(--ground);border-right:1px solid var(--rail);
+    display:flex;flex-direction:column;min-height:0;
+  }
+  .rail-head{padding:13px 15px 9px}
+  .eyebrow{
+    font-family:var(--disp);font-size:9.5px;letter-spacing:.22em;color:var(--ink-faint);
+    text-transform:uppercase;
+  }
+  .rail-head .n{font-family:var(--disp);font-size:11px;color:var(--ink-dim);margin-top:5px;font-variant-numeric:tabular-nums}
+  .filters{display:flex;gap:5px;padding:0 13px 11px;flex-wrap:wrap}
+  .chip{
+    font-size:10.5px;padding:5px 9px;border-radius:999px;border:1px solid var(--rail);
+    background:transparent;color:var(--ink-dim);cursor:pointer;
+  }
+  .chip[aria-pressed="true"]{background:rgba(79,214,255,.12);border-color:rgba(79,214,255,.45);color:var(--intake)}
+  .rail-list{overflow-y:auto;min-height:0;flex:1;padding:4px 8px 14px}
+  .item{
+    width:100%;display:grid;grid-template-columns:22px 1fr;gap:9px;align-items:start;
+    text-align:left;background:transparent;border:0;border-left:2px solid transparent;
+    padding:8px 8px 8px 6px;cursor:pointer;border-radius:0 6px 6px 0;
+  }
+  .item:hover{background:rgba(126,166,214,.06)}
+  .item[aria-selected="true"]{background:rgba(79,214,255,.10);border-left-color:var(--intake)}
+  .item .no{
+    font-family:var(--disp);font-size:10px;color:var(--ink-faint);padding-top:2px;
+    font-variant-numeric:tabular-nums;letter-spacing:.04em;
+  }
+  .item[aria-selected="true"] .no{color:var(--intake)}
+  .item .nm{display:block;font-size:12px;line-height:1.5}
+  .item .en{display:block;font-family:var(--disp);font-size:9.5px;color:var(--ink-faint);letter-spacing:.04em;margin-top:1px}
+  .item .dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:1px}
+
+  /* ---------------- stage ---------------- */
+  section.stage{
+    position:relative;background:
+      radial-gradient(120% 85% at 50% 8%, #14202f 0%, #0a0f18 48%, #05080e 100%);
+  }
+  #scene{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+  #pins{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:2}
+  .pin{
+    position:absolute;transform:translate(-50%,-50%);pointer-events:auto;cursor:pointer;
+    display:flex;align-items:center;gap:7px;padding:3px 9px 3px 3px;border-radius:999px;
+    background:rgba(8,13,21,.72);border:1px solid var(--rail-2);backdrop-filter:blur(7px);
+    font-size:10.5px;white-space:nowrap;transition:opacity .2s ease;
+  }
+  .pin b{
+    width:17px;height:17px;border-radius:50%;display:grid;place-items:center;
+    font-family:var(--disp);font-size:9.5px;font-weight:700;color:#05080e;
+  }
+  .pin:hover,.pin.on{border-color:var(--intake);box-shadow:0 0 0 3px rgba(79,214,255,.13)}
+  .pin.dim{opacity:.3}
+  .pin.mini{padding:3px}
+  .pin.mini span{display:none}
+  .pin.mini:hover span,.pin.mini.on span{display:inline}
+
+  #tip{
+    position:absolute;z-index:5;pointer-events:none;transform:translate(14px,-50%);display:none;
+    background:rgba(6,10,17,.95);border:1px solid var(--rail-2);border-radius:4px;
+    padding:7px 10px;font-size:11.5px;max-width:230px;box-shadow:var(--shadow);
+  }
+  #tip .en{font-family:var(--disp);font-size:9.5px;color:var(--ink-dim);letter-spacing:.05em;margin-top:2px}
+
+  /* engine HUD */
+  .hud{
+    position:absolute;top:12px;right:12px;z-index:3;width:232px;
+    background:var(--panel);border:1px solid var(--rail);border-radius:7px;
+    backdrop-filter:blur(12px);box-shadow:var(--shadow);overflow:hidden;
+  }
+  .hud-top{display:flex;align-items:baseline;gap:8px;padding:9px 11px 7px;border-bottom:1px solid var(--rail)}
+  .hud-top .lbl{font-family:var(--disp);font-size:9.5px;letter-spacing:.2em;color:var(--ink-faint)}
+  .hud-top .rpm{font-family:var(--disp);font-size:17px;font-weight:700;margin-left:auto;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+  .hud-top .unit{font-family:var(--disp);font-size:9.5px;color:var(--ink-faint);letter-spacing:.1em}
+  .cyls{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rail)}
+  .cyl{background:var(--panel-solid);padding:7px 5px 6px;text-align:center;position:relative}
+  .cyl .id{font-family:var(--disp);font-size:9px;color:var(--ink-faint);letter-spacing:.1em}
+  .cyl .st{font-size:11px;margin-top:3px;font-weight:500;line-height:1.3}
+  .cyl .bar{display:block;height:2px;margin-top:6px;background:rgba(126,166,214,.16);border-radius:2px;overflow:hidden}
+  .cyl .bar i{display:block;height:100%;width:0;border-radius:2px}
+  .cyl.fire::after{
+    content:'';position:absolute;inset:0;pointer-events:none;
+    box-shadow:inset 0 0 16px rgba(255,154,60,.55);
+  }
+  .hud-foot{display:flex;gap:9px;padding:7px 11px 9px;flex-wrap:wrap;font-size:9.5px;color:var(--ink-faint)}
+  .hud-foot span{display:flex;align-items:center;gap:4px}
+  .hud-foot i{width:7px;height:7px;border-radius:1px;display:inline-block}
+  .hud-order{padding:0 11px 9px;font-family:var(--disp);font-size:9.5px;color:var(--ink-dim);letter-spacing:.08em}
+
+  /* flow legend */
+  .flows{
+    position:absolute;left:12px;top:12px;z-index:3;display:flex;flex-direction:column;gap:4px;
+  }
+  .flow-btn{
+    display:flex;align-items:center;gap:7px;font-size:10.5px;cursor:pointer;
+    background:rgba(8,13,21,.66);border:1px solid var(--rail);border-radius:999px;
+    padding:4px 10px 4px 6px;backdrop-filter:blur(8px);color:var(--ink-dim);
+  }
+  .flow-btn i{width:8px;height:8px;border-radius:50%;box-shadow:0 0 8px currentColor}
+  .flow-btn[aria-pressed="true"]{color:var(--ink);border-color:var(--rail-2)}
+  .flow-btn[aria-pressed="false"] i{opacity:.25;box-shadow:none}
+
+  /* control dock */
+  .dock{
+    position:absolute;left:50%;transform:translateX(-50%);bottom:14px;z-index:4;
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;
+    background:var(--panel);border:1px solid var(--rail);border-radius:999px;
+    padding:7px 9px;backdrop-filter:blur(12px);box-shadow:var(--shadow);
+    max-width:calc(100% - 24px);
+  }
+  .run{
+    display:flex;align-items:center;justify-content:center;gap:7px;
+    height:34px;padding:0 15px;border-radius:999px;cursor:pointer;border:0;
+    background:linear-gradient(135deg,var(--burn),var(--ember));color:#160a02;
+    font-family:var(--disp);font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  }
+  .run[data-on="false"]{background:rgba(126,166,214,.12);color:var(--ink-dim);box-shadow:inset 0 0 0 1px var(--rail)}
+  .rpm-wrap{display:flex;align-items:center;gap:8px;padding:0 4px}
+  .rpm-wrap label{font-family:var(--disp);font-size:9.5px;letter-spacing:.16em;color:var(--ink-faint)}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:132px;height:3px;border-radius:3px;
+    background:linear-gradient(90deg,var(--intake),var(--burn));outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+    background:var(--ink);border:2px solid #0a0f18;cursor:pointer;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:14px;height:14px;border-radius:50%;background:var(--ink);border:2px solid #0a0f18;cursor:pointer;
+  }
+  .seg{display:flex;gap:4px}
+  .tgl{
+    font-size:10.5px;padding:7px 11px;border-radius:999px;cursor:pointer;
+    background:transparent;border:1px solid var(--rail);color:var(--ink-dim);white-space:nowrap;
+  }
+  .tgl:hover{border-color:var(--rail-2);color:var(--ink)}
+  .tgl[aria-pressed="true"]{background:rgba(79,214,255,.14);border-color:rgba(79,214,255,.5);color:var(--intake)}
+
+  #boot{
+    position:absolute;inset:0;display:grid;place-items:center;z-index:9;background:var(--void);
+    font-family:var(--disp);font-size:11px;letter-spacing:.2em;color:var(--ink-faint);
+    transition:opacity .5s ease;text-transform:uppercase;
+  }
+
+  /* ---------------- dossier ---------------- */
+  aside.dossier{
+    background:var(--ground);border-left:1px solid var(--rail);
+    display:flex;flex-direction:column;min-height:0;
+  }
+  .intro{padding:22px 20px;font-size:12.5px;line-height:2;color:var(--ink-dim)}
+  .intro h2{font-family:var(--disp);font-size:13px;letter-spacing:.12em;color:var(--ink);margin:0 0 12px;text-transform:uppercase}
+  .intro b{color:var(--ink)}
+  .intro ol{padding-left:17px;margin:14px 0}
+  .intro li{margin-bottom:5px}
+  .intro .hr{height:1px;background:var(--rail);margin:18px 0}
+  .d-scroll{overflow-y:auto;min-height:0;flex:1}
+  .d-head{padding:16px 19px 14px;border-bottom:1px solid var(--rail);position:sticky;top:0;background:var(--ground);z-index:2}
+  .d-head .row{display:flex;align-items:center;gap:9px}
+  .d-head .sysno{font-family:var(--disp);font-size:9.5px;letter-spacing:.2em;color:var(--ink-faint)}
+  .d-head .swatch{width:9px;height:9px;border-radius:2px}
+  .d-head h2{font-size:17px;margin:8px 0 3px;line-height:1.4;font-weight:700}
+  .d-head .en{font-family:var(--disp);font-size:10.5px;letter-spacing:.07em;color:var(--ink-dim)}
+  .badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:11px}
+  .badge{font-size:10px;padding:3px 8px;border-radius:3px;border:1px solid var(--rail);color:var(--ink-dim)}
+  .badge.gone{color:var(--ember);border-color:rgba(255,106,90,.42);background:rgba(255,106,90,.09)}
+  .badge.reduced{color:var(--burn);border-color:rgba(255,154,60,.42);background:rgba(255,154,60,.09)}
+  .badge.shared{color:var(--fuel);border-color:rgba(95,227,161,.4);background:rgba(95,227,161,.08)}
+  .sec{padding:15px 19px;border-bottom:1px solid var(--rail)}
+  .sec h3{font-family:var(--disp);font-size:9.5px;letter-spacing:.2em;color:var(--ink-faint);margin:0 0 10px;text-transform:uppercase}
+  .sec p{font-size:12.5px;line-height:1.95;margin:0;color:#cfdaea}
+  .motion{
+    background:linear-gradient(135deg,rgba(255,154,60,.10),rgba(79,214,255,.07));
+    border:1px solid rgba(255,154,60,.22);border-radius:6px;padding:12px 13px;
+    font-size:12px;line-height:1.9;color:#e2e9f3;
+  }
+  .motion .tagline{font-family:var(--disp);font-size:9.5px;letter-spacing:.18em;color:var(--burn);display:block;margin-bottom:6px}
+  .tags{display:flex;flex-wrap:wrap;gap:5px}
+  .tag{font-size:10.5px;padding:4px 9px;border-radius:3px;background:rgba(126,166,214,.07);border:1px solid var(--rail)}
+  .co-label{font-size:9.5px;font-family:var(--disp);letter-spacing:.18em;color:var(--ink-faint);margin-bottom:7px}
+  .co-group + .co-group{margin-top:12px}
+  .co{font-size:10.5px;padding:4px 9px;border-radius:3px;border:1px solid rgba(79,214,255,.3);background:rgba(79,214,255,.08);color:#d2f2fd}
+  .co.gl{border-color:rgba(255,154,60,.28);background:rgba(255,154,60,.07);color:#ffe2c0}
+  .chain{display:flex;flex-direction:column}
+  .step{display:grid;grid-template-columns:74px 1fr;gap:11px;padding:10px 0;position:relative}
+  .step + .step{border-top:1px dashed var(--rail)}
+  .step .stg{font-family:var(--disp);font-size:10px;letter-spacing:.08em;color:var(--intake);padding-top:2px}
+  .step .bd{font-size:12px;line-height:1.75;color:#cfdaea}
+  .step .pl{font-size:10.5px;color:var(--ink-dim);margin-top:5px;line-height:1.7}
+  .note{
+    font-size:11.5px;line-height:1.9;color:var(--ink-dim);
+    background:rgba(126,166,214,.05);border:1px solid var(--rail);border-radius:6px;padding:11px 13px;
+  }
+  .d-close{display:none}
+
+  /* ---------------- modal ---------------- */
+  .modal{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(3,6,11,.8);backdrop-filter:blur(5px)}
+  .modal.open{display:flex}
+  .modal-box{width:min(1000px,100%);max-height:86dvh;overflow-y:auto;background:var(--panel-solid);border:1px solid var(--rail-2);border-radius:10px;box-shadow:var(--shadow)}
+  .modal-head{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--rail);position:sticky;top:0;background:var(--panel-solid);z-index:2}
+  .modal-head h2{font-size:15px;margin:0;font-weight:700}
+  .modal-head .x{margin-left:auto}
+  .modal-body{padding:18px 20px 24px}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+  .kpi{background:rgba(79,214,255,.06);border:1px solid rgba(79,214,255,.2);border-radius:7px;padding:13px 15px}
+  .kpi .v{font-family:var(--disp);font-size:21px;font-weight:700;color:var(--intake);font-variant-numeric:tabular-nums}
+  .kpi .l{font-size:10.5px;color:var(--ink-dim);margin-top:4px;line-height:1.65}
+  .flow-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+  .flow-grid .col{background:rgba(126,166,214,.05);border:1px solid var(--rail);border-radius:7px;padding:12px;position:relative}
+  .flow-grid .col h4{margin:0 0 5px;font-size:12px}
+  .flow-grid .col .cap{font-family:var(--disp);font-size:9px;letter-spacing:.16em;color:var(--intake);margin-bottom:8px}
+  .flow-grid .col ul{margin:0;padding-left:14px;font-size:10.5px;line-height:1.85;color:var(--ink-dim)}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+  .card{background:rgba(126,166,214,.05);border:1px solid var(--rail);border-radius:7px;padding:14px 16px}
+  .card h4{margin:0 0 9px;font-size:12.5px}
+  .card ul{margin:0;padding-left:16px}
+  .card li{font-size:11.5px;line-height:1.9;color:var(--ink-dim)}
+  .src{margin-top:16px;font-size:10.5px;color:var(--ink-faint);line-height:1.85}
+
+  @media (min-width:981px){
+    .flow-grid .col:not(:last-child)::after{
+      content:'›';position:absolute;right:-9px;top:50%;transform:translateY(-50%);
+      font-size:15px;color:var(--intake);opacity:.7;font-family:var(--disp)
+    }
+  }
+  @media (max-width:1240px){ main{grid-template-columns:222px 1fr 330px} .hud{width:210px} }
+  @media (max-width:980px){
+    main{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+    aside.index{border-right:0;border-bottom:1px solid var(--rail)}
+    .rail-head,.filters{display:none}
+    .rail-list{display:flex;gap:5px;overflow-x:auto;overflow-y:hidden;padding:8px 10px;flex:none;max-width:100%}
+    .item{
+      flex:none;display:flex;align-items:center;width:auto;white-space:nowrap;
+      border:1px solid var(--rail);border-left-width:1px;border-radius:999px;padding:6px 12px;
+    }
+    .item[aria-selected="true"]{border-color:var(--intake)}
+    .item .en{display:none}
+    section.stage{min-height:44dvh}
+    .hud{width:196px;top:8px;right:8px}
+    .hud-foot,.hud-order{display:none}
+    .flows{left:8px;top:8px;flex-direction:row;flex-wrap:wrap;max-width:150px}
+    .flow-btn span{display:none}
+    .flow-btn{padding:5px}
+    .dock{bottom:8px;gap:7px;padding:6px 8px;border-radius:16px}
+    input[type=range]{width:88px}
+    aside.dossier{
+      position:fixed;left:0;right:0;bottom:0;top:auto;max-height:76dvh;z-index:15;
+      border:1px solid var(--rail-2);border-radius:14px 14px 0 0;transform:translateY(102%);
+      transition:transform .32s cubic-bezier(.2,.8,.25,1);box-shadow:var(--shadow);
+    }
+    aside.dossier.open{transform:translateY(0)}
+    .d-close{display:block;margin-left:auto}
+    .intro{display:none}
+    .flow-grid{grid-template-columns:1fr 1fr}
+    .split,.kpis{grid-template-columns:1fr}
+    .mark .jp{display:none}
+    .mark h1{font-size:11.5px;letter-spacing:.05em}
+    header.top{gap:8px;padding:9px 12px}
+    .ghost-btn{padding:6px 9px;font-size:10.5px}
+  }
+  @media (max-width:520px){
+    .flow-grid{grid-template-columns:1fr}
+    .rpm-wrap label{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){ *{animation-duration:.01ms!important;transition-duration:.01ms!important} }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="mark">
+      <span class="glyph" aria-hidden="true"></span>
+      <div style="min-width:0">
+        <h1>ICE Powertrain Atlas</h1>
+        <div class="jp">内燃機関はどう動き、誰が作っているのか — 19システムの動作とバリューチェーン</div>
+      </div>
+    </div>
+    <span class="grow"></span>
+    <button class="ghost-btn" id="btnChain">Value Chain</button>
+    <a class="ghost-btn" href="../index.html">← Portfolio</a>
+  </header>
+
+  <main>
+    <aside class="index">
+      <div class="rail-head">
+        <div class="eyebrow">Systems</div>
+        <div class="n" id="railCount"></div>
+      </div>
+      <div class="filters" id="filters">
+        <button class="chip" data-f="all" aria-pressed="true">すべて</button>
+        <button class="chip" data-f="gone" aria-pressed="false">EV化で不要</button>
+        <button class="chip" data-f="reduced" aria-pressed="false">縮小</button>
+        <button class="chip" data-f="shared" aria-pressed="false">共通</button>
+      </div>
+      <div class="rail-list" id="railList" role="listbox" aria-label="システム一覧"></div>
+    </aside>
+
+    <section class="stage">
+      <canvas id="scene"></canvas>
+      <div id="pins"></div>
+      <div id="tip"></div>
+
+      <div class="flows" id="flows">
+        <button class="flow-btn" data-flow="intake"  aria-pressed="true"><i style="color:#4fd6ff;background:#4fd6ff"></i><span>吸気</span></button>
+        <button class="flow-btn" data-flow="fuel"    aria-pressed="true"><i style="color:#5fe3a1;background:#5fe3a1"></i><span>燃料</span></button>
+        <button class="flow-btn" data-flow="exhaust" aria-pressed="true"><i style="color:#ff6a5a;background:#ff6a5a"></i><span>排気</span></button>
+        <button class="flow-btn" data-flow="coolant" aria-pressed="true"><i style="color:#7fb2ff;background:#7fb2ff"></i><span>冷却水</span></button>
+        <button class="flow-btn" data-flow="power"   aria-pressed="true"><i style="color:#b18cff;background:#b18cff"></i><span>動力</span></button>
+        <button class="flow-btn" data-flow="volt"    aria-pressed="true"><i style="color:#ff8ad4;background:#ff8ad4"></i><span>電気</span></button>
+      </div>
+
+      <div class="hud" id="hud">
+        <div class="hud-top">
+          <span class="lbl">Inline-4</span>
+          <span class="rpm" id="hudRpm">0</span><span class="unit">rpm</span>
+        </div>
+        <div class="cyls" id="cyls"></div>
+        <div class="hud-order">FIRING ORDER 1 – 3 – 4 – 2</div>
+        <div class="hud-foot">
+          <span><i style="background:#4fd6ff"></i>吸気</span>
+          <span><i style="background:#8fa2ba"></i>圧縮</span>
+          <span><i style="background:#ff9a3c"></i>燃焼</span>
+          <span><i style="background:#ff6a5a"></i>排気</span>
+        </div>
+      </div>
+
+      <div class="dock">
+        <button class="run" id="btnRun" data-on="true">■ 停止</button>
+        <div class="rpm-wrap">
+          <label for="rpm">RPM</label>
+          <input type="range" id="rpm" min="600" max="6000" step="100" value="1600">
+        </div>
+        <div class="seg">
+          <button class="tgl" id="btnXray" aria-pressed="true">透視</button>
+          <button class="tgl" id="btnExplode" aria-pressed="false">分解</button>
+          <button class="tgl" id="btnBody" aria-pressed="true">ボディ</button>
+          <button class="tgl" id="btnPins" aria-pressed="true">ラベル</button>
+          <button class="tgl" id="btnOrbit" aria-pressed="true">回転</button>
+          <button class="tgl" id="btnReset">リセット</button>
+        </div>
+      </div>
+
+      <div id="boot">Building powertrain…</div>
+    </section>
+
+    <aside class="dossier" id="dossier">
+      <div class="intro" id="intro">
+        <h2>Select a system</h2>
+        内燃機関車は一般に<b>約3万点</b>の部品でできています。そのうち約1万点が、エンジン・排気・変速機といった<b>内燃機関に固有</b>の部品です。
+        <div class="hr"></div>
+        <ol>
+          <li>エンジンは既に回っています。<b>RPM</b>を上げると4気筒の動きが速くなります。</li>
+          <li>3Dモデルのパーツ・ラベル・左の一覧から部品を選択。</li>
+          <li>その部品が<b>どう動くか</b>、<b>誰が作るか</b>、<b>バリューチェーン</b>が右に出ます。</li>
+        </ol>
+        <div class="hr"></div>
+        右上のHUDは4気筒それぞれの行程（吸気→圧縮→燃焼→排気）を示します。クランク2回転で1サイクルです。
+      </div>
+      <div class="d-scroll" id="dScroll" hidden></div>
+    </aside>
+  </main>
+</div>
+
+<div class="modal" id="chainModal" aria-hidden="true">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>自動車産業のバリューチェーン全体像</h2>
+      <button class="ghost-btn x" id="btnChainClose">Close</button>
+    </div>
+    <div class="modal-body" id="chainBody"></div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "../assets/vendor/three/three.module.min.js",
+    "three/addons/controls/OrbitControls.js": "../assets/vendor/three/OrbitControls.js",
+    "three/addons/environments/RoomEnvironment.js": "../assets/vendor/three/RoomEnvironment.js"
+  }
+}
+</script>
+
+<script type="module">
+/* =========================================================================
+   ICE(内燃機関)自動車 — 19システムの部品 × 企業 × バリューチェーン
+   ev: gone=EV化で不要 / reduced=EV化で縮小 / shared=EV/ICE共通
+   ========================================================================= */
+const PARTS = [
+{
+  id:'engine', name:'エンジン本体（ブロック／ヘッド）', en:'Engine Block / Cylinder Head', color:0xff8b4d, ev:'gone',
+  summary:'燃料の燃焼エネルギーを回転力に変換するICE車の中核ユニット。アルミ／鋳鉄の鋳造品を数十ミクロン精度で機械加工して組み上げる、完成車メーカーの内製比率が最も高い領域です。',
+  parts:['シリンダーブロック','シリンダーヘッド','ピストン往復機構','カムシャフト','バルブ／バルブスプリング','タイミングチェーン','オイルポンプ／オイルパン','ガスケット類'],
+  jp:['トヨタ自動車（内製）','ホンダ（内製）','アイシン','豊田自動織機','ヤマハ発動機','アイシン高丘','アーレスティ','リョービ','オティックス','大豊工業'],
+  global:['Mahle','Tenneco','Rheinmetall（KS）','Cummins','thyssenkrupp','Nemak'],
+  chain:[
+    {s:'原材料', b:'鉄鉱石・ボーキサイト・合金元素（Si, Mg, Cr, Mo）', p:'Vale／Rio Tinto／BHP／Alcoa'},
+    {s:'素材・部材', b:'鋳鉄・アルミ合金地金・特殊鋼', p:'日本製鉄／大同特殊鋼／UACJ／日本軽金属／Novelis'},
+    {s:'Tier2', b:'ダイカスト鋳造・鍛造・熱処理・高精度機械加工', p:'アーレスティ／リョービ／アイシン高丘／木村鋳造所／オティックス'},
+    {s:'Tier1', b:'エンジン部品ユニット（動弁系・潤滑系）の供給', p:'アイシン／豊田自動織機／大豊工業／Mahle'},
+    {s:'OEM', b:'自社エンジン工場でブロック加工〜組立。設計・内製の中核',p:'トヨタ／ホンダ／日産／VW／GM'},
+    {s:'アフター', b:'補修部品・リビルトエンジン', p:'各社純正部品網／Mahle／Bosch'}
+  ],
+  note:'EVでは完全に不要となる領域。エンジン1基で1,000点超の部品が失われるため、鋳造・機械加工を担う地域Tier2への構造転換インパクトが最も大きい。'
+},
+{
+  id:'crank', name:'ピストン・コンロッド・クランクシャフト', en:'Piston / Conrod / Crankshaft', color:0xffd27a, ev:'gone',
+  summary:'燃焼圧を受け止め、往復運動を回転運動へ変換する往復動機構。数百万回の繰り返し荷重に耐える鍛造・表面処理技術が競争力の源泉で、日系メーカーがニッチトップを握る典型領域です。',
+  parts:['ピストン','ピストンリング','コンロッド','クランクシャフト','すべり軸受（エンジンメタル）','フライホイール','バランスシャフト'],
+  jp:['アート金属工業','リケンNPRホールディングス','TPR','愛知製鋼','大同特殊鋼','大豊工業','中央可鍛工業'],
+  global:['Mahle','Tenneco（Federal-Mogul）','Rheinmetall（Kolbenschmidt）','thyssenkrupp Forged Technologies','MAT Foundry'],
+  chain:[
+    {s:'原材料', b:'鉄鉱石・アルミ・モリブデン・バナジウム', p:'Vale／Glencore／Rio Tinto'},
+    {s:'素材・部材', b:'鍛造用特殊鋼・アルミ鍛造材・軸受用銅合金', p:'愛知製鋼／大同特殊鋼／山陽特殊製鋼'},
+    {s:'Tier2', b:'熱間鍛造・浸炭焼入れ・超精密研削・表面コーティング', p:'愛知製鋼／リケンNPR各工場／地場鍛造業'},
+    {s:'Tier1', b:'ピストンASSY・リングセット・クランクASSYの供給', p:'アート金属工業／リケンNPR／TPR／Mahle'},
+    {s:'OEM', b:'エンジン組立ラインで選択嵌合（クリアランス管理）', p:'トヨタ／ホンダ／VW／GM'},
+    {s:'アフター', b:'オーバーホール・レース／産業用途向け', p:'専門リビルダー／Mahle Motorsport'}
+  ],
+  note:'ピストンリングはリケンNPR・TPR・Mahleの3社で世界シェアの大半を占める寡占市場。各社はEV化を見据えて水素エンジン部品・燃料電池用シール・機能部品へ転換中。'
+},
+{
+  id:'fuel', name:'燃料供給・噴射システム', en:'Fuel Injection System', color:0x6ee7a8, ev:'gone',
+  summary:'燃料を高圧で微粒化し、数ミリ秒単位で燃焼室に噴射するシステム。排ガス規制と燃費を同時に満たす鍵であり、噴射圧の高圧化（直噴で350bar級）と多段噴射制御が技術的主戦場です。',
+  parts:['インジェクター','高圧燃料ポンプ','デリバリーパイプ（コモンレール）','燃料タンク','燃料ポンプモジュール','キャニスター（蒸発ガス）','燃料配管'],
+  jp:['デンソー','日立Astemo','愛三工業','三菱電機','八千代工業（タンク）','FTS'],
+  global:['Bosch','Vitesco／Continental','BorgWarner（Delphi）','Marelli','OPmobility（Plastic Omnium）','Stanadyne'],
+  chain:[
+    {s:'原材料', b:'鉄鉱石（精密ノズル用鋼）・原油（樹脂タンク原料）', p:'資源メジャー／石化各社'},
+    {s:'素材・部材', b:'高清浄度特殊鋼・多層バリア樹脂・圧電（ピエゾ）素子', p:'大同特殊鋼／三菱ケミカル／旭化成／村田製作所'},
+    {s:'Tier2', b:'微細穴放電加工・ソレノイド巻線・多層ブロー成形', p:'精密加工専業各社'},
+    {s:'Tier1', b:'噴射系システム一式（ポンプ＋レール＋インジェクタ＋制御）', p:'デンソー／Bosch（直噴で世界2強）／Vitesco'},
+    {s:'OEM', b:'排ガス規制適合のためTier1と燃焼・制御を共同開発', p:'トヨタ／VW／Stellantis'},
+    {s:'アフター', b:'インジェクター洗浄・交換、燃料ポンプ補修', p:'Bosch Car Service／各社部品網'}
+  ],
+  note:'デンソーとBoschの2社で世界の直噴システムの過半。EVでは全量が不要になるが、ハイブリッド向けには2030年代まで需要が残る。'
+},
+{
+  id:'turbo', name:'吸気・過給システム', en:'Air Intake & Turbocharger', color:0x8fd2ff, ev:'reduced',
+  summary:'空気を圧縮して押し込み、小排気量でも大きな出力を得るダウンサイジング過給の中核。排気温度1,000℃に耐える耐熱超合金と、毎分20万回転に耐える軸受技術が参入障壁を作っています。',
+  parts:['ターボチャージャー','インタークーラー','スロットルボディ','エアクリーナー','吸気マニホールド','EGRバルブ／EGRクーラー','過給圧センサー'],
+  jp:['三菱重工エンジン&ターボチャージャ','IHI','豊田自動織機','愛三工業','デンソー','東京濾器'],
+  global:['Garrett Motion','BorgWarner','Vitesco／Continental','Mann+Hummel','Donaldson'],
+  chain:[
+    {s:'原材料', b:'ニッケル・コバルト・クロム（耐熱超合金の原料）', p:'Glencore／Vale／Nornickel'},
+    {s:'素材・部材', b:'インコネル系超合金・耐熱鋳鋼・アルミ鋳物', p:'Proterial（旧日立金属）／大同特殊鋼／Special Metals'},
+    {s:'Tier2', b:'ロストワックス精密鋳造・高速動バランス取り・軸受加工', p:'精密鋳造専業／NTN・大豊工業（軸受）'},
+    {s:'Tier1', b:'ターボチャージャーASSY（世界は実質4社の寡占）', p:'三菱重工／IHI／Garrett／BorgWarner'},
+    {s:'OEM', b:'エンジン開発と一体で過給マッチングを設計', p:'VW／トヨタ／Ford／Stellantis'},
+    {s:'アフター', b:'リビルトターボ（コア回収・再生）', p:'Garrett／専門リビルダー'}
+  ],
+  note:'過給機各社は培った高速回転技術を燃料電池用エアコンプレッサーやEV用電動過給に転用しており、「ICEで消える技術」を再利用できる数少ない領域。'
+},
+{
+  id:'ignition', name:'点火システム', en:'Ignition System', color:0xffe066, ev:'gone',
+  summary:'混合気に火花を飛ばして燃焼を開始させるシステム。高純度アルミナのセラミック絶縁体と貴金属電極という材料技術が本質で、消耗品ゆえに補修市場の比率が高いのが特徴です。',
+  parts:['スパークプラグ','イグニッションコイル','点火制御回路','プラグコード','グロープラグ（ディーゼル）'],
+  jp:['日本特殊陶業（Niterra）','デンソー','ダイヤモンド電機','三菱電機','日立Astemo'],
+  global:['Bosch','Tenneco（Champion）','BorgWarner（Delphi）','ACDelco','BERU'],
+  chain:[
+    {s:'原材料', b:'ボーキサイト（高純度アルミナ）・イリジウム・白金', p:'南アフリカ・ロシアのPGM鉱山／Anglo American'},
+    {s:'素材・部材', b:'セラミック絶縁体・貴金属チップ・電磁鋼板', p:'Niterra（内製）／田中貴金属／日本製鉄'},
+    {s:'Tier2', b:'セラミック焼成・貴金属レーザー溶接・コイル巻線・樹脂モールド', p:'各社内製工程／巻線専業'},
+    {s:'Tier1', b:'プラグ／コイルASSYの供給（日系2社で世界シェア過半）', p:'Niterra／デンソー／Bosch'},
+    {s:'OEM', b:'燃焼設計に合わせた熱価・突き出し量の選定', p:'トヨタ／ホンダ／VW ほか'},
+    {s:'アフター', b:'定期交換部品。売上の3〜4割を補修市場が占める', p:'カー用品店／整備網／Amazon等EC'}
+  ],
+  note:'日本特殊陶業（Niterra）はEV化で本業の消滅が確実なため、社名変更とともに半導体製造装置向けセラミック・医療・環境事業へ大胆に転換中。ICE依存企業の転身事例として象徴的。'
+},
+{
+  id:'exhaust', name:'排気・触媒システム', en:'Exhaust & Catalytic Converter', color:0xc9a24d, ev:'gone',
+  summary:'排ガス中のCO・HC・NOxを浄化し、騒音を抑えて大気に放出する装置。セラミック担体に白金・パラジウム・ロジウム（PGM）を担持させており、1台に数グラムの貴金属が使われる高価値部品です。',
+  parts:['エキゾーストマニホールド','触媒コンバーター（担体＋触媒）','GPF／DPF（微粒子フィルタ）','O2／空燃比センサー','マフラー（消音器）','テールパイプ','排気温センサー'],
+  jp:['日本ガイシ','キャタラー','三井金属鉱業','田中貴金属工業','フタバ産業','三恵技研工業','ユタカ技研','Niterra（センサー）','デンソー（センサー）'],
+  global:['Corning','BASF','Johnson Matthey','Umicore','Forvia（Faurecia）','Tenneco（Walker）','Eberspächer'],
+  chain:[
+    {s:'原材料', b:'白金・パラジウム・ロジウム（PGM）。南アフリカとロシアに産出が偏在する地政学リスク資源', p:'Anglo American Platinum／Sibanye-Stillwater／Impala／Nornickel'},
+    {s:'素材・部材', b:'コーディエライト系セラミックハニカム担体、ステンレス鋼板', p:'日本ガイシ／Corning／日本製鉄／JFEスチール'},
+    {s:'Tier2', b:'触媒コーティング（ウォッシュコート）・キャニング・パイプ曲げ', p:'キャタラー／Umicore／BASF／三井金属'},
+    {s:'Tier1', b:'排気系ASSY（マニホールド〜マフラー）の一括供給', p:'フタバ産業／三恵技研／Forvia／Tenneco'},
+    {s:'OEM', b:'排ガス規制（Euro7・ポスト新長期）が仕様を規定', p:'全OEM'},
+    {s:'アフター', b:'使用済み触媒からのPGM回収＝都市鉱山。逆流バリューチェーンを形成', p:'DOWAホールディングス／松田産業／Umicore／Johnson Matthey'}
+  ],
+  note:'原価の大半を貴金属が占めるため、PGM相場と為替が収益を左右する。セラミック担体は日本ガイシとCorningの実質2社体制で、日本の素材技術が世界の排ガス規制対応を支えてきた領域。'
+},
+{
+  id:'cooling', name:'冷却システム', en:'Cooling System', color:0x5ec8f0, ev:'shared',
+  summary:'燃焼で発生する熱を冷却水と外気で逃がし、エンジンを適温に保つ熱交換システム。アルミ材のろう付け技術とファン制御が中核で、EVではバッテリー熱マネジメントとして役割を変えて生き残ります。',
+  parts:['ラジエーター','電動クーリングファン','ウォーターポンプ','サーモスタット','ラジエーターホース','リザーブタンク','オイルクーラー'],
+  jp:['デンソー','T.RAD','アイシン','山田製作所','日本サーモスタット','住友理工'],
+  global:['Valeo','Mahle','Hanon Systems','Modine','Gates'],
+  chain:[
+    {s:'原材料', b:'ボーキサイト（アルミ）・銅・原油（合成ゴム）', p:'Rio Tinto／Codelco／石化各社'},
+    {s:'素材・部材', b:'アルミクラッド材（ろう付け用）・EPDMゴム・樹脂タンク材', p:'UACJ／神戸製鋼所／JSR／三井化学'},
+    {s:'Tier2', b:'チューブ成形・フィン加工・炉中ろう付け・ホース押出成形', p:'熱交換器専業／ゴムホース各社'},
+    {s:'Tier1', b:'ラジエーター／クーリングモジュールASSY', p:'デンソー／T.RAD／Valeo／Mahle'},
+    {s:'OEM', b:'フロントエンドモジュールとして一括搭載', p:'全OEM'},
+    {s:'アフター', b:'ラジエーター・ホース・冷却水の交換', p:'整備網／部品商社'}
+  ],
+  note:'EVでは「高温排熱の処理」から「電池を適温に保つ低温精密制御」へ要求が変化。熱交換器メーカーはEV熱マネジメント（チラー・ヒートポンプ）として成長領域に再定義できている数少ない例。'
+},
+{
+  id:'transmission', name:'トランスミッション・駆動系', en:'Transmission & Driveline', color:0xb59bff, ev:'reduced',
+  summary:'エンジンの限られた回転域のトルクを、走行条件に合わせて変速しタイヤへ伝える装置。多段AT・CVTは数百点の歯車・クラッチ・油圧回路からなる、エンジンに次ぐ高付加価値ユニットです。',
+  parts:['AT／CVT／MT本体','トルクコンバーター','クラッチ','プロペラシャフト','ディファレンシャル','ドライブシャフト／等速ジョイント','バルブボディ（油圧制御）'],
+  jp:['アイシン','ジヤトコ','エクセディ','武蔵精密工業','ジェイテクト','NTN','日本精工（NSK）','日立Astemo'],
+  global:['ZF','BorgWarner','Schaeffler（LuK）','GKN Automotive','Allison Transmission','Magna'],
+  chain:[
+    {s:'原材料', b:'鉄鉱石・ニッケル・クロム（歯車用合金鋼）', p:'資源メジャー'},
+    {s:'素材・部材', b:'肌焼鋼・軸受鋼・ATF（作動油）', p:'愛知製鋼／大同特殊鋼／山陽特殊製鋼／出光興産・ENEOS'},
+    {s:'Tier2', b:'歯車の転造・研削・浸炭焼入れ、軸受・シャフト加工', p:'武蔵精密工業／NTN／NSK／地場歯車メーカー'},
+    {s:'Tier1', b:'変速機ユニットASSY（アイシンはATで世界首位級）', p:'アイシン／ジヤトコ／ZF／BorgWarner'},
+    {s:'OEM', b:'内製（トヨタ・ホンダ等）とTier1調達が混在', p:'トヨタ／日産／VW／BMW'},
+    {s:'アフター', b:'リビルトAT・ATF交換・クラッチ交換', p:'エクセディ／専門リビルダー'}
+  ],
+  note:'EVでは多段変速が不要（原則1段減速機）となり、数百点規模で部品が減少。アイシン・ジヤトコはモーター＋インバーター＋減速機を一体化したeAxleへ事業を転換中。'
+},
+{
+  id:'electrical', name:'始動・充電・鉛バッテリー', en:'Starter / Alternator / Battery', color:0x7be0c8, ev:'reduced',
+  summary:'エンジンを始動させ、走行中に発電して電装品と12V鉛バッテリーを賄うシステム。モーター・発電機・二次電池という、EV時代の基盤技術の源流にあたる領域でもあります。',
+  parts:['スターターモーター','オルタネーター（発電機）','12V鉛蓄電池','ISG（マイルドHV用）','DC-DCコンバーター','ヒューズ／リレーボックス'],
+  jp:['デンソー','三菱電機','ミツバ','GSユアサ','古河電池','パナソニックエナジー'],
+  global:['Bosch','Valeo','SEG Automotive','BorgWarner（Delphi）','Clarios','Exide','East Penn'],
+  chain:[
+    {s:'原材料', b:'銅・鉛・希土類（ネオジム・ジスプロシウム）', p:'Codelco／Glencore／中国のレアアース各社'},
+    {s:'素材・部材', b:'マグネットワイヤ・電磁鋼板・鉛合金極板・希土類磁石', p:'住友電工／古河電工／日本製鉄／JFE／信越化学／TDK'},
+    {s:'Tier2', b:'巻線・整流子・ブラシ・極板化成・組電池', p:'モーター部品専業／電池部材各社'},
+    {s:'Tier1', b:'始動発電系ASSY、鉛バッテリー', p:'デンソー／Bosch／Valeo／GSユアサ／Clarios'},
+    {s:'OEM', b:'アイドリングストップ等の制御と組み合わせて搭載', p:'全OEM'},
+    {s:'アフター', b:'鉛バッテリーは3年前後で交換。回収・リサイクル率はほぼ100%', p:'カー用品店／整備網／鉛精錬各社'}
+  ],
+  note:'12V鉛バッテリーはEVでも補機電源として残るが、オルタネーター／スターターはEVで不要。各社はモーター技術をEV駆動用に転用できるため、ICE消滅の影響を吸収しやすい。'
+},
+{
+  id:'harness', name:'ワイヤーハーネス・ECU／半導体', en:'Wire Harness / ECU / Semiconductors', color:0xff9de2, ev:'shared',
+  summary:'車内の電力と信号をつなぐ神経網。1台あたり電線長は約1〜2km、重量20〜50kgにおよび、ECUと車載半導体が全ての制御を担います。近年最も供給網リスクが顕在化した領域です。',
+  parts:['ワイヤーハーネス','コネクタ／端子','エンジンECU・ボディECU','車載半導体（MCU・パワー半導体）','各種センサー','リレー／ジャンクションボックス'],
+  jp:['住友電装（住友電工）','矢崎総業','古河電工','デンソー','ルネサスエレクトロニクス','ローム','東芝デバイス&ストレージ','村田製作所','TDK'],
+  global:['Aptiv','Leoni','TE Connectivity','Bosch','Continental','NXP','Infineon','STMicroelectronics','Texas Instruments','TSMC'],
+  chain:[
+    {s:'原材料', b:'銅鉱石・珪石（シリコン）・レアメタル', p:'Codelco／Freeport-McMoRan／Glencore'},
+    {s:'素材・部材', b:'銅荒引線・絶縁電線・シリコンウェハ・積層セラミックコンデンサ', p:'住友電工／古河電工／信越化学／SUMCO／村田製作所'},
+    {s:'Tier2', b:'端子・コネクタ成形、半導体前工程（ウェハ製造・パッケージ）', p:'TSMC／ルネサス／Infineon／JAE・ヒロセ電機'},
+    {s:'Tier1', b:'ハーネスASSY（労働集約的でアジア・北アフリカ・メキシコに生産集中）、ECU', p:'住友電装／矢崎総業／Aptiv／デンソー／Bosch'},
+    {s:'OEM', b:'E/Eアーキテクチャ（集中ECU化・ソフト定義車両）はOEMの主戦場に', p:'トヨタ／VW／Tesla／BYD'},
+    {s:'アフター', b:'診断・リプログラミング（OTA更新へ移行中）', p:'ディーラー整備網'}
+  ],
+  note:'2021年以降の車載半導体不足、ウクライナ侵攻によるハーネス供給途絶は、数十円の部品が完成車ラインを止めうることを示した。EVでは高電圧ハーネスが加わり、1台あたりの付加価値はむしろ増加する。'
+},
+{
+  id:'suspension', name:'サスペンション', en:'Suspension', color:0x9fd96a, ev:'shared',
+  summary:'路面からの入力を吸収し、タイヤを路面に接地させ続ける機構。乗り心地と操縦安定性を決める「走りの味」の要で、ばね・減衰力の作り込みはOEMとTier1の共同開発領域です。',
+  parts:['ショックアブソーバー','コイルスプリング','スタビライザー','ロアアーム／アッパーアーム','ハブベアリング','ナックル','サブフレーム','ブッシュ類'],
+  jp:['KYB','日立Astemo','日本発条（ニッパツ）','中央発條','ヨロズ','エフテック','NTN','ジェイテクト','住友理工'],
+  global:['ZF','Tenneco（Monroe）','thyssenkrupp','Schaeffler','SKF','Magna','Gestamp'],
+  chain:[
+    {s:'原材料', b:'鉄鉱石・合金元素（Si, Cr, V）', p:'資源メジャー'},
+    {s:'素材・部材', b:'ばね鋼・軸受鋼・高張力鋼板・防振ゴム材', p:'神戸製鋼所／愛知製鋼／山陽特殊製鋼／JSR'},
+    {s:'Tier2', b:'熱間成形コイリング・ショットピーニング・鍛造・プレス', p:'中央発條／ニッパツ各工場／地場鍛圧'},
+    {s:'Tier1', b:'ダンパー／アームASSY、コーナーモジュール', p:'KYB／日立Astemo／ZF／ヨロズ'},
+    {s:'OEM', b:'車両運動性能の作り込み（チューニング）はOEM主導', p:'全OEM'},
+    {s:'アフター', b:'ダンパー・ブッシュは走行距離に応じた交換需要', p:'KYB／Monroe／Bilstein'}
+  ],
+  note:'EV/ICE共通の必須部品。ただし電池搭載で車重が200〜400kg増えるため、ばね定数と減衰力の全面見直し、アルミ・超ハイテンによる軽量化要求が強まっている。'
+},
+{
+  id:'brake', name:'ブレーキ', en:'Brake System', color:0xff6b6b, ev:'shared',
+  summary:'運動エネルギーを摩擦熱に変えて車両を止める、最重要保安部品。摩擦材の配合技術と、ABS／ESCの電子制御がセットで価値を生みます。日清紡は摩擦材で世界首位級です。',
+  parts:['ディスクローター','ブレーキパッド','キャリパー','マスターシリンダー','ブレーキブースター','ABS／ESC制御ユニット','電動パーキングブレーキ','ブレーキフルード配管'],
+  jp:['アドヴィックス（アイシン系）','曙ブレーキ工業','日清紡ホールディングス','日立Astemo','豊生ブレーキ工業'],
+  global:['Continental','Bosch','ZF（TRW）','Brembo','Knorr-Bremse','TMD Friction','Haldex'],
+  chain:[
+    {s:'原材料', b:'鉄鉱石（鋳鉄ローター）、銅・アラミド繊維・樹脂・充填材（摩擦材）', p:'資源メジャー／帝人（アラミド）'},
+    {s:'素材・部材', b:'ねずみ鋳鉄、ノンアスベスト摩擦材（低銅化が規制で進行）', p:'日清紡ブレーキ／曙ブレーキ／TMD Friction'},
+    {s:'Tier2', b:'ローター鋳造・研削、パッド熱間成形、キャリパー鋳造', p:'鋳造専業／摩擦材各社'},
+    {s:'Tier1', b:'ブレーキシステム一式（機構＋電子制御）', p:'アドヴィックス／Continental／Bosch／ZF／Brembo'},
+    {s:'OEM', b:'制動性能の法規適合と回生協調制御の統合', p:'全OEM'},
+    {s:'アフター', b:'パッド・ローターは代表的な消耗品市場', p:'カー用品店／整備網／Brembo等ブランド品'}
+  ],
+  note:'EVでは回生ブレーキが主役となり摩擦材の摩耗が減るため、アフター収益は縮小方向。一方でブレーキバイワイヤ化により電子制御の付加価値は上昇し、機構部品から制御ソフトへ価値が移動している。'
+},
+{
+  id:'steering', name:'ステアリング', en:'Steering System', color:0x9ac6ff, ev:'shared',
+  summary:'ドライバーの操作をタイヤの舵角に変換する系。エンジンのベルト駆動だった油圧パワステから電動パワステ（EPS）への転換はICE時代に完了しており、次はステアバイワイヤが争点です。',
+  parts:['ステアリングホイール','ステアリングコラム','中間シャフト','EPSモーター／制御ECU','ラック＆ピニオン','トルクセンサー','エアバッグモジュール'],
+  jp:['ジェイテクト','日本精工（NSK）','ニデックモビリティ','豊田合成','山田製作所'],
+  global:['Nexteer Automotive','Bosch','thyssenkrupp','ZF','HL Mando'],
+  chain:[
+    {s:'原材料', b:'鉄鉱石・銅・希土類（磁石）', p:'資源メジャー／レアアース精錬各社'},
+    {s:'素材・部材', b:'特殊鋼（ラック）・電磁鋼板・ネオジム磁石・樹脂', p:'愛知製鋼／日本製鉄／信越化学／TDK'},
+    {s:'Tier2', b:'ラック鍛造・ボールねじ加工・モーター巻線・センサー実装', p:'NSK／ジェイテクト各工場／モーター部品専業'},
+    {s:'Tier1', b:'EPSユニットASSY（ジェイテクトは世界首位級）', p:'ジェイテクト／Nexteer／Bosch／thyssenkrupp'},
+    {s:'OEM', b:'操舵フィールのチューニング、ADAS（車線維持）との統合', p:'全OEM'},
+    {s:'アフター', b:'EPS-ECU交換・アライメント調整', p:'ディーラー整備網'}
+  ],
+  note:'EV/ICE共通かつ成長領域。自動運転ではステアリングが「人の操作を受け取る装置」から「アクチュエーター」へ役割を変え、冗長設計（二重系）による高付加価値化が進む。'
+},
+{
+  id:'tire', name:'タイヤ・ホイール', en:'Tires & Wheels', color:0x8b96a6, ev:'shared',
+  summary:'車両と路面をつなぐ唯一の接点で、はがき1枚分の接地面が駆動・制動・旋回の全てを担います。新車装着より交換（市販）市場の方が大きい、自動車部品として例外的な産業構造を持ちます。',
+  parts:['タイヤ','アルミホイール／スチールホイール','TPMS（空気圧センサー）','ホイールバランスウェイト','エアバルブ','ホイールナット'],
+  jp:['ブリヂストン','住友ゴム工業','横浜ゴム','TOYO TIRE','中央精機','トピー工業','エンケイ'],
+  global:['Michelin','Goodyear','Continental','Pirelli','Hankook','Maxion Wheels','BBS'],
+  chain:[
+    {s:'原材料', b:'天然ゴム（タイ・インドネシア・ベトナムの小規模農園に依存）、原油、鉄鉱石', p:'現地農家／ゴム商社／石化各社'},
+    {s:'素材・部材', b:'合成ゴム・カーボンブラック・シリカ・スチールコード・補強繊維', p:'JSR／日本ゼオン／旭化成／東海カーボン／Cabot／東レ／帝人'},
+    {s:'Tier2', b:'ビードワイヤ・スチールコード製造、ホイール鋳造・鍛造', p:'ブリヂストン系／新日鉄系ワイヤ／中央精機'},
+    {s:'Tier1', b:'タイヤ製造（上位3社で世界シェア約4割）', p:'ブリヂストン／Michelin／Goodyear／住友ゴム'},
+    {s:'OEM', b:'新車装着（OE）は数量の約3割。銘柄指定で車両性能を作り込む', p:'全OEM'},
+    {s:'アフター', b:'交換（REP）市場が約7割を占め、収益の柱', p:'タイヤ専門店／カー用品店／EC'}
+  ],
+  note:'EVでは車重増と静粛性要求から、低転がり抵抗・高荷重対応のEV専用タイヤへシフトし単価が上昇。天然ゴムはEUDR（EU森林破壊防止規則）対応でトレーサビリティが新たな競争軸になっている。'
+},
+{
+  id:'body', name:'車体・ボディ（プレス／鋼板）', en:'Body-in-White & Stamping', color:0xcfd8e6, ev:'shared',
+  summary:'衝突安全性と剛性を担う骨格。重量・コストとも最大の領域で、鋼材価格が完成車原価に直結します。プレス→溶接→塗装→組立の4大工程は完成車メーカー内製の中核です。',
+  parts:['ボディシェル（ホワイトボディ）','サイドメンバー／ピラー','ドア・フード・トランクリッド','バンパー','サブフレーム','プレス金型','接合（スポット溶接・構造用接着剤）'],
+  jp:['日本製鉄','JFEスチール','神戸製鋼所','UACJ','ユニプレス','ジーテクト','豊田鉄工','太平洋工業','オギハラ'],
+  global:['ArcelorMittal','POSCO','宝武鋼鉄（Baosteel）','Magna','Gestamp','Benteler'],
+  chain:[
+    {s:'原材料', b:'鉄鉱石・原料炭（豪州・ブラジルに集中）、ボーキサイト', p:'BHP／Rio Tinto／Vale'},
+    {s:'素材・部材', b:'高張力鋼板（ハイテン）・超ハイテン・ホットスタンプ材・アルミ板', p:'日本製鉄／JFE／神戸製鋼／ArcelorMittal／POSCO'},
+    {s:'Tier2', b:'プレス金型設計・製作、ホットスタンプ、ブランキング', p:'オギハラ／富士テクニカ宮津／金型専業'},
+    {s:'Tier1', b:'車体骨格部品・モジュールの供給', p:'ユニプレス／ジーテクト／Gestamp／Magna'},
+    {s:'OEM', b:'プレス〜車体溶接〜塗装を内製。工場投資の大半を占める', p:'全OEM'},
+    {s:'アフター', b:'補修用パネル・板金塗装', p:'純正部品網／板金業者'}
+  ],
+  note:'EV化でも車体は必要だが、電池搭載による重量増と生産性要求から、ギガキャスト（大型アルミダイカスト）やCTB（セル・トゥ・ボディ）など製法そのものの転換が進行。プレス系Tier1にとっては工程数減少というリスク要因でもある。'
+},
+{
+  id:'interior', name:'内装・シート', en:'Interior & Seats', color:0xd9a679, ev:'shared',
+  summary:'乗員が直接触れる、ブランド価値を左右する領域。シートは1脚あたり数百点の部品からなる大型ユニットで、フレーム・機構・表皮・発泡と多様な技術の集合体です。',
+  parts:['シート（フレーム／ウレタン／表皮）','インストルメントパネル','ドアトリム','天井材（ヘッドライニング）','フロアカーペット','エアバッグ','コンソール'],
+  jp:['トヨタ紡織','テイ・エス テック','タチエス','河西工業','林テレンプ','豊田合成','日本プラスト','今仙電機製作所'],
+  global:['Adient','Lear','Forvia（Faurecia）','Magna Seating','Autoliv','Antolin','Yanfeng'],
+  chain:[
+    {s:'原材料', b:'原油（樹脂・ウレタン・合成皮革）、綿・皮革、鉄鉱石（フレーム）', p:'石化各社／皮革商社'},
+    {s:'素材・部材', b:'ポリプロピレン・ウレタン原料・ファブリック・表皮材', p:'三井化学／住友化学／東ソー／セーレン／住江織物'},
+    {s:'Tier2', b:'シートフレーム・スライドレール・リクライナー、発泡成形、射出成形', p:'今仙電機／デルタ工業／樹脂成形専業'},
+    {s:'Tier1', b:'シートASSY（JITで完成車ラインへ順序供給）', p:'トヨタ紡織／テイ・エス テック／Adient／Lear'},
+    {s:'OEM', b:'デザイン・質感はOEM主導。組立ラインへの同期納入', p:'全OEM'},
+    {s:'アフター', b:'内装補修・張替え・カスタム', p:'専門業者／用品メーカー'}
+  ],
+  note:'完全にEV/ICE共通。むしろEV・自動運転で「室内空間の価値」が高まり、シート姿勢の自由度、静粛性、リサイクルPETや植物由来素材といったサステナビリティが新たな競争軸になっている。'
+},
+{
+  id:'hvac', name:'空調（HVAC）', en:'HVAC / Thermal Management', color:0x6fd4ff, ev:'shared',
+  summary:'車室内を快適に保つ空調システム。ICEではエンジン排熱を暖房に使えますが、EVには熱源が無いためヒートポンプが必須となり、航続距離を左右する重要部品へ格上げされました。',
+  parts:['エアコンコンプレッサー','コンデンサー','エバポレーター','ヒーターコア','ブロワモーター','HVACユニット','冷媒配管','ヒートポンプ（EV）'],
+  jp:['デンソー','豊田自動織機','三菱重工サーマルシステムズ','サンデン','住友理工'],
+  global:['Valeo','Hanon Systems','Mahle','Marelli','BorgWarner'],
+  chain:[
+    {s:'原材料', b:'ボーキサイト（アルミ）・銅・フッ素系冷媒原料', p:'Rio Tinto／Codelco／フッ素化学各社'},
+    {s:'素材・部材', b:'アルミ押出材・クラッド材、冷媒HFO-1234yf、コンプレッサー用特殊鋼', p:'UACJ／神戸製鋼／Chemours／Honeywell／AGC'},
+    {s:'Tier2', b:'スクロール精密加工、熱交換器コアろう付け、モーター巻線', p:'精密加工専業／熱交換器専業'},
+    {s:'Tier1', b:'空調システム一式（豊田自動織機はカーエアコン用コンプレッサーで世界首位級）', p:'デンソー／豊田自動織機／Valeo／Hanon Systems'},
+    {s:'OEM', b:'車室快適性と電費（EV）のトレードオフ設計', p:'全OEM'},
+    {s:'アフター', b:'冷媒補充・コンプレッサー交換', p:'整備網／カー用品店'}
+  ],
+  note:'ICEでは「快適装備」だった空調が、EVでは「航続距離を決める熱マネジメント」に変わった。ベルト駆動から電動コンプレッサーへの置換で、単価と技術要求が上がる典型的な勝ち組領域。'
+},
+{
+  id:'lamp', name:'ランプ（灯火類）', en:'Lighting', color:0xfff2a8, ev:'shared',
+  summary:'夜間視認性と被視認性を担う保安部品であると同時に、車の「顔」を作る意匠部品。ハロゲン→LED→ADB（配光可変）と高機能化し、単価が上昇し続けている数少ない領域です。',
+  parts:['ヘッドランプ（LED／ADB）','リアコンビネーションランプ','フォグランプ','ターンシグナル','LED光源','配光制御ECU','レベリング機構'],
+  jp:['小糸製作所','スタンレー電気','市光工業','日亜化学工業（LEDチップ）'],
+  global:['Hella（Forvia）','Valeo','Marelli','Varroc','ams-OSRAM','Lumileds'],
+  chain:[
+    {s:'原材料', b:'ガリウム・インジウム（LED半導体）、原油（ポリカーボネート原料）', p:'レアメタル精錬各社／石化各社'},
+    {s:'素材・部材', b:'LEDチップ・パッケージ、ポリカーボネート樹脂、アルミ蒸着材', p:'日亜化学工業／ams-OSRAM／帝人／三菱ガス化学'},
+    {s:'Tier2', b:'レンズ射出成形、リフレクター蒸着、基板実装', p:'樹脂成形専業／EMS各社'},
+    {s:'Tier1', b:'ランプASSY（小糸製作所は世界シェア首位級）', p:'小糸製作所／スタンレー電気／Hella／Valeo'},
+    {s:'OEM', b:'デザイン一体で開発。シグネチャーランプがブランドの象徴に', p:'全OEM'},
+    {s:'アフター', b:'破損交換・バルブ交換（LED化で需要は減少傾向）', p:'純正部品網／用品メーカー'}
+  ],
+  note:'EV/ICE共通。意匠性とADB（眩惑を避けて照らし分ける配光可変）により、コモディティ化を回避して付加価値を上げ続けている。日系2社（小糸・スタンレー）の世界シェアが高い。'
+},
+{
+  id:'glass', name:'ガラス', en:'Automotive Glass', color:0xa8e6ff, ev:'shared',
+  summary:'視界を確保しつつ乗員を保護する構造部材。フロントは2枚のガラスで樹脂中間膜を挟んだ合わせガラス、側面は割れても粒状になる強化ガラスと、用途で製法が異なります。',
+  parts:['フロントウインドシールド（合わせガラス）','サイドガラス（強化ガラス）','リアガラス（熱線付き）','サンルーフ','ドアミラー／ルームミラー','ガラスアンテナ'],
+  jp:['AGC','日本板硝子（NSG／Pilkington）','セントラル硝子','村上開明堂'],
+  global:['Saint-Gobain Sekurit','福耀玻璃（Fuyao Glass）','信義玻璃（Xinyi）','Guardian Glass','Gentex'],
+  chain:[
+    {s:'原材料', b:'珪砂・ソーダ灰・石灰石', p:'鉱山会社／ソーダ灰メーカー'},
+    {s:'素材・部材', b:'フロート板ガラス、PVB中間膜（積水化学が世界首位級）、Low-E膜', p:'AGC／NSG／Saint-Gobain／積水化学／Eastman'},
+    {s:'Tier2', b:'切断・曲げ加工（重力／プレス曲げ）、合わせ・強化、熱線印刷', p:'ガラス加工各社'},
+    {s:'Tier1', b:'自動車用ガラスASSY（モジュール化してOEMへ）', p:'AGC／日本板硝子／Saint-Gobain／Fuyao'},
+    {s:'OEM', b:'ADASカメラの光学要件・HUD対応で仕様が高度化', p:'全OEM'},
+    {s:'アフター', b:'飛び石破損の交換（ADAS再キャリブレーションが必要に）', p:'ガラス施工専門店／保険連携'}
+  ],
+  note:'EV/ICE共通。フロートガラス製造は巨大な熱エネルギーを要するため脱炭素圧力が強い。一方で遮熱・調光・HUD・アンテナ内蔵など機能ガラス化が進み、単価は上昇傾向。'
+}
+];
+
+const EV_LABEL = { gone:'EV化で不要', reduced:'EV化で縮小・変質', shared:'EV/ICE共通' };
+const STAGE_ORDER = ['原材料','素材・部材','Tier2','Tier1','OEM','アフター'];
+
+/* 各システムが「どう動くか」。3Dの動きと対応させて読ませる */
+const MOTION = {
+  engine:'燃焼室で爆発した混合気がピストンを押し下げ、その往復がクランクで回転に変わります。ヘッド上のバルブが、クランク2回転につき1回ずつ吸気と排気を開け閉めしています（透視表示で内部が見えます）。',
+  crank:'4つのピストンは180°ずつずれて動きます。1番→3番→4番→2番の順に燃焼し、どれか1気筒が必ず膨張しているので回転が途切れません。コンロッドが首を振りながら、往復を回転へ変換します。',
+  fuel:'タンクの燃料がポンプで送られ、デリバリーパイプからインジェクターへ。吸気〜圧縮行程で霧状に噴射されます（緑の粒が燃料の流れです）。',
+  turbo:'排気がタービンを回し、同じ軸のコンプレッサーが空気を圧縮します。熱くなった空気はインタークーラーで冷やされ、吸気マニホールドからバルブへ（水色の流れ）。',
+  ignition:'圧縮上死点の直前にコイルが高電圧を作り、プラグが放電します。燃焼室がオレンジに光る瞬間が点火です。HUDの「燃焼」と同じタイミングで光ります。',
+  exhaust:'排気バルブが開くと、燃えたガスがピストンに押し出されます。タービン→触媒→マフラーと流れるうちに、有害成分が浄化され音が小さくなります（橙の流れ）。',
+  cooling:'クランクのベルトでウォーターポンプが回り、冷却水がエンジン→ラジエーター→エンジンと循環します。ファンは水温が高いときに回ります（青の流れ）。',
+  transmission:'クランクの回転がトルコンを介して変速機に入り、歯車で減速されてトルクが増えます。プロペラシャフト→デフ→ドライブシャフトを通って、左右のタイヤへ（紫の流れ）。',
+  electrical:'クランクプーリーのベルトがオルタネーターを回して発電し、バッテリーと電装品へ配ります。始動時だけはスターターがリングギヤを回してエンジンを起こします（桃色の流れ）。',
+  harness:'各センサーの信号がハーネスでECUに集まり、ECUが噴射量と点火時期を1サイクルごとに計算して指令を返します。動いている間ずっと、この往復が続いています。',
+  suspension:'ばねが路面の凹凸を吸収し、ダンパーがその伸び縮みを熱に変えて止めます。走行中は上下に細かく動き続けます。',
+  brake:'ローターはタイヤと一緒に回っています。ペダルを踏むとキャリパーがパッドで挟み、回転エネルギーを摩擦熱に変えて減速します。',
+  steering:'ハンドルの回転がコラムを通り、ラックで直線の動きに変換されます。タイロッドが左右のナックルを押し引きして、前輪の向きが変わります。',
+  tire:'エンジンの回転は最終的にタイヤの回転になります。接地しているのは1輪あたりはがき1枚ほどの面積で、駆動・制動・旋回のすべてをそこで受け持ちます。',
+  body:'走行中の車体はねじれと曲げを常に受けています。骨格の剛性が高いほど、サスペンションが設計どおりに動けます。',
+  interior:'シートは乗員を支えながら、路面からの振動を最後に受け止める部分でもあります。',
+  hvac:'エンジンのベルトでコンプレッサーが回り、冷媒を圧縮・膨張させて熱を運びます。暖房にはエンジンの排熱をそのまま使います。',
+  lamp:'ランプは電装系から電気をもらって光ります。走行中も常時点灯するため、発熱と放熱の設計が寿命を決めます。',
+  glass:'ガラスは視界を確保しつつ、車体剛性の一部も担っています。フロントは割れても飛散しない合わせ構造です。'
+};
+
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+/* ===================== renderer / stage ===================== */
+const canvas   = document.getElementById('scene');
+const stageEl  = canvas.parentElement;
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearAlpha(0);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+
+const scene  = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 220);
+const controls = new OrbitControls(camera, canvas);
+controls.target.set(0, 0.80, 0);
+controls.enableDamping = true;
+controls.dampingFactor = 0.075;
+controls.minDistance = 1.6;
+controls.maxDistance = 28;
+controls.maxPolarAngle = Math.PI * 0.495;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.5;
+
+/* 反射用の環境マップ。金属部品の質感がこれで決まる */
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+scene.add(new THREE.HemisphereLight(0x8fc4ff, 0x080c14, 0.55));
+const key  = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(5.5, 7.5, 4.5);  scene.add(key);
+const fill = new THREE.DirectionalLight(0x76a8ff, 0.7); fill.position.set(-6, 2.5, -5);   scene.add(fill);
+const rim  = new THREE.DirectionalLight(0xffd2a0, 1.0); rim.position.set(-4, 1.6, 6.5);   scene.add(rim);
+const emberLight = new THREE.PointLight(0xff8a3c, 0.0, 3.2, 2); emberLight.position.set(1.45, 0.9, 0); scene.add(emberLight);
+const coolLight = new THREE.PointLight(0x4fd6ff, 6, 7, 2);
+coolLight.position.set(2.6, 0.2, 0); scene.add(coolLight);
+
+/* 地面: 中心が濃く外側へ溶けるグリッド */
+function groundTexture(){
+  const s = 1024, c = document.createElement('canvas'); c.width = c.height = s;
+  const g = c.getContext('2d');
+  g.fillStyle = '#080c14'; g.fillRect(0,0,s,s);
+  g.strokeStyle = 'rgba(120,180,235,.26)'; g.lineWidth = 1.1;
+  for(let i=0;i<=32;i++){
+    const p = i/32*s;
+    g.beginPath(); g.moveTo(p,0); g.lineTo(p,s); g.stroke();
+    g.beginPath(); g.moveTo(0,p); g.lineTo(s,p); g.stroke();
+  }
+  const fade = g.createRadialGradient(s/2,s/2,s*0.06,s/2,s/2,s*0.5);
+  fade.addColorStop(0,'rgba(8,12,20,0)');
+  fade.addColorStop(0.55,'rgba(8,12,20,.55)');
+  fade.addColorStop(1,'rgba(8,12,20,1)');
+  g.fillStyle = fade; g.fillRect(0,0,s,s);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(26, 26),
+  new THREE.MeshBasicMaterial({ map:groundTexture(), transparent:true, opacity:0.85, depthWrite:false })
+);
+ground.rotation.x = -Math.PI/2; ground.position.y = -0.004; scene.add(ground);
+
+/* 接地影 */
+function blobTexture(){
+  const s = 256, c = document.createElement('canvas'); c.width = c.height = s;
+  const g = c.getContext('2d');
+  const r = g.createRadialGradient(s/2,s/2,0,s/2,s/2,s/2);
+  r.addColorStop(0,'rgba(0,0,0,.85)'); r.addColorStop(.55,'rgba(0,0,0,.35)'); r.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle = r; g.fillRect(0,0,s,s);
+  return new THREE.CanvasTexture(c);
+}
+const blobTex = blobTexture();
+const shadowBlob = new THREE.Mesh(
+  new THREE.PlaneGeometry(5.6, 2.6),
+  new THREE.MeshBasicMaterial({ map:blobTex, transparent:true, opacity:0.75, depthWrite:false })
+);
+shadowBlob.rotation.x = -Math.PI/2; shadowBlob.position.y = 0.004; scene.add(shadowBlob);
+
+/* ===================== 登録簿 ===================== */
+const carRoot = new THREE.Group(); scene.add(carRoot);
+const partGroups = new Map(), partMaterials = new Map(), partMeta = new Map();
+const spinners = [];      // 回転し続ける部品
+const xrayMats = [];      // 透視でスケルトンにする外殻
+const kin = { pistons:[], rods:[], webs:[], valves:[], plugs:[], flames:[] };
+const flowList = [];
+
+function group(id){
+  if(!partGroups.has(id)){
+    const g = new THREE.Group(); g.userData.partId = id;
+    carRoot.add(g); partGroups.set(id, g); partMaterials.set(id, []);
+  }
+  return partGroups.get(id);
+}
+function pmat(id, color, o={}){
+  group(id);
+  const m = new THREE.MeshPhysicalMaterial({
+    color, metalness:o.metalness ?? 0.7, roughness:o.roughness ?? 0.34,
+    transparent:!!o.transparent, opacity:o.opacity ?? 1,
+    emissive:new THREE.Color(o.emissive ?? 0x000000), emissiveIntensity:o.emissiveIntensity ?? 1,
+    side:o.side ?? THREE.FrontSide, depthWrite:o.depthWrite ?? true,
+    clearcoat:o.clearcoat ?? 0, clearcoatRoughness:0.2,
+    envMapIntensity:o.env ?? 1.0, flatShading:!!o.flatShading
+  });
+  m.userData = { baseColor:new THREE.Color(color), baseOpacity:o.opacity ?? 1,
+                 baseTransparent:!!o.transparent, baseEmissive:new THREE.Color(o.emissive ?? 0x000000) };
+  partMaterials.get(id).push(m);
+  return m;
+}
+function lineMat(id, color, opacity){
+  group(id);
+  const m = new THREE.LineBasicMaterial({ color, transparent:true, opacity });
+  m.userData = { isLine:true, baseColor:new THREE.Color(color), baseOpacity:opacity };
+  partMaterials.get(id).push(m);
+  return m;
+}
+function mesh(id, geo, mat, pos, rot, ghost){
+  const m = new THREE.Mesh(geo, mat);
+  if(pos) m.position.set(pos[0], pos[1], pos[2]);
+  if(rot) m.rotation.set(rot[0], rot[1], rot[2]);
+  if(ghost) m.userData.ghost = true;
+  group(id).add(m); return m;
+}
+function box(id,w,h,d,mat,pos,rot,ghost){ return mesh(id,new THREE.BoxGeometry(w,h,d),mat,pos,rot,ghost); }
+function rod(id,a,b,r,mat,seg=18,parent){
+  const A=new THREE.Vector3(...a), B=new THREE.Vector3(...b);
+  const d=new THREE.Vector3().subVectors(B,A), len=d.length();
+  const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,seg), mat);
+  m.position.copy(A).addScaledVector(d,0.5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.clone().normalize());
+  (parent||group(id)).add(m); return m;
+}
+function pipe(id, pts, r, mat, seg=72, closed=false){
+  const curve=new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p)), closed);
+  return mesh(id, new THREE.TubeGeometry(curve, seg, r, 12, closed), mat);
+}
+function spring(id,cx,cy,cz,r,h,turns,mat){
+  const pts=[], N=turns*18;
+  for(let i=0;i<=N;i++){ const t=i/N, a=t*turns*Math.PI*2;
+    pts.push(new THREE.Vector3(cx+Math.cos(a)*r, cy+t*h, cz+Math.sin(a)*r)); }
+  return mesh(id, new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), N*2, 0.021, 8, false), mat);
+}
+
+/* ===================== 流線形ボディ（ロフト） ===================== */
+/* [x, 床面, 屋根, 半幅] — 前(+X)が長いノーズ、後方に流れる,ファストバック */
+/* [x, 床面, 屋根, 半幅(ベルトライン), 半幅(ルーフ)]
+   ルーフ側を絞る＝タンブルホーム。これが「膨らんだ塊」と「流線形」を分ける */
+const BODY_KEYS = [
+  [-2.52, 0.50, 0.56, 0.05, 0.04],
+  [-2.38, 0.42, 0.70, 0.40, 0.30],
+  [-2.18, 0.35, 0.84, 0.66, 0.48],
+  [-1.86, 0.31, 0.97, 0.80, 0.58],
+  [-1.40, 0.29, 1.14, 0.87, 0.62],
+  [-0.90, 0.29, 1.32, 0.91, 0.61],
+  [-0.34, 0.29, 1.42, 0.925, 0.58],
+  [ 0.22, 0.29, 1.41, 0.925, 0.58],
+  [ 0.74, 0.29, 1.28, 0.92, 0.64],
+  [ 1.20, 0.29, 1.19, 0.90, 0.74],
+  [ 1.66, 0.30, 1.10, 0.86, 0.76],
+  [ 2.04, 0.32, 0.95, 0.78, 0.66],
+  [ 2.30, 0.36, 0.78, 0.58, 0.47],
+  [ 2.50, 0.44, 0.60, 0.06, 0.05]
+];
+function crs(p0,p1,p2,p3,t){
+  const t2=t*t, t3=t2*t;
+  return 0.5*((2*p1)+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t2+(-p0+3*p1-3*p2+p3)*t3);
+}
+function profileAt(u){
+  const K=BODY_KEYS, n=K.length;
+  const f=Math.max(0,Math.min(1,u))*(n-1);
+  const i=Math.min(n-2,Math.floor(f)), t=f-i;
+  const p0=K[Math.max(0,i-1)], p1=K[i], p2=K[i+1], p3=K[Math.min(n-1,i+2)];
+  return [crs(p0[0],p1[0],p2[0],p3[0],t), crs(p0[1],p1[1],p2[1],p3[1],t),
+          crs(p0[2],p1[2],p2[2],p3[2],t), crs(p0[3],p1[3],p2[3],p3[3],t),
+          crs(p0[4],p1[4],p2[4],p3[4],t)];
+}
+const U_LUT = [];
+for(let i=0;i<=240;i++) U_LUT.push(profileAt(i/240)[0]);
+function uAtX(x){
+  for(let i=1;i<U_LUT.length;i++){
+    if(U_LUT[i] >= x){
+      const a=U_LUT[i-1], b=U_LUT[i], f=(x-a)/Math.max(1e-6,b-a);
+      return (i-1+f)/(U_LUT.length-1);
+    }
+  }
+  return 1;
+}
+const SE = 2/2.75;                                   // 断面のスーパー楕円指数
+function sectionPoint(u, a, scale){
+  const [x,bot,top,w,wr] = profileAt(u);
+  const waist = bot + (top-bot)*0.38;
+  const c = Math.cos(a), s = Math.sin(a);
+  const wAt = w + (wr - w)*Math.pow(Math.max(0,s), 1.3);   // 上に行くほど絞る
+  const z = wAt*scale*Math.sign(c)*Math.pow(Math.abs(c), SE);
+  const h = (s>=0 ? (top-waist) : (waist-bot))*scale;
+  const y = waist + h*Math.sign(s)*Math.pow(Math.abs(s), SE);
+  return [x,y,z];
+}
+/* 閉じた全体シェル or 一部だけのパッチを作る */
+function shellGeometry({u0=0,u1=1,a0=0,a1=Math.PI*2,nu=110,na=52,scale=1,closed=true}={}){
+  const pos=[], idx=[];
+  for(let i=0;i<=nu;i++){
+    const u = u0 + (u1-u0)*i/nu;
+    for(let j=0;j<(closed?na:na+1);j++){
+      const a = a0 + (a1-a0)*(j/na);
+      pos.push(...sectionPoint(u, a, scale));
+    }
+  }
+  const ring = closed ? na : na+1;
+  for(let i=0;i<nu;i++) for(let j=0;j<(closed?na:na);j++){
+    const jn = closed ? (j+1)%na : j+1;
+    const A=i*ring+j, B=i*ring+jn, C=(i+1)*ring+j, D=(i+1)*ring+jn;
+    idx.push(A,C,B, B,C,D);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  return g;
+}
+/* 等高線（リブ）を抜き出して技術図面的な輪郭を作る */
+function contourGeometry(everyU=11, everyA=7, nu=110, na=52){
+  const seg=[];
+  for(let i=0;i<=nu;i+=everyU){
+    const u=i/nu;
+    for(let j=0;j<na;j++){
+      seg.push(...sectionPoint(u,j/na*Math.PI*2,1.002), ...sectionPoint(u,(j+1)/na*Math.PI*2,1.002));
+    }
+  }
+  for(let j=0;j<na;j+=everyA){
+    const a=j/na*Math.PI*2;
+    for(let i=0;i<nu;i++){
+      seg.push(...sectionPoint(i/nu,a,1.002), ...sectionPoint((i+1)/nu,a,1.002));
+    }
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(seg,3));
+  return g;
+}
+
+/* ===================== 共通の小道具 ===================== */
+function dotTexture(){
+  const s=128, c=document.createElement('canvas'); c.width=c.height=s;
+  const g=c.getContext('2d');
+  const r=g.createRadialGradient(s/2,s/2,0,s/2,s/2,s/2);
+  r.addColorStop(0,'rgba(255,255,255,1)'); r.addColorStop(.35,'rgba(255,255,255,.55)');
+  r.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=r; g.fillRect(0,0,s,s);
+  return new THREE.CanvasTexture(c);
+}
+const DOT = dotTexture();
+const spriteMats = [];
+function glow(id, color, size, pos, opacity=0.9){
+  group(id);
+  const m = new THREE.SpriteMaterial({ map:DOT, color, transparent:true, opacity,
+    blending:THREE.AdditiveBlending, depthWrite:false });
+  m.userData = { isSprite:true, baseOpacity:opacity, partId:id };
+  spriteMats.push(m);
+  const s = new THREE.Sprite(m);
+  s.scale.set(size,size,size); s.position.set(...pos); s.userData.ghost = true;
+  group(id).add(s); return s;
+}
+function spin(obj, axis, k){ spinners.push({ obj, axis, k }); return obj; }
+const _qa = new THREE.Vector3(0,1,0), _qd = new THREE.Vector3();
+function orient(m, ax,ay,az, bx,by,bz){
+  _qd.set(bx-ax, by-ay, bz-az);
+  m.position.set((ax+bx)/2, (ay+by)/2, (az+bz)/2);
+  m.quaternion.setFromUnitVectors(_qa, _qd.normalize());
+}
+
+/* ===================== 諸元 ===================== */
+const CYL   = [1.69, 1.53, 1.37, 1.21];                       // 気筒1〜4（前が1番）
+const OFF   = [2*Math.PI, 3*Math.PI, Math.PI, 0];             // 点火順 1-3-4-2
+const CY = 0.55, CR_R = 0.08, ROD_L = 0.26, DECK = 0.97;      // クランク軸高/半径/コンロッド長/デッキ面
+const VZ = 0.088;                                             // バルブのオフセット(±Z)
+const WX = [1.42, -1.38], WZ = [0.80, -0.80], TIRE_R = 0.38;
+const GEAR = 7.6;                                             // 総減速比（クランク回転 → タイヤ回転）
+function pistonY(psi){
+  const s = CR_R*Math.sin(psi);
+  return CY + CR_R*Math.cos(psi) + Math.sqrt(ROD_L*ROD_L - s*s);
+}
+
+/* ===================== 01 車体 ===================== */
+{
+  const id='body';
+  const skin = pmat(id, 0x2b435c, {metalness:0.72, roughness:0.10, transparent:true, opacity:0.24,
+                                   side:THREE.DoubleSide, depthWrite:false, env:2.4, clearcoat:1});
+  mesh(id, shellGeometry({}), skin, null, null, true);
+  const contour = new THREE.LineSegments(contourGeometry(), lineMat(id, 0x8fdcff, 0.20));
+  contour.userData.ghost = true; group(id).add(contour);
+
+  const panel = pmat(id, 0x93a6bd, {metalness:0.85, roughness:0.3, env:1.4});
+  box(id, 2.9, 0.05, 1.5, panel, [-0.25, 0.30, 0]);      // フロアパン
+  box(id, 0.05, 0.5,  1.42, panel, [1.00, 0.72, 0]);     // ダッシュパネル(隔壁)
+  for(const z of [0.90,-0.90]) box(id, 2.2, 0.16, 0.05, panel, [-0.35, 0.40, z*0.99]); // サイドシル
+  // ホイールアーチ
+  const arch = pmat(id, 0x8fa8c4, {metalness:0.9, roughness:0.25, env:1.6});
+  for(const x of WX) for(const z of WZ){
+    const t = new THREE.Mesh(new THREE.TorusGeometry(TIRE_R+0.07, 0.019, 8, 30, Math.PI), arch);
+    t.position.set(x, 0.36, z*0.98);
+    group(id).add(t);
+  }
+}
+
+/* ===================== 19 ガラスキャノピー ===================== */
+{
+  const id='glass';
+  const g = pmat(id, 0x7fd4ff, {metalness:0.25, roughness:0.03, transparent:true, opacity:0.16,
+                                side:THREE.DoubleSide, depthWrite:false, env:3.0, clearcoat:1});
+  const canopy = shellGeometry({
+    u0:uAtX(-1.70), u1:uAtX(0.98), a0:Math.PI*0.20, a1:Math.PI*0.80,
+    nu:72, na:34, scale:1.010, closed:false
+  });
+  mesh(id, canopy, g, null, null, true);
+  for(const z of [0.80,-0.80]){                                   // ドアミラー
+    box(id, 0.12, 0.06, 0.13, g, [0.90, 1.02, z], [0, 0, 0.18]);
+  }
+}
+
+/* ===================== 02 エンジン本体 ===================== */
+{
+  const id='engine';
+  const alloy = pmat(id, 0xc96a2e, {metalness:0.72, roughness:0.42, env:1.2});
+  const alloy2= pmat(id, 0xa8551f, {metalness:0.8,  roughness:0.34, env:1.2});
+  const block = pmat(id, 0xd07a3a, {metalness:0.7,  roughness:0.4,  env:1.2});
+  xrayMats.push(block, alloy);
+  box(id, 0.74, 0.55, 0.66, block,  [1.45, 0.695, 0]);   // シリンダーブロック
+  box(id, 0.76, 0.12, 0.68, alloy,  [1.45, 1.03, 0]);    // シリンダーヘッド
+  box(id, 0.66, 0.07, 0.56, alloy,  [1.45, 1.125, 0]);   // ヘッドカバー
+  box(id, 0.60, 0.12, 0.54, alloy2, [1.42, 0.355, 0]);   // オイルパン
+
+  const bore = pmat(id, 0x6f8296, {metalness:0.95, roughness:0.15, transparent:true, opacity:0.28, side:THREE.DoubleSide, depthWrite:false});
+  CYL.forEach(x=>{
+    const b = new THREE.Mesh(new THREE.CylinderGeometry(0.079,0.079,0.30,26,1,true), bore);
+    b.position.set(x, 0.82, 0); b.userData.ghost = true; group(id).add(b);
+  });
+
+  // 動弁系: 気筒あたり 吸気/排気 1本ずつ
+  const steel = pmat(id, 0xd9e2ec, {metalness:1.0, roughness:0.18, env:1.6});
+  CYL.forEach((x,i)=>{
+    [-VZ, VZ].forEach((z,k)=>{
+      const v = new THREE.Group(); v.position.set(x, DECK, z);
+      const head = new THREE.Mesh(new THREE.CylinderGeometry(0.031,0.031,0.014,16), steel);
+      head.position.y = -0.007; v.add(head);
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.009,0.009,0.17,8), steel);
+      stem.position.y = 0.085; v.add(stem);
+      group(id).add(v);
+      kin.valves.push({ g:v, cyl:i, intake:k===0 });
+    });
+    // 燃焼のフラッシュ
+    kin.flames.push(glow('engine', 0xff9a3c, 0.30, [x, 0.945, 0], 0));
+  });
+
+  // 補機ベルトとプーリー
+  const beltMat = pmat(id, 0x2a3240, {metalness:0.2, roughness:0.9, env:0.5});
+  const pulley = new THREE.Group(); pulley.position.set(1.86, 0.62, 0);
+  const pd = new THREE.Mesh(new THREE.CylinderGeometry(0.105,0.105,0.045,24), alloy2);
+  pd.rotation.z = Math.PI/2; pulley.add(pd);
+  const pk = new THREE.Mesh(new THREE.BoxGeometry(0.05,0.2,0.02), steel); pulley.add(pk);
+  group(id).add(pulley); spin(pulley, 'x', 1);
+  pipe(id, [[1.86,0.725,0.02],[1.86,0.70,0.16],[1.86,0.56,0.14],[1.86,0.515,0],
+            [1.86,0.56,-0.16],[1.86,0.80,-0.30],[1.86,0.96,-0.14],[1.86,0.86,0.02]], 0.013, beltMat, 90, true);
+}
+
+/* ===================== 03 ピストン・クランク ===================== */
+{
+  const id='crank';
+  const forged = pmat(id, 0xf0c274, {metalness:1.0, roughness:0.2,  env:1.8});
+  const forged2= pmat(id, 0xc99a4c, {metalness:1.0, roughness:0.26, env:1.6});
+  const mark   = pmat(id, 0x4fd6ff, {metalness:0.4, roughness:0.3, emissive:0x0b3a48, env:1.0});
+
+  const crankG = new THREE.Group(); crankG.position.set(1.45, CY, 0);
+  group(id).add(crankG); spin(crankG, 'x', 1);
+  rod(id, [-0.40,0,0], [0.40,0,0], 0.042, forged2, 18, crankG);          // メインジャーナル
+  CYL.forEach((x,i)=>{
+    const w = new THREE.Group();
+    w.position.x = x - 1.45;
+    w.rotation.x = OFF[i];                                               // 気筒ごとの位相
+    const cw = new THREE.Mesh(new THREE.BoxGeometry(0.034,0.20,0.115), forged2);
+    cw.position.y = -0.055; w.add(cw);
+    const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.034,0.034,0.075,14), forged);
+    pin.rotation.z = Math.PI/2; pin.position.y = CR_R; w.add(pin);
+    crankG.add(w);
+  });
+  const fly = new THREE.Mesh(new THREE.CylinderGeometry(0.19,0.19,0.05,32), forged2);
+  fly.rotation.z = Math.PI/2; fly.position.x = -0.39; crankG.add(fly);
+  const flyMark = new THREE.Mesh(new THREE.BoxGeometry(0.055,0.34,0.022), mark);
+  flyMark.position.x = -0.365; crankG.add(flyMark);                       // 回転が見えるマーカー
+
+  CYL.forEach((x,i)=>{
+    const p = new THREE.Mesh(new THREE.CylinderGeometry(0.073,0.073,0.09,26), forged);
+    p.position.set(x, pistonY(OFF[i]), 0);
+    group(id).add(p); kin.pistons.push(p);
+    const r = new THREE.Mesh(new THREE.BoxGeometry(0.03, ROD_L, 0.052), forged2);
+    group(id).add(r); kin.rods.push(r);
+  });
+}
+
+/* ===================== 06 点火 ===================== */
+{
+  const id='ignition';
+  const m  = pmat(id, 0xffe27a, {metalness:0.6, roughness:0.32, emissive:0x241c00, env:1.2});
+  CYL.forEach((x,i)=>{
+    box(id, 0.048, 0.10, 0.048, m, [x, 1.19, 0]);                   // イグニッションコイル
+    const plug = new THREE.Mesh(new THREE.CylinderGeometry(0.019,0.019,0.16,12), m);
+    plug.position.set(x, 1.06, 0); group(id).add(plug);
+    kin.plugs.push(glow('ignition', 0xfff0b0, 0.16, [x, 0.985, 0], 0));
+  });
+}
+
+/* ===================== 04 燃料供給・噴射 ===================== */
+{
+  const id='fuel';
+  const m  = pmat(id, 0x5fe3a1, {metalness:0.6, roughness:0.35, env:1.2});
+  const m2 = pmat(id, 0x3aa876, {metalness:0.35, roughness:0.6, env:0.8});
+  box(id, 0.58, 0.042, 0.05, m, [1.45, 1.10, -0.26]);               // デリバリーパイプ
+  CYL.forEach(x=> rod(id,[x,1.00,-0.26],[x,1.10,-0.26],0.021,m));   // インジェクター
+  box(id, 0.80, 0.26, 1.08, m2, [-0.92, 0.52, 0]);                  // 燃料タンク
+  rod(id, [-0.92,0.65,0.25], [-0.92,0.72,0.25], 0.085, m);          // 燃料ポンプモジュール
+  box(id, 0.15, 0.13, 0.13, m, [-0.42, 0.62, 0.44]);                // キャニスター
+  pipe(id, [[-0.60,0.58,0.30],[0.30,0.40,0.40],[1.05,0.52,0.36],[1.30,0.86,-0.10],[1.40,1.02,-0.26]], 0.020, m);
+}
+
+/* ===================== 05 吸気・過給 ===================== */
+{
+  const id='turbo';
+  const m  = pmat(id, 0x8ad8ff, {metalness:0.9, roughness:0.2, env:1.8});
+  const m2 = pmat(id, 0x4a96c4, {metalness:0.6, roughness:0.4, env:1.2});
+  // タービン側(排気) と コンプレッサー側(吸気) が同軸で回る
+  const turboG = new THREE.Group(); turboG.position.set(1.12, 0.60, 0.42);
+  group(id).add(turboG);
+  const th = new THREE.Mesh(new THREE.TorusGeometry(0.115,0.058,14,26), m2);
+  th.rotation.y = Math.PI/2; th.position.z = 0.07; turboG.add(th);
+  const ch = new THREE.Mesh(new THREE.TorusGeometry(0.10,0.05,14,26), m);
+  ch.rotation.y = Math.PI/2; ch.position.z = -0.10; turboG.add(ch);
+  const shaftG = new THREE.Group(); turboG.add(shaftG); spin(shaftG, 'z', 9);
+  for(const [zz,rr,mm] of [[0.07,0.075,m2],[-0.10,0.065,m]]){
+    for(let k=0;k<6;k++){
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.012,rr*1.7,0.045), mm);
+      blade.position.z = zz; blade.rotation.z = k/6*Math.PI*2; shaftG.add(blade);
+    }
+  }
+  box(id, 0.08, 0.26, 0.66, m2, [1.99, 0.54, 0]);                   // インタークーラー
+  box(id, 0.34, 0.18, 0.30, m,  [1.72, 0.98, -0.48]);               // エアクリーナー
+  box(id, 0.50, 0.13, 0.15, m2, [1.45, 0.99, -0.38]);               // 吸気マニホールド
+  CYL.forEach(x=> rod(id,[x,0.99,-0.34],[x,1.00,-0.14],0.030,m2));  // 吸気ポート
+  pipe(id, [[1.12,0.60,0.52],[1.62,0.46,0.48],[1.96,0.46,0.24]], 0.034, m);   // 圧縮空気 → I/C
+  pipe(id, [[1.99,0.62,-0.18],[1.80,0.80,-0.34],[1.62,0.96,-0.44]], 0.034, m);// I/C → マニホールド
+  pipe(id, [[1.70,0.92,-0.46],[1.45,0.78,-0.52],[1.20,0.64,0.20],[1.12,0.60,0.30]], 0.030, m2); // 吸入口 → タービン
+}
+
+/* ===================== 07 排気・触媒 ===================== */
+{
+  const id='exhaust';
+  const steel = pmat(id, 0x9fadbb, {metalness:1.0, roughness:0.28, env:1.8});
+  const cat   = pmat(id, 0xd0a94e, {metalness:1.0, roughness:0.22, emissive:0x1b1200, env:1.6});
+  pipe(id, [[1.69,0.99,VZ],[1.60,0.92,0.22],[1.45,0.86,0.32],[1.24,0.70,0.38],[1.14,0.62,0.42]], 0.034, steel);
+  pipe(id, [[1.12,0.55,0.46],[1.02,0.44,0.30],[0.95,0.41,0.22]], 0.032, steel);
+  rod(id, [0.95,0.41,0.22], [0.60,0.39,0.20], 0.102, cat);          // 触媒コンバーター
+  rod(id, [0.40,0.38,0.18], [0.14,0.37,0.17], 0.088, cat);          // GPF / DPF
+  pipe(id, [[0.60,0.39,0.20],[0.42,0.38,0.18],[0.14,0.37,0.17],[-0.5,0.36,0.15],[-1.1,0.36,0.14],[-1.5,0.37,0.14]], 0.032, steel);
+  rod(id, [-1.5,0.37,0.13], [-2.0,0.37,0.13], 0.145, steel);        // マフラー
+  pipe(id, [[-2.0,0.37,0.20],[-2.16,0.41,0.32],[-2.34,0.43,0.38]], 0.029, steel);
+  rod(id, [1.30,0.74,0.36], [1.30,0.82,0.36], 0.028, cat);          // O2センサー
+}
+
+/* ===================== 08 冷却 ===================== */
+{
+  const id='cooling';
+  const m  = pmat(id, 0x4fa8cc, {metalness:0.65, roughness:0.4, env:0.9});
+  const m2 = pmat(id, 0x2f8fba, {metalness:0.5, roughness:0.5, env:1.0});
+  box(id, 0.07, 0.42, 1.00, m, [2.06, 0.66, 0]);                    // ラジエーター
+  const fanG = new THREE.Group(); fanG.position.set(1.98, 0.70, 0);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.175,0.018,10,26), m2);
+  ring.rotation.y = Math.PI/2; fanG.add(ring);
+  for(let i=0;i<6;i++){
+    const b = new THREE.Mesh(new THREE.BoxGeometry(0.02,0.30,0.075), m2);
+    b.rotation.x = i/6*Math.PI*2; b.rotation.z = 0.3; fanG.add(b);
+  }
+  group(id).add(fanG); spin(fanG, 'x', 0.55);
+  const wpG = new THREE.Group(); wpG.position.set(1.86, 0.90, -0.14);
+  const wp = new THREE.Mesh(new THREE.CylinderGeometry(0.075,0.075,0.07,20), m2);
+  wp.rotation.z = Math.PI/2; wpG.add(wp);
+  const wpk = new THREE.Mesh(new THREE.BoxGeometry(0.045,0.14,0.02), m); wpG.add(wpk);
+  group(id).add(wpG); spin(wpG, 'x', 1.5);
+  pipe(id, [[2.04,0.90,0.20],[1.90,0.98,0.22],[1.72,0.94,0.16]], 0.028, m);   // アッパーホース
+  pipe(id, [[2.04,0.50,-0.20],[1.90,0.46,-0.20],[1.74,0.54,-0.14]], 0.028, m);// ロアホース
+  box(id, 0.13, 0.17, 0.13, m, [1.88, 1.02, 0.44]);                 // リザーブタンク
+}
+
+/* ===================== 09 トランスミッション・駆動系 ===================== */
+{
+  const id='transmission';
+  const m  = pmat(id, 0xb79cff, {metalness:0.85, roughness:0.28, env:1.6});
+  const m2 = pmat(id, 0x8a6fe0, {metalness:0.9,  roughness:0.22, env:1.4});
+  const mk = pmat(id, 0x4fd6ff, {metalness:0.4,  roughness:0.3, emissive:0x0b3a48});
+  const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.235,0.155,0.30,26), m);
+  bell.position.set(0.90, 0.55, 0); bell.rotation.z = -Math.PI/2; group(id).add(bell);
+  rod(id, [0.75,0.55,0], [0.30,0.53,0], 0.155, m);                  // 変速機ケース
+  box(id, 0.28, 0.14, 0.30, m2, [0.55, 0.40, 0]);                   // バルブボディ
+  const propG = new THREE.Group(); propG.position.set(-0.45, 0.50, 0);
+  group(id).add(propG); spin(propG, 'x', 1/2.6);
+  const ps = new THREE.Mesh(new THREE.CylinderGeometry(0.040,0.040,1.44,16), m2);
+  ps.rotation.z = Math.PI/2; propG.add(ps);
+  const pk = new THREE.Mesh(new THREE.BoxGeometry(1.34,0.018,0.018), mk);
+  pk.position.y = 0.042; propG.add(pk);                              // 回転が見えるライン
+  mesh(id, new THREE.SphereGeometry(0.165,22,16), m, [-1.33, 0.42, 0]);   // デファレンシャル
+  const axG = new THREE.Group(); axG.position.set(-1.33, 0.395, 0);
+  group(id).add(axG); spin(axG, 'z', -1/GEAR);
+  for(const z of WZ){
+    const a = new THREE.Mesh(new THREE.CylinderGeometry(0.038,0.038,0.60,14), m2);
+    a.rotation.x = Math.PI/2; a.position.z = z*0.52; axG.add(a);
+    const s = new THREE.Mesh(new THREE.BoxGeometry(0.016,0.016,0.54), mk);
+    s.position.set(0,0.04,z*0.52); axG.add(s);
+  }
+}
+
+/* ===================== 10 始動・充電・バッテリー ===================== */
+{
+  const id='electrical';
+  const m  = pmat(id, 0x8ceedb, {metalness:0.75, roughness:0.3, env:1.4});
+  const m2 = pmat(id, 0x33907c, {metalness:0.35, roughness:0.6, env:0.9});
+  box(id, 0.28, 0.22, 0.22, m2, [1.74, 0.78, 0.48]);                // 12V鉛バッテリー
+  const altG = new THREE.Group(); altG.position.set(1.86, 0.80, -0.30);
+  const alt = new THREE.Mesh(new THREE.CylinderGeometry(0.092,0.092,0.15,20), m);
+  alt.rotation.z = Math.PI/2; altG.add(alt);
+  const am = new THREE.Mesh(new THREE.BoxGeometry(0.155,0.17,0.02), m2); altG.add(am);
+  group(id).add(altG); spin(altG, 'x', 2.6);                        // オルタネーター（ベルト駆動）
+  rod(id, [1.02,0.48,-0.30], [1.22,0.48,-0.30], 0.078, m);          // スターターモーター
+  box(id, 0.15, 0.12, 0.17, m, [1.30, 0.96, 0.48]);                 // ヒューズボックス
+}
+
+/* ===================== 11 ハーネス・ECU ===================== */
+{
+  const id='harness';
+  const m  = pmat(id, 0xff8ad4, {metalness:0.25, roughness:0.75, env:0.7});
+  const m2 = pmat(id, 0xc75ba4, {metalness:0.5,  roughness:0.45, env:1.0});
+  box(id, 0.20, 0.06, 0.22, m2, [1.06, 0.90, 0.32]);                // エンジンECU
+  box(id, 0.17, 0.05, 0.19, m2, [0.40, 0.36, -0.42]);               // ボディECU
+  pipe(id, [[1.78,0.92,0.40],[1.45,1.14,0.30],[1.12,0.94,0.32],[1.00,0.70,0.40],[0.50,0.36,0.44],[-0.60,0.34,0.44],[-1.60,0.40,0.40]], 0.016, m);
+  pipe(id, [[1.62,0.70,-0.42],[1.10,0.58,-0.44],[0.60,0.38,-0.46],[-0.50,0.34,-0.46],[-1.55,0.40,-0.40]], 0.016, m);
+  pipe(id, [[1.04,0.90,0.32],[0.96,1.02,0.08],[0.92,0.98,-0.28],[1.00,0.80,-0.44]], 0.013, m);
+}
+
+/* ===================== 12 サスペンション ===================== */
+{
+  const id='suspension';
+  const m  = pmat(id, 0xa8e070, {metalness:0.85, roughness:0.28, env:1.5});
+  const m2 = pmat(id, 0x6da83f, {metalness:0.7,  roughness:0.4, env:1.2});
+  for(const x of WX) for(const z of WZ){
+    rod(id, [x, 0.40, z*0.88], [x, 0.94, z*0.70], 0.034, m);        // ショックアブソーバー
+    spring(id, x, 0.44, z*0.80, 0.082, 0.44, 5, m2);                // コイルスプリング
+    box(id, 0.10, 0.05, 0.34, m2, [x, 0.38, z*0.60]);               // ロアアーム
+    rod(id, [x, 0.36, z*0.68], [x, 0.36, z*0.80], 0.082, m);        // ハブベアリング
+    box(id, 0.07, 0.20, 0.06, m, [x, 0.44, z*0.86]);                // ナックル
+  }
+  for(const x of WX){
+    box(id, 0.22, 0.07, 1.30, m2, [x, 0.33, 0]);                    // サブフレーム
+    pipe(id, [[x,0.48,0.70],[x-0.16*Math.sign(x),0.44,0],[x,0.48,-0.70]], 0.021, m);  // スタビライザー
+  }
+}
+
+/* ===================== 13 ブレーキ（ローターは回る） ===================== */
+{
+  const id='brake';
+  const m  = pmat(id, 0xff6b6b, {metalness:0.7, roughness:0.35, env:1.3});
+  const m2 = pmat(id, 0xc6ced6, {metalness:1.0, roughness:0.22, env:2.0});
+  const brakeSteer = [];
+  for(const x of WX) for(const z of WZ){
+    const st = new THREE.Group(); st.position.set(x, 0.36, z); group(id).add(st);
+    const sp = new THREE.Group(); st.add(sp); spin(sp, 'z', -1/GEAR);
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.215,0.215,0.028,30), m2);
+    disc.rotation.x = Math.PI/2; disc.position.z = Math.sign(z)*0.09; sp.add(disc);
+    for(let i=0;i<8;i++){                                            // ベンチレーテッドの穴
+      const h = new THREE.Mesh(new THREE.BoxGeometry(0.02,0.10,0.032), m);
+      h.position.set(Math.cos(i/8*Math.PI*2)*0.13, Math.sin(i/8*Math.PI*2)*0.13, Math.sign(z)*0.09);
+      h.rotation.z = i/8*Math.PI*2; sp.add(h);
+    }
+    const cal = new THREE.Mesh(new THREE.BoxGeometry(0.13,0.16,0.07), m);
+    cal.position.set(-0.19*Math.sign(x), 0.12, Math.sign(z)*0.09); st.add(cal);
+    if(x > 0) brakeSteer.push(st);
+  }
+  group(id).userData.steer = brakeSteer;
+  box(id, 0.16, 0.11, 0.13, m, [1.12, 0.90, 0.20]);                  // マスターシリンダー
+  rod(id, [1.06,0.90,0.20], [0.96,0.90,0.20], 0.105, m2);            // ブースター
+  box(id, 0.13, 0.12, 0.13, m, [1.22, 0.62, 0.42]);                  // ABS/ESCユニット
+  pipe(id, [[1.14,0.58,0.42],[0.60,0.40,0.48],[-0.60,0.36,0.48],[-1.30,0.40,0.60]], 0.011, m);
+}
+
+/* ===================== 14 ステアリング ===================== */
+{
+  const id='steering';
+  const m  = pmat(id, 0x9ac6ff, {metalness:0.8, roughness:0.3, env:1.5});
+  const m2 = pmat(id, 0x5f93d8, {metalness:0.7, roughness:0.35, env:1.3});
+  const swG = new THREE.Group(); swG.position.set(0.64, 1.16, 0.40);
+  swG.rotation.y = Math.PI/2; swG.rotateOnWorldAxis(new THREE.Vector3(0,0,1), -0.52);
+  const rim2 = new THREE.Mesh(new THREE.TorusGeometry(0.14,0.021,12,28), m); swG.add(rim2);
+  for(let i=0;i<3;i++){
+    const s = new THREE.Mesh(new THREE.BoxGeometry(0.018,0.14,0.018), m);
+    s.position.set(Math.cos(i/3*Math.PI*2)*0.07, Math.sin(i/3*Math.PI*2)*0.07, 0);
+    s.rotation.z = -i/3*Math.PI*2; swG.add(s);
+  }
+  group(id).add(swG); group(id).userData.wheelG = swG;
+  rod(id, [0.68,1.14,0.40], [0.98,0.86,0.40], 0.028, m2);            // コラム
+  rod(id, [0.98,0.86,0.40], [1.20,0.58,0.38], 0.024, m2);            // 中間シャフト
+  rod(id, [1.20,0.56,-0.52], [1.20,0.56,0.52], 0.042, m);            // ラック
+  rod(id, [1.18,0.56,0.28], [1.18,0.56,0.46], 0.072, m2);            // EPSモーター
+  for(const z of WZ) rod(id, [1.22,0.53,z*0.60], [1.32,0.46,z*0.82], 0.020, m2);  // タイロッド
+}
+
+/* ===================== 15 タイヤ・ホイール ===================== */
+{
+  const id='tire';
+  const tm = pmat(id, 0x161b21, {metalness:0.1, roughness:0.92, env:0.5});
+  const wm = pmat(id, 0xbcc8d6, {metalness:1.0, roughness:0.18, env:2.4});
+  const steerGroups = [];
+  for(const x of WX) for(const z of WZ){
+    const st = new THREE.Group(); st.position.set(x, TIRE_R-0.02, z); group(id).add(st);
+    const sp = new THREE.Group(); st.add(sp); spin(sp, 'z', -1/GEAR);
+    const t = new THREE.Mesh(new THREE.CylinderGeometry(TIRE_R,TIRE_R,0.26,36), tm);
+    t.rotation.x = Math.PI/2; sp.add(t);
+    for(let i=0;i<20;i++){                                           // トレッド（回転が見える）
+      const g = new THREE.Mesh(new THREE.BoxGeometry(0.035,0.02,0.27), tm);
+      g.position.set(Math.cos(i/20*Math.PI*2)*TIRE_R, Math.sin(i/20*Math.PI*2)*TIRE_R, 0);
+      g.rotation.z = i/20*Math.PI*2; sp.add(g);
+    }
+    const r = new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,0.27,28), wm);
+    r.rotation.x = Math.PI/2; sp.add(r);
+    for(let i=0;i<5;i++){
+      const s = new THREE.Mesh(new THREE.BoxGeometry(0.05,0.36,0.10), wm);
+      s.position.z = Math.sign(z)*0.10; s.rotation.z = i/5*Math.PI*2; sp.add(s);
+    }
+    if(x > 0) steerGroups.push(st);
+  }
+  group(id).userData.steer = steerGroups;
+}
+
+/* ===================== 16 内装・シート ===================== */
+{
+  const id='interior';
+  const m  = pmat(id, 0xb08258, {metalness:0.2, roughness:0.8,  env:0.9});
+  const m2 = pmat(id, 0x4a4f57, {metalness:0.35, roughness:0.7, env:1.0});
+  const m3 = pmat(id, 0x6c7480, {metalness:0.2, roughness:0.9, transparent:true, opacity:0.26, env:0.6});
+  for(const [x,zs] of [[0.20,[0.38,-0.38]], [-0.72,[0.40,-0.40]]]){
+    for(const z of zs){
+      box(id, 0.46, 0.10, 0.44, m,  [x, 0.56, z]);                   // クッション
+      box(id, 0.10, 0.52, 0.44, m2, [x-0.25, 0.84, z]);              // シートバック
+      box(id, 0.11, 0.11, 0.20, m,  [x-0.25, 1.15, z]);              // ヘッドレスト
+    }
+  }
+  box(id, 0.24, 0.22, 1.30, m2, [0.86, 0.92, 0]);                    // インパネ
+  box(id, 0.72, 0.13, 0.22, m,  [-0.08, 0.50, 0]);                   // コンソール
+  box(id, 2.20, 0.02, 1.30, m3, [-0.28, 0.335, 0]);                  // カーペット
+  box(id, 1.70, 0.02, 1.05, m3, [-0.30, 1.355, 0]);                  // 天井材
+  for(const z of [0.86,-0.86]) box(id, 1.70, 0.34, 0.04, m3, [-0.30, 0.70, z]);  // ドアトリム
+}
+
+/* ===================== 17 空調 ===================== */
+{
+  const id='hvac';
+  const m  = pmat(id, 0x5fb6dd, {metalness:0.6, roughness:0.42, env:0.8});
+  const m2 = pmat(id, 0x2f9fce, {metalness:0.55, roughness:0.42, env:1.2});
+  box(id, 0.30, 0.28, 0.50, m, [0.84, 0.76, 0]);                     // HVACユニット
+  const compG = new THREE.Group(); compG.position.set(1.78, 0.50, 0.26);
+  const comp = new THREE.Mesh(new THREE.CylinderGeometry(0.082,0.082,0.14,20), m2);
+  comp.rotation.z = Math.PI/2; compG.add(comp);
+  const cm = new THREE.Mesh(new THREE.BoxGeometry(0.145,0.15,0.02), m); compG.add(cm);
+  group(id).add(compG); spin(compG, 'x', 1.3);                       // ベルト駆動コンプレッサー
+  box(id, 0.05, 0.32, 0.92, m, [2.14, 0.66, 0]);                     // コンデンサー
+  pipe(id, [[1.86,0.52,0.28],[2.06,0.56,0.30],[2.16,0.60,0.28]], 0.018, m2);
+  pipe(id, [[2.16,0.80,-0.20],[1.60,0.90,-0.30],[1.02,0.82,-0.18],[0.90,0.78,-0.08]], 0.018, m2);
+}
+
+/* ===================== 18 ランプ ===================== */
+{
+  const id='lamp';
+  const hm = pmat(id, 0xfff4c2, {metalness:0.3, roughness:0.1, emissive:0x6a5a18, env:2.0});
+  const tm = pmat(id, 0xff6a6a, {metalness:0.3, roughness:0.15, emissive:0x3a0808, env:1.6});
+  for(const z of [0.56,-0.56]){
+    box(id, 0.09, 0.11, 0.34, hm, [2.22, 0.68, z], [0,0,-0.30]);     // ヘッドランプ
+    glow(id, 0xfff0c0, 0.30, [2.27, 0.68, z], 0.45);
+    box(id, 0.07, 0.10, 0.34, tm, [-2.20, 0.70, z], [0,0,0.26]);     // リアコンビランプ
+    glow(id, 0xff7a6a, 0.26, [-2.24, 0.70, z], 0.35);
+  }
+}
+
+/* ===================== 流れ（吸気・燃料・排気・冷却水・動力・電気） ===================== */
+function makeFlow(name, partIds, color, pts, count, speed, size, closed){
+  const curve = new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p)), !!closed);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(count*3), 3));
+  const mat = new THREE.PointsMaterial({ size, map:DOT, color, transparent:true, opacity:0.95,
+    blending:THREE.AdditiveBlending, depthWrite:false, sizeAttenuation:true });
+  const obj = new THREE.Points(geo, mat);
+  obj.frustumCulled = false;
+  carRoot.add(obj);
+  flowList.push({ name, partIds, curve, count, speed, obj, mat, on:true });
+}
+makeFlow('intake', ['turbo','engine'], 0x4fd6ff, [
+  [1.70,0.98,-0.62],[1.42,0.76,-0.56],[1.18,0.62,0.16],[1.12,0.60,0.34],
+  [1.30,0.52,0.50],[1.75,0.46,0.46],[1.98,0.48,0.22],[2.00,0.60,-0.14],
+  [1.80,0.80,-0.36],[1.58,0.97,-0.44],[1.45,0.99,-0.30],[1.45,0.99,-0.12]
+], 22, 0.10, 0.075);
+makeFlow('fuel', ['fuel'], 0x5fe3a1, [
+  [-0.92,0.62,0.24],[-0.60,0.56,0.30],[0.30,0.40,0.40],[1.05,0.52,0.36],
+  [1.30,0.86,-0.10],[1.42,1.06,-0.26],[1.60,1.04,-0.26]
+], 16, 0.09, 0.06);
+makeFlow('exhaust', ['exhaust','turbo'], 0xff6a5a, [
+  [1.69,0.99,0.10],[1.60,0.92,0.24],[1.45,0.86,0.32],[1.24,0.70,0.38],
+  [1.12,0.60,0.44],[1.02,0.44,0.30],[0.78,0.40,0.21],[0.28,0.37,0.17],
+  [-0.60,0.36,0.15],[-1.40,0.37,0.14],[-1.80,0.37,0.13],[-2.10,0.39,0.22],[-2.40,0.44,0.40]
+], 26, 0.11, 0.075);
+makeFlow('coolant', ['cooling','engine'], 0x7fb2ff, [
+  [1.58,0.92,0.14],[1.78,0.96,0.20],[2.00,0.92,0.16],[2.10,0.72,0.04],
+  [2.04,0.50,-0.16],[1.84,0.46,-0.20],[1.66,0.58,-0.16],[1.50,0.74,-0.04],[1.50,0.86,0.06]
+], 18, 0.085, 0.055, true);
+makeFlow('power', ['transmission','crank','tire'], 0xb18cff, [
+  [1.40,0.55,0],[1.06,0.55,0],[0.80,0.54,0],[0.40,0.52,0],
+  [-0.40,0.49,0],[-1.10,0.45,0],[-1.33,0.42,0],[-1.33,0.39,0.40],[-1.35,0.38,0.76]
+], 20, 0.075, 0.065);
+makeFlow('power', ['transmission','crank','tire'], 0xb18cff, [
+  [-1.33,0.42,0],[-1.33,0.39,-0.40],[-1.35,0.38,-0.76]
+], 7, 0.075, 0.065);
+makeFlow('volt', ['electrical','harness'], 0xff8ad4, [
+  [1.86,0.80,-0.36],[1.80,0.90,-0.10],[1.76,0.84,0.34],[1.74,0.80,0.46],
+  [1.45,1.12,0.30],[1.06,0.92,0.32],[0.50,0.38,0.44],[-0.60,0.36,0.44],[-1.60,0.42,0.40]
+], 18, 0.08, 0.05);
+
+/* ===================== メタ情報 ===================== */
+const CAR_CENTER = new THREE.Vector3(0, 0.55, 0);
+const NUDGE = {
+  body:[0,0,0], glass:[0,0.95,0], engine:[0,0.75,0], crank:[0.80,0.15,-0.85],
+  fuel:[0,-0.35,0.80], turbo:[0,0.35,-0.85], ignition:[0,1.05,0.25], exhaust:[0,-0.70,-0.55],
+  cooling:[0.60,0.35,0], transmission:[0,-0.65,0.55], electrical:[0.25,0.65,0.60],
+  harness:[0,1.10,-0.45], suspension:[0,0,0.55], brake:[0,-0.15,1.00], steering:[0,0.55,0.45],
+  tire:[0,0,1.20], interior:[0,0.60,0], hvac:[0,0.70,0.35], lamp:[0.60,0.15,0]
+};
+const SHAKE = new Set(['engine','crank','ignition','turbo','exhaust']);
+{
+  const b3 = new THREE.Box3(), sz = new THREE.Vector3();
+  for(const p of PARTS){
+    const g = partGroups.get(p.id);
+    b3.setFromObject(g); b3.getSize(sz);
+    const center = b3.getCenter(new THREE.Vector3());
+    const auto = center.clone().sub(CAR_CENTER).multiplyScalar(0.42);
+    const n = NUDGE[p.id] || [0,0,0];
+    partMeta.set(p.id, {
+      center, radius: Math.max(sz.x, sz.y, sz.z)*0.5,
+      offset: new THREE.Vector3(auto.x+n[0], auto.y+n[1], auto.z+n[2])
+    });
+  }
+}
+
+/* ===================== UI 骨組み ===================== */
+const railList = document.getElementById('railList');
+const pinLayer = document.getElementById('pins');
+const tipEl    = document.getElementById('tip');
+const dossier  = document.getElementById('dossier');
+const dScroll  = document.getElementById('dScroll');
+const introEl  = document.getElementById('intro');
+const hexOf = c => '#'+c.toString(16).padStart(6,'0');
+let filter='all', selected=null, hovered=null;
+
+function renderList(){
+  const items = PARTS.filter(p => filter==='all' || p.ev===filter);
+  document.getElementById('railCount').textContent = `${String(items.length).padStart(2,'0')} / ${PARTS.length} SYSTEMS`;
+  railList.innerHTML = items.map(p=>{
+    const no = PARTS.indexOf(p)+1;
+    return `<button class="item" role="option" data-id="${p.id}" aria-selected="${selected===p.id}">
+      <span class="no">${String(no).padStart(2,'0')}</span>
+      <span><span class="nm"><i class="dot" style="background:${hexOf(p.color)}"></i>${p.name}</span>
+      <span class="en">${p.en}</span></span></button>`;
+  }).join('');
+}
+railList.addEventListener('click', e=>{
+  const b = e.target.closest('.item'); if(b) select(b.dataset.id, true);
+});
+document.getElementById('filters').addEventListener('click', e=>{
+  const b = e.target.closest('.chip'); if(!b) return;
+  filter = b.dataset.f;
+  document.querySelectorAll('#filters .chip').forEach(c=>c.setAttribute('aria-pressed', String(c===b)));
+  renderList();
+});
+
+const pinEls = new Map();
+PARTS.forEach((p,i)=>{
+  const el = document.createElement('div');
+  el.className = 'pin';
+  el.innerHTML = `<b style="background:${hexOf(p.color)}">${i+1}</b><span>${p.name}</span>`;
+  el.addEventListener('click', ev=>{ ev.stopPropagation(); select(p.id, true); });
+  pinLayer.appendChild(el); pinEls.set(p.id, el);
+});
+
+/* HUD の気筒カード */
+const cylsEl = document.getElementById('cyls');
+cylsEl.innerHTML = [1,2,3,4].map(n=>
+  `<div class="cyl" data-c="${n-1}"><div class="id">CYL ${n}</div><div class="st">—</div><span class="bar"><i></i></span></div>`
+).join('');
+const cylCards = [...cylsEl.querySelectorAll('.cyl')].map(el=>({
+  el, st: el.querySelector('.st'), bar: el.querySelector('.bar i')
+}));
+const STROKES = [
+  { name:'吸気', color:'#4fd6ff' }, { name:'圧縮', color:'#8fa2ba' },
+  { name:'燃焼', color:'#ff9a3c' }, { name:'排気', color:'#ff6a5a' }
+];
+
+/* ===================== 見た目の状態 ===================== */
+function dimOf(id){ return (selected && selected !== id) ? 0.16 : 1; }
+function applyVisualState(){
+  for(const [id, mats] of partMaterials){
+    const isSel = selected===id, isHov = hovered===id, other = selected && !isSel;
+    for(const m of mats){
+      if(m.userData.isLine){
+        m.color.copy(m.userData.baseColor);
+        m.opacity = other ? m.userData.baseOpacity*0.2 : m.userData.baseOpacity;
+        if(isSel || isHov){ m.color.set(0xbdf0ff); m.opacity = 0.95; }
+        continue;
+      }
+      m.emissive.copy(m.userData.baseEmissive);
+      m.opacity = m.userData.baseOpacity;
+      m.transparent = m.userData.baseTransparent;
+      if(isSel || isHov){
+        m.emissive.copy(m.userData.baseColor).multiplyScalar(isSel ? 0.42 : 0.22);
+      } else if(other){
+        m.transparent = true;
+        m.opacity = Math.min(m.userData.baseOpacity, 0.12);
+      }
+      m.needsUpdate = true;
+    }
+  }
+  for(const m of spriteMats){
+    if(m.userData.animated) continue;
+    m.opacity = m.userData.baseOpacity * dimOf(m.userData.partId);
+  }
+  for(const [id, el] of pinEls){
+    el.classList.toggle('on', selected===id);
+    el.classList.toggle('dim', !!selected && selected!==id);
+  }
+}
+
+/* ===================== 詳細ドシエ ===================== */
+function renderDetail(p){
+  const no = PARTS.indexOf(p)+1;
+  const chips = (arr, cls) => arr.map(c=>`<span class="tag co ${cls}">${c}</span>`).join('');
+  const chain = p.chain.map(c=>`<div class="step"><div class="stg">${c.s}</div>
+      <div class="bd">${c.b}<div class="pl">▸ ${c.p}</div></div></div>`).join('');
+  dScroll.innerHTML = `
+    <div class="d-head">
+      <div class="row">
+        <span class="swatch" style="background:${hexOf(p.color)}"></span>
+        <span class="sysno">SYSTEM ${String(no).padStart(2,'0')}</span>
+        <button class="ghost-btn d-close" id="dClose">閉じる</button>
+      </div>
+      <h2>${p.name}</h2>
+      <div class="en">${p.en}</div>
+      <div class="badges">
+        <span class="badge ${p.ev}">${EV_LABEL[p.ev]}</span>
+        <span class="badge">構成部品 ${p.parts.length}種</span>
+      </div>
+    </div>
+    <div class="sec"><h3>Motion ／ どう動くか</h3>
+      <div class="motion"><span class="tagline">3Dで動いている部分</span>${MOTION[p.id]}</div></div>
+    <div class="sec"><h3>Role ／ どんな部品か</h3><p>${p.summary}</p></div>
+    <div class="sec"><h3>Components</h3><div class="tags">${p.parts.map(x=>`<span class="tag">${x}</span>`).join('')}</div></div>
+    <div class="sec"><h3>Manufacturers</h3>
+      <div class="co-group"><div class="co-label">Japan</div><div class="tags">${chips(p.jp,'')}</div></div>
+      <div class="co-group"><div class="co-label">Global</div><div class="tags">${chips(p.global,'gl')}</div></div>
+    </div>
+    <div class="sec"><h3>Value Chain</h3><div class="chain">${chain}</div></div>
+    <div class="sec"><h3>Electrification</h3><div class="note">${p.note}</div></div>`;
+  dScroll.hidden = false; introEl.style.display = 'none';
+  dScroll.scrollTop = 0; dossier.classList.add('open');
+  document.getElementById('dClose').addEventListener('click', ()=> select(null, false));
+}
+
+/* ===================== 選択とカメラ ===================== */
+let camDesired = null, userMoved = false;
+function fitDistance(radius){
+  const vFov = THREE.MathUtils.degToRad(camera.fov);
+  const hFov = 2*Math.atan(Math.tan(vFov/2)*camera.aspect);
+  return radius / Math.sin(Math.min(vFov, hFov)/2);
+}
+const HOME_TARGET = new THREE.Vector3(0, 0.80, 0);
+const HOME_DIR = new THREE.Vector3(0.58, 0.33, 0.74).normalize();
+function homeCamera(){
+  return HOME_TARGET.clone().addScaledVector(HOME_DIR, THREE.MathUtils.clamp(fitDistance(2.45), 4.2, 26));
+}
+function focusOn(id){
+  const meta = partMeta.get(id);
+  const target = meta.center.clone().add(partGroups.get(id).position);
+  const dist = THREE.MathUtils.clamp(fitDistance(Math.max(meta.radius, 0.34)*2.3), 2.2, 22);
+  const dir = camera.position.clone().sub(controls.target).normalize();
+  camDesired = { target, pos: target.clone().addScaledVector(dir, dist) };
+}
+function select(id, focusCam){
+  selected = id;
+  if(id){
+    if((id==='body' || id==='glass') && !bodyOn) toggleBody(true);
+    if((id==='engine' || id==='crank' || id==='ignition') && !xrayOn) toggleXray(true);
+    renderDetail(PARTS.find(x=>x.id===id));
+    controls.autoRotate = false;
+    document.getElementById('btnOrbit').setAttribute('aria-pressed','false');
+    if(focusCam !== false) focusOn(id);
+  }else{
+    dScroll.hidden = true; dScroll.innerHTML = '';
+    introEl.style.display = ''; dossier.classList.remove('open');
+  }
+  railList.querySelectorAll('.item').forEach(el=> el.setAttribute('aria-selected', String(el.dataset.id===id)));
+  const act = railList.querySelector('.item[aria-selected="true"]');
+  if(act) act.scrollIntoView({block:'nearest', inline:'nearest', behavior:'smooth'});
+  applyVisualState();
+}
+
+/* ===================== ピッキング ===================== */
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+function pickAt(cx, cy){
+  const r = canvas.getBoundingClientRect();
+  ndc.x = ((cx-r.left)/r.width)*2-1;
+  ndc.y = -((cy-r.top)/r.height)*2+1;
+  ray.setFromCamera(ndc, camera);
+  for(const h of ray.intersectObjects(carRoot.children, true)){
+    if(h.object.userData.ghost || h.object.isPoints || h.object.isSprite) continue;
+    let o = h.object;
+    while(o && !o.userData.partId) o = o.parent;
+    if(o && o.visible) return o.userData.partId;
+  }
+  return null;
+}
+let downX=0, downY=0, downT=0;
+canvas.addEventListener('pointerdown', e=>{ downX=e.clientX; downY=e.clientY; downT=Date.now(); });
+canvas.addEventListener('pointerup', e=>{
+  if(Math.hypot(e.clientX-downX, e.clientY-downY) > 8 || Date.now()-downT > 700) return;
+  const id = pickAt(e.clientX, e.clientY);
+  select(id, !!id);
+});
+canvas.addEventListener('pointermove', e=>{
+  if(e.pointerType !== 'mouse') return;
+  const id = pickAt(e.clientX, e.clientY);
+  canvas.style.cursor = id ? 'pointer' : 'grab';
+  if(id !== hovered){ hovered = id; applyVisualState(); }
+  if(id){
+    const p = PARTS.find(x=>x.id===id), r = stageEl.getBoundingClientRect();
+    tipEl.style.display='block';
+    tipEl.style.left = (e.clientX-r.left)+'px';
+    tipEl.style.top  = (e.clientY-r.top)+'px';
+    tipEl.innerHTML = `<div>${p.name}</div><div class="en">${p.en} ／ ${EV_LABEL[p.ev]}</div>`;
+  } else tipEl.style.display='none';
+});
+canvas.addEventListener('pointerleave', ()=>{
+  tipEl.style.display='none';
+  if(hovered){ hovered=null; applyVisualState(); }
+});
+window.addEventListener('keydown', e=>{ if(e.key==='Escape'){ select(null,false); closeModal(); } });
+
+/* ===================== ドックの操作 ===================== */
+let running = true, rpm = 1600, exploded = false, explodeT = 0;
+let bodyOn = true, pinsOn = true, xrayOn = true;
+const btnRun = document.getElementById('btnRun');
+const btnXray = document.getElementById('btnXray');
+const btnBody = document.getElementById('btnBody');
+const btnPins = document.getElementById('btnPins');
+const btnOrbit= document.getElementById('btnOrbit');
+const btnExplode = document.getElementById('btnExplode');
+
+btnRun.addEventListener('click', ()=>{
+  running = !running;
+  btnRun.dataset.on = String(running);
+  btnRun.textContent = running ? '■ 停止' : '▶ 始動';
+});
+document.getElementById('rpm').addEventListener('input', e=>{ rpm = +e.target.value; });
+function toggleXray(force){
+  xrayOn = (force !== undefined) ? force : !xrayOn;
+  for(const m of xrayMats){
+    m.userData.baseOpacity = xrayOn ? 0.17 : 1;
+    m.userData.baseTransparent = xrayOn;
+  }
+  btnXray.setAttribute('aria-pressed', String(xrayOn));
+  applyVisualState();
+}
+function toggleBody(force){
+  bodyOn = (force !== undefined) ? force : !bodyOn;
+  partGroups.get('body').visible = bodyOn;
+  partGroups.get('glass').visible = bodyOn;
+  pinEls.get('body').style.visibility = bodyOn ? '' : 'hidden';
+  pinEls.get('glass').style.visibility= bodyOn ? '' : 'hidden';
+  btnBody.setAttribute('aria-pressed', String(bodyOn));
+}
+btnXray.addEventListener('click', ()=> toggleXray());
+btnBody.addEventListener('click', ()=> toggleBody());
+btnExplode.addEventListener('click', ()=>{
+  exploded = !exploded;
+  btnExplode.setAttribute('aria-pressed', String(exploded));
+  if(selected) setTimeout(()=> focusOn(selected), 420);
+});
+btnPins.addEventListener('click', ()=>{
+  pinsOn = !pinsOn;
+  pinLayer.style.display = pinsOn ? '' : 'none';
+  btnPins.setAttribute('aria-pressed', String(pinsOn));
+});
+btnOrbit.addEventListener('click', ()=>{
+  controls.autoRotate = !controls.autoRotate;
+  btnOrbit.setAttribute('aria-pressed', String(controls.autoRotate));
+});
+document.getElementById('btnReset').addEventListener('click', ()=>{
+  camDesired = { target:HOME_TARGET.clone(), pos:homeCamera() };
+  userMoved = false; select(null, false);
+});
+document.getElementById('flows').addEventListener('click', e=>{
+  const b = e.target.closest('.flow-btn'); if(!b) return;
+  const on = b.getAttribute('aria-pressed') !== 'true';
+  b.setAttribute('aria-pressed', String(on));
+  flowList.filter(f=>f.name===b.dataset.flow).forEach(f=>{ f.on = on; f.obj.visible = on; });
+});
+toggleXray(true);
+
+/* ===================== バリューチェーン全体図 ===================== */
+const FLOW_COLS = [
+  {cap:'UPSTREAM', h:'原材料', li:['鉄鉱石・原料炭（BHP／Vale／Rio Tinto）','ボーキサイト／銅／鉛','白金・パラジウム・ロジウム（南アフリカ・ロシア）','原油・天然ゴム（東南アジア）','レアアース（中国に精錬が集中）']},
+  {cap:'MATERIALS', h:'素材・部材', li:['鋼板・特殊鋼（日本製鉄／JFE／愛知製鋼）','アルミ・銅（UACJ／住友電工）','セラミック（日本ガイシ／Niterra）','樹脂・ゴム（三井化学／JSR）','半導体ウェハ（信越化学／SUMCO）']},
+  {cap:'TIER 2 / 3', h:'部品加工', li:['鋳造・鍛造・プレス・機械加工','金型（オギハラ／富士テクニカ宮津）','歯車・軸受（武蔵精密／NTN／NSK）','コネクタ・電子部品（村田／TDK）','中小サプライヤーの厚い層＝日本の強み']},
+  {cap:'TIER 1', h:'ユニット供給', li:['デンソー／アイシン／ボッシュ／ZF','システム単位で開発・保証を担う','OEMと同期したJIT納入','売上規模は数兆円クラスに集約','EV化で事業ポートフォリオを再構築中']},
+  {cap:'OEM', h:'完成車メーカー', li:['プレス→溶接→塗装→組立の4大工程','エンジン・車体は内製比率が高い','系列／グローバル調達のハイブリッド','1台=約3万点を同期させる統合能力','規制対応と商品企画の主体']},
+  {cap:'DOWNSTREAM', h:'販売・アフター', li:['ディーラー・販売金融','補修部品（消耗品が収益源）','中古車・リマン（再生部品）','使用済み車のリサイクル（PGM回収）','タイヤ・バッテリーは交換市場が主戦場']}
+];
+document.getElementById('chainBody').innerHTML = `
+  <div class="kpis">
+    <div class="kpi"><div class="v">30,000</div><div class="l">ICE車1台の部品点数（一般的な目安）</div></div>
+    <div class="kpi"><div class="v">10,000</div><div class="l">エンジン・排気・変速機などICE固有でEVでは不要になる部品</div></div>
+    <div class="kpi"><div class="v">720°</div><div class="l">クランク2回転＝吸気・圧縮・燃焼・排気の1サイクル</div></div>
+  </div>
+  <div class="flow-grid">
+    ${FLOW_COLS.map(c=>`<div class="col"><div class="cap">${c.cap}</div><h4>${c.h}</h4>
+      <ul>${c.li.map(x=>`<li>${x}</li>`).join('')}</ul></div>`).join('')}
+  </div>
+  <div class="split">
+    <div class="card"><h4>ICE車のバリューチェーンの特徴</h4><ul>
+      <li>エンジン・車体は<b>OEMの内製領域</b>で、そこに系列Tier1が密着する垂直的な構造。</li>
+      <li>Tier1がシステムを束ね、その下に加工を担うTier2・Tier3が広く連なる<b>ピラミッド型</b>。</li>
+      <li>擦り合わせ（インテグラル）型の設計で、部品単体ではなく<b>組み合わせの最適化</b>が競争力になる。</li>
+      <li>触媒のPGM、半導体、ハーネスなど<b>一点物の供給途絶が全ラインを止める</b>脆弱性を持つ。</li>
+    </ul></div>
+    <div class="card"><h4>EV化で何が変わるか</h4><ul>
+      <li><b>消える領域</b>：エンジン本体、燃料噴射、点火、排気・触媒、変速機、始動・充電系。</li>
+      <li><b>残る・伸びる領域</b>：車体、サスペンション、ブレーキ、ステアリング、内装、ランプ、ガラス、そして<b>熱マネジメントと電装</b>。</li>
+      <li>価値の中心が機構部品から<b>電池・パワー半導体・ソフトウェア</b>へ移動し、化学・電機メーカーが新たに参入。</li>
+      <li>モジュール化が進み、ピラミッド型から<b>水平分業型</b>へ構造が変化しつつある。</li>
+    </ul></div>
+  </div>
+  <div class="src">※ 掲載企業は各領域で代表的とされる主要プレーヤーの例示であり、網羅的なものでも、特定車種の採用実績を示すものでもありません。
+  部品点数・シェアに関する数値は業界で一般に語られる概数です。3Dモデルは構造と動きを理解するための模式figureで、実車の寸法とは異なります。</div>`;
+
+const modal = document.getElementById('chainModal');
+function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); }
+document.getElementById('btnChain').addEventListener('click', ()=>{
+  modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
+});
+document.getElementById('btnChainClose').addEventListener('click', closeModal);
+modal.addEventListener('click', e=>{ if(e.target===modal) closeModal(); });
+
+/* ===================== リサイズ ===================== */
+controls.addEventListener('start', ()=>{ userMoved = true; });
+function resize(){
+  const w = stageEl.clientWidth, h = stageEl.clientHeight;
+  if(!w || !h) return;
+  renderer.setSize(w, h, false);
+  camera.aspect = w/h; camera.updateProjectionMatrix();
+  if(!selected && !userMoved){
+    camera.position.copy(homeCamera()); controls.target.copy(HOME_TARGET); camDesired = null;
+  }
+}
+new ResizeObserver(resize).observe(stageEl);
+camera.position.copy(homeCamera());
+resize();
+
+/* ===================== ループ ===================== */
+const TWO_PI = Math.PI*2, CYCLE = Math.PI*4;
+const _v = new THREE.Vector3(), _p = new THREE.Vector3();
+const pinWidth = new Map();
+function hidePin(el){ el.style.opacity = 0; el.style.pointerEvents = 'none'; }
+let theta = 0, lastT = performance.now(), hudT = 0, booted = false, steerPhase = 0;
+
+function animate(now){
+  requestAnimationFrame(animate);
+  const dt = Math.min(0.05, (now - lastT)/1000); lastT = now;
+  const omega = running ? rpm/60*TWO_PI : 0;        // クランク角速度 [rad/s]
+  theta = (theta + omega*dt) % CYCLE;
+
+  /* --- ピストン・コンロッド・クランク --- */
+  for(let i=0;i<4;i++){
+    const psi = theta + OFF[i];
+    const py  = pistonY(psi);
+    kin.pistons[i].position.y = py + 0.015;
+    orient(kin.rods[i], CYL[i], CY + CR_R*Math.cos(psi), CR_R*Math.sin(psi), CYL[i], py, 0);
+  }
+  /* --- バルブ（クランク2回転で1往復） --- */
+  for(const v of kin.valves){
+    const c = (theta + OFF[v.cyl]) % CYCLE;
+    let lift = 0;
+    if(v.intake && c < Math.PI) lift = Math.sin(c);
+    else if(!v.intake && c > Math.PI*3) lift = Math.sin(c - Math.PI*3);
+    v.g.position.y = DECK - lift*0.036;
+  }
+  /* --- 点火と燃焼 --- */
+  let ember = 0;
+  for(let i=0;i<4;i++){
+    const c = (theta + OFF[i]) % CYCLE;
+    const d = c - TWO_PI;                                   // 圧縮上死点からの角度
+    const spark = (d > -0.30 && d < 0.12) ? 1 : 0;
+    const burn  = (d > -0.10 && d < 1.5) ? Math.max(0, 1 - d/1.5) : 0;
+    const dim = dimOf('ignition'), dimE = dimOf('engine');
+    kin.plugs[i].material.opacity = spark * 0.95 * dim;
+    kin.plugs[i].scale.setScalar(0.16 + spark*0.06);
+    kin.flames[i].material.opacity = burn * 0.9 * dimE;
+    kin.flames[i].scale.setScalar(0.16 + burn*0.22);
+    ember += burn;
+  }
+  emberLight.intensity = ember * 1.6 * (running ? 1 : 0);
+
+  /* --- 回り続ける部品 --- */
+  if(omega > 0) for(const s of spinners) s.obj.rotation[s.axis] += omega * s.k * dt;
+
+  /* --- アイドルの振動と分解表示 --- */
+  const shake = running ? Math.min(0.004, 2.6/rpm) * Math.sin(theta*3.1) : 0;
+  const target = exploded ? 1 : 0;
+  explodeT += (target - explodeT) * 0.09;
+  for(const [id, g] of partGroups){
+    const off = partMeta.get(id).offset;
+    g.position.set(off.x*explodeT, off.y*explodeT, off.z*explodeT);
+    if(SHAKE.has(id)) g.position.y += shake;
+  }
+  /* --- ステアリング（選択中だけ舵を切る） --- */
+  const steerTarget = (selected === 'steering') ? 1 : 0;
+  steerPhase += dt;
+  const steer = steerTarget * Math.sin(steerPhase*0.9) * 0.22;
+  for(const pid of ['tire','brake']){
+    const list = partGroups.get(pid).userData.steer || [];
+    for(const g of list) g.rotation.y += (steer - g.rotation.y) * 0.08;
+  }
+  const sw = partGroups.get('steering').userData.wheelG;
+  if(sw){
+    const cur = sw.userData.a || 0;
+    const next = cur + (steer*2.4 - cur)*0.08;
+    sw.rotateZ(next - cur);                       // ハンドルは自身の軸まわりに回る
+    sw.userData.a = next;
+  }
+
+  /* --- 流れの粒 --- */
+  const rpmN = rpm/6000;
+  for(const f of flowList){
+    if(!f.on) continue;
+    const arr = f.obj.geometry.attributes.position.array;
+    const sp = f.speed * (f.name==='volt' ? 1 : (running ? 0.25 + rpmN*2.2 : 0.12));
+    f.phase = (f.phase || 0) + sp*dt;
+    for(let i=0;i<f.count;i++){
+      let t = (f.phase + i/f.count) % 1; if(t < 0) t += 1;
+      f.curve.getPointAt(t, _p);
+      arr[i*3] = _p.x; arr[i*3+1] = _p.y; arr[i*3+2] = _p.z;
+    }
+    f.obj.geometry.attributes.position.needsUpdate = true;
+    let o = 0.95;
+    if(selected && !f.partIds.includes(selected)) o = 0.10;
+    f.mat.opacity = o;
+  }
+
+  /* --- カメラ --- */
+  if(camDesired){
+    camera.position.lerp(camDesired.pos, 0.09);
+    controls.target.lerp(camDesired.target, 0.12);
+    if(camera.position.distanceTo(camDesired.pos) < 0.02) camDesired = null;
+  }
+  controls.update();
+  renderer.render(scene, camera);
+
+  /* --- HUD --- */
+  hudT += dt;
+  if(hudT > 0.08){
+    hudT = 0;
+    document.getElementById('hudRpm').textContent = running ? Math.round(rpm).toLocaleString() : '0';
+    for(let i=0;i<4;i++){
+      const c = (theta + OFF[i]) % CYCLE;
+      const k = Math.min(3, Math.floor(c/Math.PI));
+      const card = cylCards[i], st = STROKES[k];
+      if(card.st.textContent !== st.name){
+        card.st.textContent = st.name;
+        card.st.style.color = st.color;
+        card.bar.style.background = st.color;
+        card.el.classList.toggle('fire', k===2);
+      }
+      card.bar.style.width = ((c % Math.PI)/Math.PI*100).toFixed(0)+'%';
+    }
+  }
+
+  /* --- ラベルピン --- */
+  if(pinsOn){
+    const w = stageEl.clientWidth, h = stageEl.clientHeight;
+    const cands = [];
+    for(const [id, el] of pinEls){
+      const g = partGroups.get(id);
+      if(!g.visible){ hidePin(el); continue; }
+      _v.copy(partMeta.get(id).center).add(g.position);
+      const dist = camera.position.distanceTo(_v);
+      _v.project(camera);
+      if(_v.z > 1 || Math.abs(_v.x) > 1.1 || Math.abs(_v.y) > 1.1){ hidePin(el); continue; }
+      cands.push({ id, el, dist, x:(_v.x*0.5+0.5)*w, y:(-_v.y*0.5+0.5)*h });
+    }
+    cands.sort((a,b)=> a.id===selected ? -1 : b.id===selected ? 1 : a.dist-b.dist);
+    const placed = [];
+    const fits = r => !placed.some(q => !(r.r<q.l || r.l>q.r || r.b<q.t || r.t>q.b));
+    for(const c of cands){
+      let cw = pinWidth.get(c.id);
+      if(!cw){ c.el.classList.remove('mini'); cw = c.el.offsetWidth; if(cw) pinWidth.set(c.id, cw); else cw = 120; }
+      let r = { l:c.x-cw/2-3, r:c.x+cw/2+3, t:c.y-14, b:c.y+14 }, mini = false;
+      if(!fits(r)){ r = { l:c.x-14, r:c.x+14, t:c.y-13, b:c.y+13 }; mini = true; }
+      if(!fits(r) && c.id !== selected){ hidePin(c.el); continue; }
+      c.el.classList.toggle('mini', mini);
+      placed.push(r);
+      c.el.style.left = c.x+'px'; c.el.style.top = c.y+'px';
+      c.el.style.opacity = ''; c.el.style.pointerEvents = 'auto';
+      c.el.style.zIndex = String(Math.max(1, Math.round(2000 - c.dist*60)));
+    }
+  }
+
+  if(!booted){
+    booted = true;
+    const b = document.getElementById('boot');
+    b.style.opacity = 0; setTimeout(()=> b.remove(), 500);
+  }
+}
+renderList();
+applyVisualState();
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
