@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Global Investor Atlas ｜ ECMで出会う投資家の地図</title>
+<meta name="description" content="ECMで対話するグローバル投資家を、資金の出所・保有期間・判断スタイルで整理した地図。種別ごとの戦略、案件タイプ別の参加度、T. Rowe PriceとMaven Securitiesの役割比較、株式アナリストの仕事までを一望できます。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- フォントは描画をブロックしない: 届かない環境でも即座に代替フォントで表示する -->
+<link rel="stylesheet" media="print" onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap"></noscript>
+<style>
+  /* ============================================================
+     ディールブックの紙面をモチーフにした、落ち着いた編集系デザイン。
+     明暗どちらでも読めるよう色はすべてトークン経由で塗る。
+     グループ色: LO=藍 / HF=朱 / アセットオーナー=緑 / その他=紫
+     ============================================================ */
+  :root{
+    --bg:#f6f4ef;
+    --surface:#ffffff;
+    --surface-2:#efece5;
+    --line:#dcd7cc;
+    --line-2:#c4bdae;
+    --ink:#1b1e24;
+    --ink-2:#4a505b;
+    --ink-3:#7a808a;
+    --accent:#1f4fd1;
+
+    --g-lo:#2757c9;
+    --g-hf:#d2562a;
+    --g-ao:#23865a;
+    --g-ot:#7b4fc4;
+    --g-lo-bg:rgba(39,87,201,.10);
+    --g-hf-bg:rgba(210,86,42,.10);
+    --g-ao-bg:rgba(35,134,90,.10);
+    --g-ot-bg:rgba(123,79,196,.10);
+
+    --sans:"IBM Plex Sans","Noto Sans JP",system-ui,-apple-system,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
+    --jp:"Noto Sans JP",system-ui,-apple-system,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --radius:10px;
+    --shadow:0 1px 2px rgba(20,20,30,.05),0 8px 24px rgba(20,20,30,.06);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#111317;
+      --surface:#181b21;
+      --surface-2:#1f232a;
+      --line:#2c313a;
+      --line-2:#3c434f;
+      --ink:#e8eaee;
+      --ink-2:#b3b9c3;
+      --ink-3:#808895;
+      --accent:#7ea2ff;
+      --g-lo:#7ea2ff;
+      --g-hf:#ff8a5c;
+      --g-ao:#5bcf97;
+      --g-ot:#b996ff;
+      --g-lo-bg:rgba(126,162,255,.14);
+      --g-hf-bg:rgba(255,138,92,.14);
+      --g-ao-bg:rgba(91,207,151,.14);
+      --g-ot-bg:rgba(185,150,255,.14);
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#111317;
+    --surface:#181b21;
+    --surface-2:#1f232a;
+    --line:#2c313a;
+    --line-2:#3c434f;
+    --ink:#e8eaee;
+    --ink-2:#b3b9c3;
+    --ink-3:#808895;
+    --accent:#7ea2ff;
+    --g-lo:#7ea2ff;
+    --g-hf:#ff8a5c;
+    --g-ao:#5bcf97;
+    --g-ot:#b996ff;
+    --g-lo-bg:rgba(126,162,255,.14);
+    --g-hf-bg:rgba(255,138,92,.14);
+    --g-ao-bg:rgba(91,207,151,.14);
+    --g-ot-bg:rgba(185,150,255,.14);
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:64px}
+  @media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto} }
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.7;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden}
+  button{font-family:inherit;color:inherit}
+  a{color:var(--accent)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .wrap{max-width:1160px;margin:0 auto;padding:0 20px}
+  @media (max-width:560px){ .wrap{padding:0 16px} }
+
+  /* ---------------- top bar ---------------- */
+  .top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .top .wrap{display:flex;align-items:center;gap:14px;height:52px}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:600;font-size:14px;letter-spacing:.02em;white-space:nowrap}
+  .brand .glyph{width:18px;height:18px;border-radius:4px;flex:none;
+    background:conic-gradient(var(--g-lo) 0 25%,var(--g-hf) 0 50%,var(--g-ao) 0 75%,var(--g-ot) 0)}
+  .nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0}
+  .nav::-webkit-scrollbar{display:none}
+  .nav a{font-size:12.5px;color:var(--ink-2);text-decoration:none;padding:6px 10px;border-radius:6px;white-space:nowrap}
+  .nav a:hover{background:var(--surface-2);color:var(--ink)}
+  .icon-btn{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:7px;
+    height:30px;padding:0 10px;font-size:12px;cursor:pointer;color:var(--ink-2);text-decoration:none;
+    display:inline-flex;align-items:center}
+  .icon-btn:hover{border-color:var(--line-2);color:var(--ink)}
+  @media (max-width:720px){ .brand .t{display:none} }
+
+  /* ---------------- hero ---------------- */
+  .hero{padding:56px 0 28px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+  h1{font-family:var(--jp);font-size:clamp(28px,4.4vw,44px);line-height:1.25;margin:10px 0 14px;letter-spacing:-.01em;font-weight:700}
+  .lede{font-size:16px;color:var(--ink-2);max-width:760px;margin:0}
+  .axes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:28px}
+  .axis{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+  .axis .k{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+  .axis .q{font-weight:600;margin:2px 0 4px;font-family:var(--jp)}
+  .axis .a{font-size:13px;color:var(--ink-2)}
+  @media (max-width:720px){ .axes{grid-template-columns:1fr} }
+
+  section.block{padding:44px 0;border-top:1px solid var(--line)}
+  h2{font-family:var(--jp);font-size:24px;margin:6px 0 6px;line-height:1.35}
+  .sub{color:var(--ink-2);margin:0 0 22px;font-size:14.5px;max-width:780px}
+  h3{font-family:var(--jp);font-size:17px;margin:0 0 8px}
+
+  .legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12.5px;color:var(--ink-2);margin-bottom:12px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+
+  /* ---------------- map + detail ---------------- */
+  .map-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start}
+  @media (max-width:900px){ .map-grid{grid-template-columns:1fr} }
+  .map-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 16px 12px;box-shadow:var(--shadow)}
+  .plot{position:relative;aspect-ratio:1.18/1;margin:4px 0 0 22px}
+  @media (max-width:560px){ .plot{aspect-ratio:.95/1} }
+  .plot .area{position:absolute;inset:0 0 26px 0;border-left:1px solid var(--line-2);border-bottom:1px solid var(--line-2);
+    background:
+      linear-gradient(var(--line) 1px,transparent 1px) 0 0/100% 25%,
+      linear-gradient(90deg,var(--line) 1px,transparent 1px) 0 0/25% 100%;
+    background-color:transparent}
+  .plot .ylab{position:absolute;left:-22px;top:0;bottom:26px;width:18px;display:flex;flex-direction:column;justify-content:space-between;
+    align-items:center;font-size:10.5px;color:var(--ink-3)}
+  .plot .ylab span{writing-mode:vertical-rl;letter-spacing:.08em;white-space:nowrap}
+  .plot .xlab{position:absolute;left:0;right:0;bottom:0;height:22px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--ink-3)}
+  .plot .xlab span{font-family:var(--mono)}
+  .quad{position:absolute;font-size:10.5px;color:var(--ink-3);opacity:.85;pointer-events:none;font-family:var(--jp)}
+  .pt{position:absolute;transform:translate(-9px,50%);display:flex;align-items:center;gap:5px;
+    background:none;border:0;padding:3px;cursor:pointer;z-index:2;white-space:nowrap}
+  .pt .d{width:12px;height:12px;border-radius:50%;flex:none;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line-2);transition:transform .15s}
+  .pt .l{font-size:11.5px;font-weight:500;color:var(--ink);background:color-mix(in srgb,var(--surface) 82%,transparent);padding:0 4px;border-radius:4px;line-height:1.5}
+  .pt.left{flex-direction:row-reverse;transform:translate(9px,50%)}
+  .pt:hover .d,.pt[aria-pressed="true"] .d{transform:scale(1.45)}
+  .pt[aria-pressed="true"] .l{outline:1.5px solid currentColor;color:var(--ink)}
+  .pt.dim{opacity:.28}
+  @media (max-width:560px){ .pt .l{font-size:10px;padding:0 2px} .pt .d{width:10px;height:10px}
+    .pt{transform:translate(-8px,50%)} .pt.left{transform:translate(8px,50%)} .quad{display:none} }
+  .map-note{font-size:11.5px;color:var(--ink-3);margin:8px 0 0}
+
+  .detail{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+    position:sticky;top:66px;overflow:hidden}
+  @media (max-width:900px){ .detail{position:static} }
+  .detail .head{padding:16px 18px 12px;border-bottom:1px solid var(--line)}
+  .tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;letter-spacing:.02em}
+  .detail .nm{font-family:var(--jp);font-size:20px;font-weight:700;margin:8px 0 0;line-height:1.35}
+  .detail .en{font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
+  .detail .one{margin:8px 0 0;font-size:14px;color:var(--ink-2)}
+  .detail dl{margin:0;padding:6px 18px 16px}
+  .detail dt{font-size:11px;font-family:var(--mono);color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;margin-top:12px}
+  .detail dd{margin:2px 0 0;font-size:13.5px}
+  .detail dd ul{margin:2px 0 0;padding-left:18px}
+  .meters{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 18px 2px}
+  .meter .k{font-size:10.5px;color:var(--ink-3)}
+  .meter .v{font-size:12.5px;font-weight:600}
+  .bar{height:5px;border-radius:3px;background:var(--surface-2);margin-top:4px;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:3px}
+  .examples{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+  .examples span{font-size:12px;border:1px solid var(--line);border-radius:5px;padding:1px 7px;background:var(--surface-2)}
+
+  /* ---------------- type cards ---------------- */
+  .filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .chip{font-size:12.5px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer;color:var(--ink-2)}
+  .chip:hover{border-color:var(--line-2)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+  .card{text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 15px 13px;cursor:pointer;
+    border-top:3px solid var(--c);display:flex;flex-direction:column;gap:6px;transition:border-color .15s,transform .15s}
+  .card:hover{border-color:var(--line-2);border-top-color:var(--c);transform:translateY(-1px)}
+  .card .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .card .nm{font-family:var(--jp);font-weight:700;font-size:15px;line-height:1.4}
+  .card .en{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+  .card .one{font-size:12.8px;color:var(--ink-2);line-height:1.6}
+  .card .meta{display:flex;gap:10px;font-size:11px;color:var(--ink-3);margin-top:auto;padding-top:4px;flex-wrap:wrap}
+  .card .meta b{color:var(--ink-2);font-weight:500}
+  .card .ex{font-size:11.5px;color:var(--ink-3)}
+
+  /* ---------------- matrix ---------------- */
+  .table-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  thead th{font-size:11.5px;color:var(--ink-3);font-weight:500;background:var(--surface-2);white-space:nowrap;position:sticky;top:0}
+  tbody tr:last-child td,tbody tr:last-child th{border-bottom:0}
+  .matrix td.lv{text-align:center;white-space:nowrap}
+  .matrix tbody th{font-weight:500;white-space:nowrap}
+  .matrix tbody tr{cursor:pointer}
+  .matrix tbody tr:hover{background:var(--surface-2)}
+  .dots{display:inline-flex;gap:3px}
+  .dots i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--c);display:inline-block}
+  .dots i.on{background:var(--c)}
+  .matrix .note{font-size:11.5px;color:var(--ink-3);min-width:200px}
+  .matrix .grp-row th{background:var(--bg);font-size:11px;color:var(--ink-3);font-family:var(--mono);letter-spacing:.08em;cursor:default}
+  .matrix .grp-row:hover{background:transparent}
+  .mx-legend{font-size:12px;color:var(--ink-3);margin-top:10px;display:flex;gap:14px;flex-wrap:wrap}
+
+  /* ---------------- compare ---------------- */
+  .vs{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:760px){ .vs{grid-template-columns:1fr} }
+  .firm{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);border-top:4px solid var(--c)}
+  .firm .nm{font-size:21px;font-weight:600;margin:6px 0 2px}
+  .firm .kind{font-family:var(--jp);font-size:13.5px;color:var(--ink-2)}
+  .firm .quote{font-family:var(--jp);font-size:15px;font-weight:500;border-left:3px solid var(--c);padding:4px 0 4px 12px;margin:14px 0}
+  .firm ul{margin:0;padding-left:18px;font-size:13.5px}
+  .firm li{margin:3px 0}
+  .cmp{margin-top:16px}
+  .cmp td,.cmp th{font-size:13px}
+  .cmp table{min-width:640px}
+  .cmp tbody th{white-space:nowrap;color:var(--ink-2);font-weight:500;width:130px}
+  .cmp thead th:nth-child(2){color:var(--g-lo)}
+  .cmp thead th:nth-child(3){color:var(--g-hf)}
+
+  /* timeline */
+  .timeline{margin-top:26px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 18px 14px;box-shadow:var(--shadow)}
+  .tl{display:grid;grid-template-columns:repeat(7,minmax(128px,1fr));gap:0;overflow-x:auto;padding-bottom:6px}
+  .tl .st{padding:0 8px;border-left:1px dashed var(--line-2);min-width:128px}
+  .tl .st:first-child{border-left:0}
+  .tl .ph{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+  .tl .ttl{font-family:var(--jp);font-weight:700;font-size:13px;margin:2px 0 8px}
+  .lane{font-size:12px;line-height:1.55;border-radius:6px;padding:6px 8px;margin-bottom:6px}
+  .lane.lo{background:var(--g-lo-bg);color:var(--ink)}
+  .lane.hf{background:var(--g-hf-bg);color:var(--ink)}
+  .lane.none{background:transparent;color:var(--ink-3);border:1px dashed var(--line)}
+  .lane b{display:block;font-size:10.5px;letter-spacing:.04em}
+  .lane.lo b{color:var(--g-lo)}
+  .lane.hf b{color:var(--g-hf)}
+
+  /* ---------------- analyst ---------------- */
+  .tabs{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px;margin-bottom:16px;flex-wrap:wrap}
+  .tab{border:0;background:transparent;padding:7px 14px;border-radius:7px;font-size:13px;cursor:pointer;color:var(--ink-2)}
+  .tab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12);font-weight:600}
+  .panel[hidden]{display:none}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:760px){ .two{grid-template-columns:1fr} }
+  .box{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)}
+  .box.lo{border-top:3px solid var(--g-lo)}
+  .box.hf{border-top:3px solid var(--g-hf)}
+  .box ol,.box ul{margin:6px 0 0;padding-left:20px;font-size:13.5px}
+  .box li{margin:4px 0}
+  .box .kicker{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase}
+  .day{display:grid;grid-template-columns:62px 1fr;gap:4px 10px;font-size:13px;margin-top:8px}
+  .day .tm{font-family:var(--mono);color:var(--ink-3);font-size:12px}
+  .steps{counter-reset:s;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+  .step{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 15px;position:relative}
+  .step::before{counter-increment:s;content:"0" counter(s);font-family:var(--mono);font-size:11px;color:var(--accent);display:block;margin-bottom:2px}
+  .step h4{margin:0 0 4px;font-family:var(--jp);font-size:14px}
+  .step p{margin:0;font-size:12.8px;color:var(--ink-2)}
+  .callout{margin-top:14px;border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--surface);border-radius:8px;padding:12px 16px;font-size:13.5px}
+  .callout b{font-family:var(--jp)}
+
+  /* ---------------- checklist / glossary ---------------- */
+  .qs{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+  .q{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 15px}
+  .q .n{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+  .q .t{font-family:var(--jp);font-weight:700;font-size:14px;margin:2px 0 6px}
+  .q .r{font-size:12.5px;color:var(--ink-2)}
+  .q .r div{display:flex;gap:6px;margin-top:3px}
+  .q .r i{font-style:normal;font-size:10.5px;font-weight:600;border-radius:4px;padding:0 5px;flex:none;height:18px;line-height:18px}
+  .gl{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:0 22px}
+  .gl div{padding:10px 0;border-bottom:1px solid var(--line)}
+  .gl dt{font-weight:600;font-size:13.5px}
+  .gl dt span{font-family:var(--mono);font-size:11px;color:var(--ink-3);font-weight:400;margin-left:6px}
+  .gl dd{margin:2px 0 0;font-size:13px;color:var(--ink-2)}
+
+  footer{border-top:1px solid var(--line);padding:26px 0 40px;font-size:12px;color:var(--ink-3)}
+  footer p{margin:4px 0;max-width:820px}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><span class="glyph" aria-hidden="true"></span><span class="t">Global Investor Atlas</span></div>
+    <nav class="nav" aria-label="セクション">
+      <a href="#map">地図</a>
+      <a href="#types">種別一覧</a>
+      <a href="#matrix">案件別マトリクス</a>
+      <a href="#compare">T. Rowe vs Maven</a>
+      <a href="#analyst">アナリストの仕事</a>
+      <a href="#check">面談前チェック</a>
+      <a href="#glossary">用語</a>
+    </nav>
+    <button class="icon-btn" id="themeBtn" type="button" aria-label="表示テーマを切り替え">◐</button>
+    <a class="icon-btn" href="../index.html">← Portfolio</a>
+  </div>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <div class="eyebrow">ECM field guide · global buy-side</div>
+    <h1>ECMで出会う投資家を、<br>1枚の地図で。</h1>
+    <p class="lede">「ファンド」とひと口に言っても、誰のお金を、どれくらいの期間、何を根拠に動かしているかで行動はまったく違います。同じIPOのブックに並ぶ T. Rowe Price と Maven Securities は、ほぼ正反対の理由でオーダーを入れています。3つの問いで整理すると、相手が次に何をするかが読めるようになります。</p>
+    <div class="axes">
+      <div class="axis"><div class="k">AXIS 01 · 資金</div><div class="q">誰のお金か？</div><div class="a">顧客資金（投信・年金の運用委託）、国家・年金の自己資金、パートナーの自己資金。資金の粘着性が保有期間を決める。</div></div>
+      <div class="axis"><div class="k">AXIS 02 · 時間</div><div class="q">どれくらい持つか？</div><div class="a">日中〜数日で回すのか、5年以上持つのか。ECMでの「良い案件」の定義が真逆になる。</div></div>
+      <div class="axis"><div class="k">AXIS 03 · 判断</div><div class="q">何で判断するか？</div><div class="a">企業のファンダメンタルズか、需給・イベント・モデルか。アナリストに求める情報の中身が変わる。</div></div>
+    </div>
+  </div>
+
+  <!-- ============ MAP ============ -->
+  <section class="block" id="map">
+    <div class="wrap">
+      <div class="eyebrow">01 · Positioning map</div>
+      <h2>保有期間 × 判断スタイルの地図</h2>
+      <p class="sub">点をクリックすると右に詳細が出ます。右上に行くほど「長く持ち、ルールで動く」、左下に行くほど「短く回し、個別の材料で動く」。位置は各カテゴリーの典型像で、個々のファンドは幅を持ちます。</p>
+      <div class="legend" id="legend"></div>
+      <div class="map-grid">
+        <div class="map-card">
+          <div class="plot" id="plot">
+            <div class="area" id="area">
+              <div class="quad" style="left:8px;top:6px">システマティック × 短期</div>
+              <div class="quad" style="right:8px;top:6px;text-align:right">ルールベース × 長期</div>
+              <div class="quad" style="left:8px;bottom:6px">個別材料 × 短期</div>
+            </div>
+            <div class="ylab"><span>需給・モデル ↑</span><span>↓ ファンダメンタル</span></div>
+            <div class="xlab"><span>日中</span><span>数週間</span><span>数ヶ月</span><span>1〜3年</span><span>5年+</span></div>
+          </div>
+          <p class="map-note">横軸: 典型的な保有期間（右ほど長期）　縦軸: 下=企業ファンダメンタル重視 / 上=需給・イベント・モデル重視</p>
+        </div>
+        <aside class="detail" id="detail" aria-live="polite"></aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TYPES ============ -->
+  <section class="block" id="types">
+    <div class="wrap">
+      <div class="eyebrow">02 · Investor types</div>
+      <h2>投資家の種別と戦略</h2>
+      <p class="sub">大きく4グループ・16種別。カードを押すと地図の詳細パネルに飛びます。</p>
+      <div class="filters" id="filters" role="group" aria-label="グループで絞り込み"></div>
+      <div class="cards" id="cards"></div>
+    </div>
+  </section>
+
+  <!-- ============ MATRIX ============ -->
+  <section class="block" id="matrix">
+    <div class="wrap">
+      <div class="eyebrow">03 · Who shows up where</div>
+      <h2>案件タイプ別の参加度</h2>
+      <p class="sub">ECMの案件ごとに、どの種別が主役になるか。IPOのアンカーはロングオンリーと政府系、ABB（ブロック）の夜間ブックはヘッジファンドとロングオンリーの競り合い、CBはアービトラージが主役です。行を押すと詳細が開きます。</p>
+      <div class="table-wrap">
+        <table class="matrix" id="mx"></table>
+      </div>
+      <div class="mx-legend">
+        <span><span class="dots" style="--c:var(--ink-2)"><i class="on"></i><i class="on"></i><i class="on"></i></span> 主役</span>
+        <span><span class="dots" style="--c:var(--ink-2)"><i class="on"></i><i class="on"></i><i></i></span> 常連</span>
+        <span><span class="dots" style="--c:var(--ink-2)"><i class="on"></i><i></i><i></i></span> 案件次第</span>
+        <span><span class="dots" style="--c:var(--ink-2)"><i></i><i></i><i></i></span> ほぼ参加しない</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ COMPARE ============ -->
+  <section class="block" id="compare">
+    <div class="wrap">
+      <div class="eyebrow">04 · Deep dive</div>
+      <h2>T. Rowe Price と Maven Securities は何が違うのか</h2>
+      <p class="sub">どちらもECMの常連ですが、役割は正反対です。T. Rowe は「会社の株主になる」ために買い、Maven は「案件そのものが生む歪み」を取りにくる。前者は株価の長期的な土台を、後者はディールの流動性と価格発見を担います。</p>
+
+      <div class="vs">
+        <article class="firm" style="--c:var(--g-lo)">
+          <span class="tag" style="background:var(--g-lo-bg);color:var(--g-lo)">ロングオンリー / アクティブ運用</span>
+          <div class="nm">T. Rowe Price</div>
+          <div class="kind">米ボルチモア本拠の独立系アセットマネージャー（Nasdaq上場）。運用資産は約1.6兆ドル規模。成長株投資の草分けとして知られる。</div>
+          <div class="quote">「この会社を5年持てるか？」</div>
+          <ul>
+            <li><b>資金:</b> 投信・年金・退職口座（401k等）など顧客資金。解約されにくく、長期保有が可能</li>
+            <li><b>体制:</b> 大規模な社内リサーチ。セクター担当アナリストが銘柄を深掘りし、ポートフォリオマネージャー（PM）が最終判断</li>
+            <li><b>特徴:</b> 上場前（プライベート）のレイトステージ企業にも出資する「クロスオーバー」投資家としての顔を持つ</li>
+            <li><b>ECMでの役割:</b> IPOのアンカー／コーナーストーン候補、公募増資の中核需要。ブックの「質」を決める存在</li>
+          </ul>
+        </article>
+        <article class="firm" style="--c:var(--g-hf)">
+          <span class="tag" style="background:var(--g-hf-bg);color:var(--g-hf)">ヘッジファンド / プロップ・イベントドリブン</span>
+          <div class="nm">Maven Securities</div>
+          <div class="kind">ロンドン発のトレーディング・運用グループ。自己資金による売買を中心に、マーケットメイク、イベントドリブン（ECM・インデックス・M&amp;A）、クオンツ系の戦略を展開。欧州・アジア等に拠点を持つ。</div>
+          <div class="quote">「この案件で需給はどう歪むか？」</div>
+          <ul>
+            <li><b>資金:</b> 自己資金（プロップ）が中心。外部資金を受けるファンドも手掛ける</li>
+            <li><b>体制:</b> トレーダー・イベントアナリスト・クオンツが一体。案件カレンダーと需給データで高速に判断</li>
+            <li><b>特徴:</b> ヘッジ（空売り・指数先物・オプション）を組み合わせ、市場全体の方向ではなく案件固有のリターンを狙う</li>
+            <li><b>ECMでの役割:</b> ABB・ブロックトレードの即時の買い手、IPO/POの流動性供給、ロックアップ明けや指数組入れの需給の受け皿</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="table-wrap cmp">
+        <table>
+          <thead><tr><th>観点</th><th>T. Rowe Price</th><th>Maven Securities</th></tr></thead>
+          <tbody>
+            <tr><th>典型的な保有期間</th><td>数年（成長ストーリーが続く限り）</td><td>数時間〜数週間（イベント完了まで）</td></tr>
+            <tr><th>「良い案件」の定義</th><td>長期で複利成長できる事業を、妥当なバリュエーションで取得できる</td><td>ディスカウント・需給の歪み・ヘッジ可能性が十分で、期待値がプラス</td></tr>
+            <tr><th>オーダーの出し方</th><td>価格感応度の低い大口オーダー。上限価格付きでも条件はシンプル</td><td>価格指値付き、配分次第でサイズ調整。ヘッジ可否が前提</td></tr>
+            <tr><th>配分を受けた後</th><td>保有を継続し、PO・追加取得で買い増すことも</td><td>上場初日〜数日で売却、またはヘッジを外して手仕舞い</td></tr>
+            <tr><th>発行体にとっての価値</th><td>長期株主の土台。IR上の「看板」株主</td><td>ブックの厚み・価格発見・二次流通の流動性。案件を成立させるスピード</td></tr>
+            <tr><th>ブックランナーの見方</th><td>配分で優遇される Tier 1 投資家</td><td>需要として重要だが、配分は保有意図を見て調整されやすい</td></tr>
+            <tr><th>刺さる会話</th><td>TAM・競争優位・経営陣の質・資本配分・3〜5年の収益モデル</td><td>ディスカウント水準・フロート・売り手の残り持分・ロックアップ・指数イベントの日程・貸株</td></tr>
+            <tr><th>避けたい会話</th><td>短期の需給だけの話、四半期の細かいブレ</td><td>長大な業界論だけで、日付と数字が出てこない話</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="timeline">
+        <h3>ひとつのIPOのライフサイクルで、2社はどこに現れるか</h3>
+        <p class="sub" style="margin-bottom:14px">横にスクロールできます。青=T. Rowe Price型（長期LO）、橙=Maven Securities型（イベントドリブンHF）。</p>
+        <div class="tl" id="tl"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ANALYST ============ -->
+  <section class="block" id="analyst">
+    <div class="wrap">
+      <div class="eyebrow">05 · The analyst's job</div>
+      <h2>株式アナリストとしての仕事</h2>
+      <p class="sub">「株式アナリスト」は立場で仕事が変わります。相手の中で働くバイサイドのアナリストが何をしているかを知ると、セルサイド／ECM側として何を渡せば価値になるかが見えてきます。</p>
+
+      <div class="tabs" role="tablist" aria-label="アナリストの立場">
+        <button class="tab" role="tab" aria-selected="true" aria-controls="p-buy" id="t-buy">バイサイドの中の人</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="p-sell" id="t-sell">セルサイドとして何を渡すか</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="p-ipo" id="t-ipo">IPOでのアナリスト工程</button>
+      </div>
+
+      <div class="panel" id="p-buy" role="tabpanel" aria-labelledby="t-buy">
+        <div class="two">
+          <div class="box lo">
+            <div class="kicker">T. Rowe Price 型 · LO のセクターアナリスト</div>
+            <h3>「PMに推奨する銘柄の確信度を作る」</h3>
+            <ul>
+              <li>担当セクター（例: 日本の半導体・グローバルソフトウェア）を数十社カバーし、3〜5年の収益モデルを自前で持つ</li>
+              <li>経営陣・競合・顧客・サプライヤーへのヒアリングで、競争優位の持続性を検証</li>
+              <li>社内のPMに対して買い／売り／ウエイト変更を推奨。成績は推奨のパフォーマンスで評価される</li>
+              <li>IPO案件では、上場前から会社を知り、PDIE（事前需要調査）で価格感をフィードバック。アンカーになるかを社内で議論</li>
+              <li>上場後も議決権行使・エンゲージメントに関わることがある</li>
+            </ul>
+            <div class="day">
+              <span class="tm">08:00</span><span>ニュース・前日決算の確認、モデル更新</span>
+              <span class="tm">10:00</span><span>企業面談（決算説明・NDR・工場見学）</span>
+              <span class="tm">14:00</span><span>業界専門家コール、競合比較の作り込み</span>
+              <span class="tm">16:00</span><span>PMとの投資委員会・銘柄ディスカッション</span>
+            </div>
+          </div>
+          <div class="box hf">
+            <div class="kicker">Maven Securities 型 · イベントドリブンのアナリスト</div>
+            <h3>「イベントごとの期待値を数字にする」</h3>
+            <ul>
+              <li>案件カレンダー（IPO・PO・ロックアップ期限・指数入替・TOB）を常時監視し、需給インパクトを見積もる</li>
+              <li>ABB（夜間ブロック）が来たら、数十分でディスカウント・売り手の意図・残り持分・貸株コストを判断</li>
+              <li>指数（MSCI、TOPIX、FTSE等）の入替予想と、パッシブ資金の売買量をモデル化</li>
+              <li>ヘッジ手段（個別株の空売り、セクター・指数先物、オプション）の可否とコストを組み込む</li>
+              <li>トレーダー・リスク管理と一体で動き、ポジションの損益を日次で管理</li>
+            </ul>
+            <div class="day">
+              <span class="tm">07:00</span><span>前夜のブロック・案件の結果、寄り付きの需給確認</span>
+              <span class="tm">09:00</span><span>ウォールクロス（事前打診）の受諾判断・社内報告</span>
+              <span class="tm">13:00</span><span>指数入替・ロックアップ期限の需給試算</span>
+              <span class="tm">17:00</span><span>引け後のABBブックに参加、配分とヘッジを執行</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" id="p-sell" role="tabpanel" aria-labelledby="t-sell" hidden>
+        <div class="two">
+          <div class="box lo">
+            <div class="kicker">ロングオンリーへ渡すもの</div>
+            <h3>深さと独自性</h3>
+            <ul>
+              <li><b>イニシエーション・業界レポート:</b> 市場規模、競争構造、収益モデルの前提を明示した長期の論点</li>
+              <li><b>差別化された見解:</b> コンセンサスとどこが違うか、その根拠となる一次情報</li>
+              <li><b>経営陣アクセス:</b> NDR・カンファレンス・工場見学の設定（コーポレートアクセス）</li>
+              <li><b>バリュエーションの幅:</b> 強気・基本・弱気シナリオと、それぞれの前提</li>
+              <li><b>ESG・ガバナンス:</b> 議決権行使やスチュワードシップで必要になる論点</li>
+            </ul>
+          </div>
+          <div class="box hf">
+            <div class="kicker">ヘッジファンドへ渡すもの</div>
+            <h3>スピードとカタリスト</h3>
+            <ul>
+              <li><b>速報コメント:</b> 決算・ニュースに対する数分〜数十分以内の解釈</li>
+              <li><b>市場予想との差:</b> 自分の予想とコンセンサスのズレ、次の決算で何が起きうるか</li>
+              <li><b>カタリスト・カレンダー:</b> 決算、指数イベント、ロックアップ期限、株主総会</li>
+              <li><b>ロング／ショートのアイデア:</b> ペアトレード、セクター内の相対比較</li>
+              <li><b>ポジショニングの感触:</b> 誰が持っていて、誰が売りたがっているか（公開情報の範囲で）</li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout"><b>コンプライアンスの線引き:</b> リサーチアナリストは、案件のマーケティング（投資勧誘やロードショーへの同行、ピッチ）に関与できないのが原則です。ECM側で案件情報に触れたら、その情報は未公表の重要事実（MNPI）として扱い、ウォールクロスの手続きを経ずにヘッジファンドとの会話に持ち込まないこと。具体的な運用は所属会社のコンプライアンス規程に従ってください。</div>
+      </div>
+
+      <div class="panel" id="p-ipo" role="tabpanel" aria-labelledby="t-ipo" hidden>
+        <div class="steps">
+          <div class="step"><h4>アナリスト・プレゼン</h4><p>発行体経営陣が引受団のアナリストに事業を説明。アナリストはここから独立した見解を組み立てる。</p></div>
+          <div class="step"><h4>プレディール・リサーチ</h4><p>業界と会社の分析、収益モデル、バリュエーション手法をまとめる（市場によって扱いが異なる）。</p></div>
+          <div class="step"><h4>PDIE（事前需要調査）</h4><p>LO中心の投資家に説明し、関心度と価格感のフィードバックを集める。ここで T. Rowe 型の反応が仮条件を左右する。</p></div>
+          <div class="step"><h4>ブックビルディング</h4><p>リサーチは沈黙期間に入り、マーケティングはECM・セールスが担う。アナリストは表に出ない。</p></div>
+          <div class="step"><h4>上場後のカバレッジ開始</h4><p>一定の沈黙期間（米FINRA規則ではIPO後10日など）を経て正式カバレッジを開始。ここからHFも含め全投資家が読者になる。</p></div>
+        </div>
+        <div class="callout"><b>ポイント:</b> PDIEで T. Rowe 型が評価するのは「5年後の姿」の説得力、上場後にHFが読むのは「次の決算・次のイベント」の読み。同じ銘柄でも2つの時間軸で準備しておくと、どちらの面談でも価値が出ます。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHECKLIST ============ -->
+  <section class="block" id="check">
+    <div class="wrap">
+      <div class="eyebrow">06 · Before the meeting</div>
+      <h2>面談前に相手を見抜く5つの質問</h2>
+      <p class="sub">初めて会うファンドでも、この5つが分かればだいたい地図のどこにいるかが決まります。</p>
+      <div class="qs">
+        <div class="q"><div class="n">Q1</div><div class="t">資金は誰のもの？</div><div class="r">
+          <div><i style="background:var(--g-lo-bg);color:var(--g-lo)">LO</i>顧客・年金の委託資金</div>
+          <div><i style="background:var(--g-hf-bg);color:var(--g-hf)">HF</i>パートナー・自己資金、ロックアップ付き外部資金</div></div></div>
+        <div class="q"><div class="n">Q2</div><div class="t">典型的な保有期間は？</div><div class="r">
+          <div><i style="background:var(--g-lo-bg);color:var(--g-lo)">LO</i>年単位</div>
+          <div><i style="background:var(--g-hf-bg);color:var(--g-hf)">HF</i>日〜数ヶ月</div></div></div>
+        <div class="q"><div class="n">Q3</div><div class="t">最終判断は誰が？</div><div class="r">
+          <div><i style="background:var(--g-lo-bg);color:var(--g-lo)">LO</i>PM（アナリスト推奨を受けて）</div>
+          <div><i style="background:var(--g-hf-bg);color:var(--g-hf)">HF</i>ポッドPM・トレーダー・モデル</div></div></div>
+        <div class="q"><div class="n">Q4</div><div class="t">ヘッジするか？</div><div class="r">
+          <div><i style="background:var(--g-lo-bg);color:var(--g-lo)">LO</i>基本しない（ベンチマーク比で管理）</div>
+          <div><i style="background:var(--g-hf-bg);color:var(--g-hf)">HF</i>する（ネットエクスポージャー管理）</div></div></div>
+        <div class="q"><div class="n">Q5</div><div class="t">流動性・サイズの制約は？</div><div class="r">
+          <div><i style="background:var(--g-lo-bg);color:var(--g-lo)">LO</i>時価総額・売買代金の下限あり</div>
+          <div><i style="background:var(--g-hf-bg);color:var(--g-hf)">HF</i>貸株・出来高で出口が取れるか</div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GLOSSARY ============ -->
+  <section class="block" id="glossary">
+    <div class="wrap">
+      <div class="eyebrow">07 · Glossary</div>
+      <h2>ECMで飛び交う用語</h2>
+      <dl class="gl">
+        <div><dt>ABB<span>Accelerated Bookbuild</span></dt><dd>引け後から翌朝までの短時間で需要を集めるブロック売出し。大株主の売却やPE・事業会社の持分放出で多用される。</dd></div>
+        <div><dt>ウォールクロス<span>Wall-crossing</span></dt><dd>未公表の案件情報を事前に投資家へ伝え、需要を探ること。受けた側はインサイダーとなり、公表まで売買できない。</dd></div>
+        <div><dt>コーナーストーン／アンカー<span>Cornerstone / Anchor</span></dt><dd>IPOで事前に一定額の取得を約束する投資家。香港などでは開示とロックアップを伴う制度として定着している。</dd></div>
+        <div><dt>PDIE<span>Pre-Deal Investor Education</span></dt><dd>IPO前にアナリストが投資家に会社を説明し、関心と価格感を集めるプロセス。</dd></div>
+        <div><dt>ロックアップ<span>Lock-up</span></dt><dd>既存株主や発行体が上場後一定期間、株式を売らない約束。期限到来は需給イベントとしてHFが注目する。</dd></div>
+        <div><dt>フリップ<span>Flipping</span></dt><dd>IPOで配分された株を上場直後に売ること。ブックランナーは配分時にこの傾向を見て投資家を階層分けする。</dd></div>
+        <div><dt>配分・ティア分け<span>Allocation / Tiering</span></dt><dd>需要超過時に、長期保有の意図・価格リーダーシップ・過去の行動で投資家を分類し、配分に差をつけること。</dd></div>
+        <div><dt>ディスカウント<span>Discount</span></dt><dd>PO・ABBで前日終値に対して何%安く価格決定するか。HFのリターン源泉であり、発行体にとってのコスト。</dd></div>
+        <div><dt>空売り規制（増資時）<span>Rule 105 など</span></dt><dd>米国のRule 105、日本の公募増資に関する空売り規制など、案件公表後の空売りと配分株での決済を制限するルール。HFのヘッジ手法に直結する。</dd></div>
+        <div><dt>CBアービトラージ<span>Convertible Arbitrage</span></dt><dd>転換社債を買い、株式を空売りしてデルタヘッジする戦略。CB発行時にはこの空売りが株価の重しになりやすい。</dd></div>
+        <div><dt>インデックス組入れ<span>Index Inclusion</span></dt><dd>指数に採用されるとパッシブ資金の買いが入る。イベントドリブンHFは発表前後の需給を先回りする。</dd></div>
+        <div><dt>オーバーサブスクリプション<span>Coverage</span></dt><dd>募集額に対する需要の倍率。倍率の高さより、需要の「質」（長期投資家の比率）が価格決定の鍵になる。</dd></div>
+      </dl>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>本ページは公開情報をもとにした一般的な整理であり、特定の金融商品の勧誘や投資助言ではありません。各社の体制・戦略・運用資産は時期によって変わるため、個別の面談前には最新の開示資料で確認してください。</p>
+    <p>各カテゴリーの位置づけや参加度は典型像を示したもので、個々のファンドの実際の行動とは異なる場合があります。</p>
+  </div>
+</footer>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ---------------- data ---------------- */
+  const GROUPS = {
+    lo: { label: "伝統的運用会社", en: "Asset managers", c: "var(--g-lo)", bg: "var(--g-lo-bg)" },
+    hf: { label: "ヘッジファンド", en: "Hedge funds", c: "var(--g-hf)", bg: "var(--g-hf-bg)" },
+    ao: { label: "アセットオーナー", en: "Asset owners", c: "var(--g-ao)", bg: "var(--g-ao-bg)" },
+    ot: { label: "その他の参加者", en: "Other", c: "var(--g-ot)", bg: "var(--g-ot-bg)" },
+  };
+
+  // x: 保有期間 0=日中 … 100=5年+ / y: 判断スタイル 0=ファンダメンタル … 100=需給・モデル
+  // ecm: [IPOアンカー, IPOブック, PO(公募・売出), ABB/ブロック, CB/EB] 0-3
+  const TYPES = [
+    { id:"active", g:"lo", short:"アクティブLO", name:"アクティブ運用（ロングオンリー）", en:"Active long-only",
+      x:78, y:14, horizon:"2〜5年+", money:"投信・年金・退職口座などの顧客資金", decider:"PM（社内アナリストの推奨を受けて）",
+      one:"企業を深く調べ、ベンチマークを上回る銘柄を長期で保有する。ECMの需要の背骨。",
+      strategy:["グロース／バリュー／クオリティなどのスタイルごとに運用","空売りはせず、ベンチマーク比の配分で勝負","社内に大規模なリサーチ部隊を持つ"],
+      ecmRole:"IPOのアンカー・コーナーストーン、公募増資の中核需要。価格感応度が低く、ブックの質を決める。",
+      want:"長期の成長ストーリー、競争優位、経営陣の質、資本配分方針",
+      ex:["T. Rowe Price","Fidelity","Capital Group","Wellington","Baillie Gifford","国内大手投信"],
+      ecm:[3,3,3,2,1], note:"ABBでもサイズを取りに来る常連" },
+    { id:"passive", g:"lo", short:"パッシブ", name:"パッシブ／インデックス運用", en:"Passive / Index",
+      x:95, y:86, horizon:"指数に入っている限り", money:"ETF・インデックスファンドの顧客資金", decider:"指数ルール",
+      one:"指数どおりに買う。自ら案件には入らないが、指数組入れを通じて最大の買い手になる。",
+      strategy:["指数構成銘柄を時価総額ウエイトで保有","トラッキングエラー最小化が目標","議決権行使・スチュワードシップの影響力は大きい"],
+      ecmRole:"原則として案件に直接は参加しない。指数組入れ・浮動株比率の変更で機械的な需要が発生する。",
+      want:"指数算出ルール、浮動株比率、組入れタイミング（主に担当はスチュワードシップ）",
+      ex:["BlackRock (iShares)","Vanguard","State Street","国内ETF運用会社"],
+      ecm:[0,0,1,1,0], note:"直接は入らず、指数組入れで間接的な需要" },
+    { id:"swf", g:"ao", short:"政府系ファンド", name:"政府系ファンド（SWF）", en:"Sovereign wealth fund",
+      x:92, y:26, horizon:"10年+", money:"国家の外貨準備・資源収入", decider:"投資委員会（社内運用＋外部委託）",
+      one:"超長期・大口。IPOのコーナーストーンとして名前が出ると案件の信用力が上がる。",
+      strategy:["株式・債券・オルタナを横断した超長期分散","社内運用チームと外部マネージャーの併用","直接投資・共同投資も積極的"],
+      ecmRole:"大型IPOのコーナーストーン、大型ブロックの受け皿。サイズの大きさで需要を安定させる。",
+      want:"長期テーマ、ガバナンス、国家戦略との整合、大きなサイズを取れるか",
+      ex:["GIC","Norges Bank IM","ADIA","Temasek","PIF","QIA"],
+      ecm:[3,2,2,2,1], note:"大型案件のアンカー役" },
+    { id:"pension", g:"ao", short:"公的年金", name:"公的・企業年金", en:"Pension fund",
+      x:88, y:58, horizon:"10年+", money:"加入者の年金積立金", decider:"資産配分委員会（多くは外部委託）",
+      one:"運用の多くを外部のLOやパッシブに委託。直接の案件参加は一部の大型年金に限られる。",
+      strategy:["政策資産配分（株・債券・オルタナの比率）が最重要","パッシブ比率が高いことが多い","カナダ・北欧系などは直接投資にも強い"],
+      ecmRole:"委託先を通じて間接的に参加。直接運用する大型年金はコーナーストーンやブロックに入ることも。",
+      want:"ガバナンス、ESG、長期の安定性",
+      ex:["GPIF（外部委託中心）","CPP Investments","Ontario Teachers'","CalPERS"],
+      ecm:[1,1,1,1,0], note:"多くは運用委託先を通じて参加" },
+    { id:"insurance", g:"ao", short:"保険会社", name:"保険会社（一般勘定）", en:"Insurance general account",
+      x:82, y:42, horizon:"数年〜", money:"保険料の積立（負債見合い）", decider:"運用部門・ALM",
+      one:"負債（保険金支払い）と見合う運用が基本。株式よりクレジット寄りで、CBや政策保有にも関わる。",
+      strategy:["ALM（資産負債管理）を軸に債券中心","株式は配当・安定性重視","国内生保は政策保有株の売り手になる場面も"],
+      ecmRole:"POで安定需要、CB・EBのクレジット側。日本では政策保有株の売出しの「売り手」として登場することが多い。",
+      want:"配当方針、財務の安定性、資本規制上の扱い",
+      ex:["国内大手生保・損保","Allianz","AXA","Prudential"],
+      ecm:[1,1,1,1,2], note:"日本では売出しの売り手としても重要" },
+    { id:"fo", g:"ao", short:"ファミリーオフィス", name:"ファミリーオフィス", en:"Family office",
+      x:70, y:20, horizon:"柔軟（数ヶ月〜数十年）", money:"創業家・富裕層の自己資金", decider:"オーナー本人と少人数のCIO",
+      one:"意思決定が速く柔軟。テーマ性のある案件やプライベートとの橋渡しで存在感。",
+      strategy:["上場株・プライベート・不動産を横断","オーナーの関心テーマに集中しがち","外部ファンドへのLP出資も多い"],
+      ecmRole:"IPOの中小型案件やコーナーストーン、事業シナジーのある案件で登場。",
+      want:"創業者・経営者との対話、テーマ性、共同投資機会",
+      ex:["大型シングルファミリーオフィス","マルチファミリーオフィス"],
+      ecm:[1,2,1,1,0], note:"案件のテーマ次第" },
+    { id:"crossover", g:"ot", short:"クロスオーバー", name:"グロース／クロスオーバー投資家", en:"Crossover / Growth equity",
+      x:66, y:9, horizon:"上場前〜上場後数年", money:"LO・HF・PEの資金（複数の器）", decider:"PM・投資委員会",
+      one:"上場前のレイトステージで出資し、IPO後も保有・買い増す。IPOの成否を早い段階から左右する。",
+      strategy:["プライベートラウンドで先に株主になる","IPOでアンカーとして追加取得","上場後のパフォーマンスを見て積み増し"],
+      ecmRole:"プレIPOラウンドの出資者、IPOのアンカー候補。既存株主としてロックアップの対象にもなる。",
+      want:"上場時のバリュエーションの妥当性、上場後の成長の持続",
+      ex:["T. Rowe Price（クロスオーバー枠）","Fidelity","Coatue","Tiger Global","General Atlantic"],
+      ecm:[3,2,1,1,0], note:"T. Rowe Priceはこの顔も持つ" },
+    { id:"ls", g:"hf", short:"L/S株式HF", name:"ロング／ショート株式ファンド", en:"Fundamental long/short",
+      x:48, y:22, horizon:"数ヶ月〜2年", money:"年金・基金・富裕層の外部資金（解約制限あり）", decider:"PM（創業者であることが多い）",
+      one:"割安株を買い、割高株を売る。ファンダメンタル分析はLOと近いが、ショートの視点を持つ。",
+      strategy:["銘柄選択でアルファを出し、ショートで市場リスクを抑える","集中ポートフォリオが多い","いわゆる『タイガーカブ』系が代表"],
+      ecmRole:"IPOブックの常連。ストーリーが気に入れば長めに持つが、LOより回転は速い。",
+      want:"コンセンサスとの差、ショート側の論点（何が崩れうるか）",
+      ex:["Viking Global","Lone Pine","Egerton","Marshall Wace（一部戦略）"],
+      ecm:[2,3,2,2,1], note:"ストーリー次第でLO並みに入る" },
+    { id:"pod", g:"hf", short:"マルチマネージャー", name:"マルチマネージャー（ポッド型）", en:"Multi-manager platform",
+      x:26, y:44, horizon:"数日〜数ヶ月", money:"機関投資家の外部資金（長期ロック）", decider:"数百のポッドPMが独立して判断",
+      one:"小チーム（ポッド）が厳格なリスク枠の中で運用。ECMの需要として最大級の存在。",
+      strategy:["各ポッドはセクター特化で市場中立","損失上限（ドローダウン）で即座に縮小","イベント・ECM専門のポッドもある"],
+      ecmRole:"IPO・PO・ABBのブックに大きなオーダーを入れる。配分後は短期で回転しやすい。",
+      want:"決算の読み、短期カタリスト、需給、ヘッジのしやすさ",
+      ex:["Millennium","Citadel","Balyasny","Point72","ExodusPoint"],
+      ecm:[1,3,3,3,2], note:"ブックの厚みを作る主力" },
+    { id:"event", g:"hf", short:"イベントドリブン", name:"イベントドリブン／プロップ系", en:"Event-driven / Prop",
+      x:14, y:60, horizon:"数時間〜数週間", money:"自己資金中心（外部資金も）", decider:"トレーダー＋イベントアナリスト",
+      one:"ECM・指数入替・M&Aなど案件そのものが生む需給の歪みを取る。Maven Securitiesはここ。",
+      strategy:["ABB・POのディスカウントを取り、ヘッジで方向性リスクを消す","指数組入れ・ロックアップ明けの需給を先回り","合併アービトラージ・TOB"],
+      ecmRole:"ABBの即時の買い手、IPO/POの流動性供給、ロックアップ明けの受け皿。案件を短時間で成立させる。",
+      want:"ディスカウント、売り手の残り持分、ロックアップ、指数日程、貸株コスト",
+      ex:["Maven Securities","Sand Grove","Davidson Kempner","各ポッド型のイベント部門"],
+      ecm:[0,2,3,3,2], note:"ABBの夜間ブックの主役" },
+    { id:"activist", g:"hf", short:"アクティビスト", name:"アクティビスト", en:"Activist",
+      x:62, y:4, horizon:"1〜3年", money:"外部資金（長期ロック）", decider:"創業者PM",
+      one:"株主として経営に変化を求める。ECMでは買い手より、資本政策変更のきっかけとして登場。",
+      strategy:["割安な企業に大量保有し、経営陣に提案","資本効率改善・事業売却・自社株買いを要求","日本市場ではガバナンス改革を追い風に存在感"],
+      ecmRole:"直接の案件参加は少ない。政策保有株の売出し・自社株買い・事業再編を促す『引き金』になる。",
+      want:"資本効率、ガバナンス、非中核事業の価値",
+      ex:["Elliott","ValueAct","Oasis","Dalton","Effissimo"],
+      ecm:[0,0,1,1,0], note:"買い手より触媒として重要" },
+    { id:"quant", g:"hf", short:"クオンツ", name:"クオンツ／システマティック", en:"Quant / Systematic",
+      x:10, y:92, horizon:"日中〜数ヶ月", money:"外部資金・自己資金", decider:"統計モデル",
+      one:"大量のデータから統計的なパターンを取る。個別の面談よりデータとルールで動く。",
+      strategy:["ファクター（バリュー・モメンタム等）運用","統計的裁定、短期リバーサル","高頻度に近い執行"],
+      ecmRole:"案件への直接参加は限定的。上場後の流動性や、指数・ファクターの需給として影響。",
+      want:"データの網羅性（面談の優先度は低い）",
+      ex:["Renaissance","Two Sigma","D.E. Shaw（一部）","AQR"],
+      ecm:[0,1,1,1,0], note:"上場後の流動性に効く" },
+    { id:"cbarb", g:"hf", short:"CBアービトラージ", name:"CBアービトラージ", en:"Convertible arbitrage",
+      x:28, y:78, horizon:"数週間〜満期", money:"外部資金（マルチ戦略の一部が多い）", decider:"PM＋ボラティリティ・モデル",
+      one:"CBを買って株を空売りし、ボラティリティとクレジットの割安さを取る。CB案件の主役。",
+      strategy:["デルタヘッジ（株の空売り）を日々調整","ボラティリティ・クレジットのミスプライスを取る","新規発行時のディスカウントがリターン源泉"],
+      ecmRole:"CB・EB発行時の需要の大半。発行時の空売りが株価の一時的な重しになる。",
+      want:"貸株の可否とコスト、株価ボラティリティ、クレジット",
+      ex:["マルチマネージャーのCB部門","専業CBファンド"],
+      ecm:[0,0,1,1,3], note:"CB発行の需要の中心" },
+    { id:"macro", g:"hf", short:"マクロ", name:"グローバルマクロ", en:"Global macro",
+      x:38, y:74, horizon:"数週間〜1年", money:"外部資金", decider:"PM（トップダウン）",
+      one:"金利・為替・国ごとの景気を張る。個別株の案件への関与は薄い。",
+      strategy:["金利・為替・指数先物でトップダウンに運用","個別株は国・テーマの表現手段"],
+      ecmRole:"個別の案件にはほぼ関与しない。国・セクター全体へのフローとして影響。",
+      want:"マクロ環境、政策、国全体の資金フロー",
+      ex:["Bridgewater","Brevan Howard","Rokos"],
+      ecm:[0,1,0,0,0], note:"個別案件への関与は薄い" },
+    { id:"mm", g:"ot", short:"マーケットメイカー", name:"マーケットメイカー／HFT", en:"Market maker / HFT",
+      x:3, y:84, horizon:"日中", money:"自己資金", decider:"アルゴリズム＋トレーダー",
+      one:"常に売買気配を出して流動性を供給。上場初日やブロック後の二次流通を支える。",
+      strategy:["売値と買値の差（スプレッド）を取る","ETF・オプションの裁定","在庫リスクは即座にヘッジ"],
+      ecmRole:"上場初日の価格形成、ブロック後の流動性。一部はリスクを取ってブロックを買い取ることも。",
+      want:"流動性、ボラティリティ、ヘッジ手段",
+      ex:["Citadel Securities","Jane Street","Optiver","IMC","Flow Traders"],
+      ecm:[0,1,1,2,1], note:"二次流通の流動性を担う" },
+    { id:"retail", g:"ot", short:"個人投資家", name:"個人投資家", en:"Retail",
+      x:36, y:34, horizon:"日中〜数年（幅広い）", money:"個人の自己資金", decider:"本人",
+      one:"日本のIPOでは配分の大部分を占める独特の存在。上場後の初値形成にも影響が大きい。",
+      strategy:["IPO抽選・ブックへの参加","テーマ株・優待・配当重視など多様","NISA拡充で長期保有層も拡大"],
+      ecmRole:"日本のIPO・POでは国内リテール配分が大きく、案件設計の前提になる。海外案件では比率は小さい。",
+      want:"分かりやすいストーリー、優待・配当、ブランド",
+      ex:["国内証券のリテール顧客","ネット証券の個人投資家"],
+      ecm:[0,3,2,0,0], note:"日本のIPOでは主役級" },
+  ];
+  const ECM_COLS = ["IPO アンカー","IPO ブック","PO（公募・売出）","ABB / ブロック","CB / EB"];
+
+  const TIMELINE = [
+    { ph:"T − 1〜2年", t:"プレIPOラウンド",
+      lo:"クロスオーバー枠で出資し、上場前から株主になる", hf:null },
+    { ph:"T − 数ヶ月", t:"PDIE・アーリールック",
+      lo:"アナリストが会社を深掘り。価格感をフィードバック", hf:"関心は示すが本格検討はブック開始後" },
+    { ph:"T − 2週", t:"ブックビルディング",
+      lo:"大口のアンカーオーダー。価格感応度は低い", hf:"価格指値付きのオーダー。需要の厚みを作る" },
+    { ph:"T", t:"価格決定・配分",
+      lo:"Tier 1として厚めの配分", hf:"保有意図に応じて配分は絞られがち" },
+    { ph:"T + 1〜5日", t:"上場直後の売買",
+      lo:"保有を継続。押し目で買い増しも", hf:"初値で利益確定、または流動性を供給" },
+    { ph:"T + 90〜180日", t:"ロックアップ明け・売出し",
+      lo:"売出し・ABBで追加取得の機会", hf:"ABBの即時の買い手。ディスカウントとヘッジで回転" },
+    { ph:"T + 半年〜", t:"指数組入れ",
+      lo:"長期保有を継続", hf:"組入れ需給を先回りして、パッシブの買いに売り向かう" },
+  ];
+
+  /* ---------------- helpers ---------------- */
+  const $ = (s, r = document) => r.querySelector(s);
+  const el = (tag, attrs = {}, html = "") => {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === "style") n.style.cssText = v; else n.setAttribute(k, v);
+    }
+    if (html) n.innerHTML = html;
+    return n;
+  };
+  const byId = Object.fromEntries(TYPES.map(t => [t.id, t]));
+  const dots = (n, c) => `<span class="dots" style="--c:${c}" aria-label="${["ほぼ参加しない","案件次第","常連","主役"][n]}">${[0,1,2].map(i => `<i class="${i < n ? "on" : ""}"></i>`).join("")}</span>`;
+
+  let selected = "active";
+  let groupFilter = "all";
+
+  /* ---------------- legend + filters ---------------- */
+  const legend = $("#legend");
+  for (const g of Object.values(GROUPS)) {
+    legend.append(el("span", {}, `<span class="sw" style="background:${g.c}"></span>${g.label}`));
+  }
+  const filters = $("#filters");
+  const filterOpts = [["all", "すべて"], ...Object.entries(GROUPS).map(([k, g]) => [k, g.label])];
+  for (const [k, label] of filterOpts) {
+    const count = k === "all" ? TYPES.length : TYPES.filter(t => t.g === k).length;
+    const b = el("button", { class: "chip", type: "button", "aria-pressed": String(k === groupFilter), "data-g": k }, `${label} <span style="opacity:.6">${count}</span>`);
+    b.addEventListener("click", () => { groupFilter = k; renderFilters(); renderCards(); renderMap(); });
+    filters.append(b);
+  }
+  function renderFilters() {
+    filters.querySelectorAll(".chip").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.g === groupFilter)));
+  }
+
+  /* ---------------- map ---------------- */
+  const area = $("#area");
+  const points = {};
+  for (const t of TYPES) {
+    const g = GROUPS[t.g];
+    const b = el("button", {
+      class: "pt" + (t.x > 72 ? " left" : ""), type: "button", "aria-pressed": "false",
+      "aria-label": `${t.name}の詳細`, style: `${t.x > 72 ? `right:${100 - t.x}%` : `left:${t.x}%`};bottom:${t.y}%;color:${g.c}`
+    }, `<span class="d" style="background:${g.c}"></span><span class="l">${t.short}</span>`);
+    b.addEventListener("click", () => select(t.id));
+    area.append(b);
+    points[t.id] = b;
+  }
+  function renderMap() {
+    for (const t of TYPES) {
+      const p = points[t.id];
+      p.setAttribute("aria-pressed", String(t.id === selected));
+      p.classList.toggle("dim", groupFilter !== "all" && t.g !== groupFilter);
+      p.style.zIndex = t.id === selected ? 5 : 2;
+    }
+  }
+
+  /* ---------------- detail ---------------- */
+  const detail = $("#detail");
+  const horizonPct = t => t.x, stylePct = t => t.y;
+  function renderDetail() {
+    const t = byId[selected], g = GROUPS[t.g];
+    const ecmAvg = t.ecm.reduce((a, b) => a + b, 0) / (t.ecm.length * 3) * 100;
+    detail.innerHTML = `
+      <div class="head">
+        <span class="tag" style="background:${g.bg};color:${g.c}">${g.label}</span>
+        <div class="nm">${t.name}</div>
+        <div class="en">${t.en}</div>
+        <p class="one">${t.one}</p>
+      </div>
+      <div class="meters">
+        <div class="meter"><div class="k">保有期間</div><div class="v">${t.horizon}</div><div class="bar"><i style="width:${horizonPct(t)}%;background:${g.c}"></i></div></div>
+        <div class="meter"><div class="k">需給・モデル度</div><div class="v">${t.y < 34 ? "ファンダ重視" : t.y < 67 ? "混合" : "需給・モデル"}</div><div class="bar"><i style="width:${stylePct(t)}%;background:${g.c}"></i></div></div>
+        <div class="meter"><div class="k">ECM関与度</div><div class="v">${ecmAvg >= 50 ? "高い" : ecmAvg >= 25 ? "中程度" : "低い"}</div><div class="bar"><i style="width:${Math.max(ecmAvg, 4)}%;background:${g.c}"></i></div></div>
+      </div>
+      <dl>
+        <dt>資金の出所</dt><dd>${t.money}</dd>
+        <dt>意思決定</dt><dd>${t.decider}</dd>
+        <dt>戦略</dt><dd><ul>${t.strategy.map(s => `<li>${s}</li>`).join("")}</ul></dd>
+        <dt>ECMでの役割</dt><dd>${t.ecmRole}</dd>
+        <dt>面談で刺さる話題</dt><dd>${t.want}</dd>
+        <dt>代表例</dt><dd><div class="examples">${t.ex.map(e => `<span>${e}</span>`).join("")}</div></dd>
+      </dl>`;
+  }
+
+  /* ---------------- cards ---------------- */
+  const cards = $("#cards");
+  function renderCards() {
+    cards.innerHTML = "";
+    for (const t of TYPES.filter(t => groupFilter === "all" || t.g === groupFilter)) {
+      const g = GROUPS[t.g];
+      const c = el("button", { class: "card", type: "button", style: `--c:${g.c}` }, `
+        <div class="row"><span class="tag" style="background:${g.bg};color:${g.c}">${g.label}</span><span class="en">${t.en}</span></div>
+        <div class="nm">${t.name}</div>
+        <div class="one">${t.one}</div>
+        <div class="ex">例: ${t.ex.slice(0, 3).join(" / ")}</div>
+        <div class="meta"><span>保有 <b>${t.horizon}</b></span></div>`);
+      c.addEventListener("click", () => { select(t.id); $("#map").scrollIntoView(); });
+      cards.append(c);
+    }
+  }
+
+  /* ---------------- matrix ---------------- */
+  function renderMatrix() {
+    const mx = $("#mx");
+    let html = `<thead><tr><th>種別</th>${ECM_COLS.map(c => `<th style="text-align:center">${c}</th>`).join("")}<th>補足</th></tr></thead><tbody>`;
+    for (const [gk, g] of Object.entries(GROUPS)) {
+      html += `<tr class="grp-row"><th colspan="${ECM_COLS.length + 2}">${g.label.toUpperCase()} · ${g.en}</th></tr>`;
+      for (const t of TYPES.filter(t => t.g === gk)) {
+        html += `<tr data-id="${t.id}" tabindex="0"><th><span class="sw" style="background:${g.c};margin-right:7px"></span>${t.short}</th>${t.ecm.map(n => `<td class="lv">${dots(n, g.c)}</td>`).join("")}<td class="note">${t.note}</td></tr>`;
+      }
+    }
+    mx.innerHTML = html + "</tbody>";
+    mx.querySelectorAll("tr[data-id]").forEach(r => {
+      const go = () => { select(r.dataset.id); $("#map").scrollIntoView(); };
+      r.addEventListener("click", go);
+      r.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+    });
+  }
+
+  /* ---------------- timeline ---------------- */
+  function renderTimeline() {
+    const tl = $("#tl");
+    tl.innerHTML = TIMELINE.map(s => `
+      <div class="st">
+        <div class="ph">${s.ph}</div>
+        <div class="ttl">${s.t}</div>
+        ${s.lo ? `<div class="lane lo"><b>T. ROWE 型</b>${s.lo}</div>` : `<div class="lane none">—</div>`}
+        ${s.hf ? `<div class="lane hf"><b>MAVEN 型</b>${s.hf}</div>` : `<div class="lane none">この段階では不在</div>`}
+      </div>`).join("");
+  }
+
+  /* ---------------- tabs ---------------- */
+  const tabs = [...document.querySelectorAll(".tab")];
+  tabs.forEach((tab, i) => {
+    tab.addEventListener("click", () => activate(tab));
+    tab.addEventListener("keydown", e => {
+      if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+        const next = tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+        activate(next); next.focus();
+      }
+    });
+  });
+  function activate(tab) {
+    tabs.forEach(t => {
+      const on = t === tab;
+      t.setAttribute("aria-selected", String(on));
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
+    });
+  }
+  activate(tabs[0]);
+
+  /* ---------------- theme ---------------- */
+  const root = document.documentElement;
+  try { const saved = localStorage.getItem("investor-atlas-theme"); if (saved) root.dataset.theme = saved; } catch (e) {}
+  $("#themeBtn").addEventListener("click", () => {
+    const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    root.dataset.theme = dark ? "light" : "dark";
+    try { localStorage.setItem("investor-atlas-theme", root.dataset.theme); } catch (e) {}
+  });
+
+  /* ---------------- select ---------------- */
+  function select(id) {
+    selected = id;
+    renderMap();
+    renderDetail();
+  }
+
+  renderCards();
+  renderMatrix();
+  renderTimeline();
+  select(selected);
+})();
+</script>
+</body>
+</html>
