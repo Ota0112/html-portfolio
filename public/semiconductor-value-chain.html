@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Semiconductor Value Chain Atlas ｜ 半導体バリューチェーン全体図</title>
+<meta name="description" content="半導体のバリューチェーンを、設計・前工程・後工程・最終製品・用途(出口)まで一枚の地図で可視化。製造装置と材料・部材、それぞれの主要プレイヤーを網羅的に整理しています。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" media="print" onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap"></noscript>
+<style>
+  /* ============================================================
+     トークン: 明るいクリーンルームの紙面を基本に、暗色にも追従する。
+     ステージごとの色は地図・工程・凡例で共通に使う。
+     ============================================================ */
+  :root{
+    --bg:#f5f6f2;
+    --bg-2:#ecede7;
+    --paper:#ffffff;
+    --ink:#15181d;
+    --ink-2:#4a5260;
+    --ink-3:#7b8392;
+    --line:#dcdfd6;
+    --line-2:#c6cabf;
+    --shadow:0 1px 2px rgba(20,24,30,.06),0 8px 24px rgba(20,24,30,.06);
+
+    --st-ip:#7357e8;      /* 設計基盤 */
+    --st-design:#2f6fed;  /* 設計 */
+    --st-fab:#0e9488;     /* 前工程 */
+    --st-back:#d27d00;    /* 後工程 */
+    --st-system:#d63f74;  /* 最終製品 */
+    --st-app:#1f2a44;     /* 用途 */
+    --st-equip:#3f6b8f;   /* 装置 */
+    --st-mat:#4f9a2c;     /* 材料 */
+
+    --jp:#d6304a;
+    --hit:#ffd84d;
+
+    --disp:"Space Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+    --body:"Zen Kaku Gothic New",system-ui,-apple-system,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1216;--bg-2:#161a20;--paper:#1a1f26;
+      --ink:#eef1f5;--ink-2:#b4bcc8;--ink-3:#7f8896;
+      --line:#2a313b;--line-2:#3a4350;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+      --st-ip:#9a85ff;--st-design:#6b9bff;--st-fab:#2cc4b5;--st-back:#f0a332;
+      --st-system:#ff6f9f;--st-app:#c9d3ea;--st-equip:#7fb0d8;--st-mat:#86cc5c;
+      --jp:#ff5d74;--hit:#c9a400;
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1216;--bg-2:#161a20;--paper:#1a1f26;
+    --ink:#eef1f5;--ink-2:#b4bcc8;--ink-3:#7f8896;
+    --line:#2a313b;--line-2:#3a4350;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+    --st-ip:#9a85ff;--st-design:#6b9bff;--st-fab:#2cc4b5;--st-back:#f0a332;
+    --st-system:#ff6f9f;--st-app:#c9d3ea;--st-equip:#7fb0d8;--st-mat:#86cc5c;
+    --jp:#ff5d74;--hit:#c9a400;
+    color-scheme:dark;
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:64px}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  button,input{font-family:inherit;color:inherit}
+  a{color:inherit}
+  :focus-visible{outline:2px solid var(--st-design);outline-offset:2px}
+  .wrap{max-width:1320px;margin:0 auto;padding:0 24px}
+  @media (max-width:640px){.wrap{padding:0 16px}}
+  .en{font-family:var(--disp);letter-spacing:.02em}
+
+  /* ---------------- top bar ---------------- */
+  .bar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .bar .wrap{display:flex;align-items:center;gap:18px;height:56px}
+  .logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:.04em;white-space:nowrap}
+  .logo svg{flex:none}
+  .bar nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0}
+  .bar nav::-webkit-scrollbar{display:none}
+  .bar nav a{font-size:13px;text-decoration:none;color:var(--ink-2);padding:6px 10px;border-radius:6px;white-space:nowrap}
+  .bar nav a:hover{background:var(--bg-2);color:var(--ink)}
+  .theme-btn{flex:none;width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--paper);cursor:pointer;display:grid;place-items:center}
+  @media (max-width:760px){.logo span{display:none}}
+
+  /* ---------------- hero ---------------- */
+  .hero{padding:56px 0 40px}
+  .eyebrow{font-family:var(--disp);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+  .hero h1{font-size:clamp(30px,4.6vw,54px);line-height:1.22;margin:12px 0 18px;font-weight:700;letter-spacing:.01em}
+  .hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--st-ip),var(--st-design),var(--st-fab),var(--st-back),var(--st-system));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p.lead{font-size:16px;color:var(--ink-2);max-width:760px;margin:0}
+  .journey{margin-top:36px;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:22px 18px 16px;box-shadow:var(--shadow)}
+  .journey svg{display:block;width:100%;height:auto}
+  @media (max-width:760px){.journey{overflow-x:auto}.journey svg{min-width:720px}}
+  .journey .cap{font-size:12px;color:var(--ink-3);text-align:center;margin-top:6px}
+  .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px}
+  .kpi{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .kpi b{display:block;font-family:var(--disp);font-size:28px;line-height:1.1;font-weight:700}
+  .kpi b small{font-size:14px;font-weight:600;margin-left:2px}
+  .kpi span{font-size:12.5px;color:var(--ink-2)}
+  @media (max-width:860px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (max-width:520px){.kpi b{font-size:22px}.kpi b small{font-size:12px}}
+
+  /* ---------------- section shell ---------------- */
+  section.block{padding:56px 0 24px}
+  .sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:22px}
+  .sec-head h2{font-size:clamp(22px,2.6vw,30px);margin:6px 0 4px;line-height:1.35}
+  .sec-head p{margin:0;color:var(--ink-2);font-size:14.5px;max-width:720px}
+  .num{font-family:var(--disp);font-weight:700;color:var(--ink-3);font-size:13px;letter-spacing:.12em}
+
+  /* ---------------- toolbar ---------------- */
+  .tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .search{position:relative}
+  .search input{width:min(300px,78vw);height:40px;border-radius:10px;border:1px solid var(--line-2);background:var(--paper);padding:0 12px 0 36px;font-size:14px}
+  .search svg{position:absolute;left:11px;top:11px;color:var(--ink-3)}
+  .toggle{height:40px;border-radius:10px;border:1px solid var(--line-2);background:var(--paper);padding:0 14px;font-size:13.5px;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap}
+  .toggle .sw{width:30px;height:18px;border-radius:9px;background:var(--line-2);position:relative;transition:background .2s}
+  .toggle .sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .2s}
+  .toggle[aria-pressed="true"] .sw{background:var(--jp)}
+  .toggle[aria-pressed="true"] .sw::after{transform:translateX(12px)}
+  .results{margin:-6px 0 18px;font-size:13px;color:var(--ink-2);min-height:0}
+  .results:empty{display:none}
+  .results .r{display:inline-flex;align-items:center;gap:6px;margin:4px 6px 0 0;padding:4px 10px;border-radius:999px;background:var(--paper);border:1px solid var(--line);cursor:pointer;font-size:12.5px}
+  .results .r i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+
+  /* ---------------- chain map ---------------- */
+  .map{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:var(--shadow)}
+  .chain{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:26px}
+  .col{position:relative;min-width:0}
+  .col-head{position:relative;border-radius:10px;padding:10px 12px;background:color-mix(in srgb,var(--c) 12%,var(--paper));border:1px solid color-mix(in srgb,var(--c) 35%,transparent);margin-bottom:10px}
+  .col-head .k{font-family:var(--disp);font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--c)}
+  .col-head h3{margin:2px 0 0;font-size:15px;line-height:1.35}
+  .col-head .sub{font-size:11.5px;color:var(--ink-2);line-height:1.5;margin-top:3px}
+  .col:not(:last-child) .col-head::after{
+    content:"";position:absolute;right:-22px;top:50%;width:18px;height:18px;transform:translateY(-50%);
+    background:var(--ink-3);
+    -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 11h12.2l-4.6-4.6L13 5l7 7-7 7-1.4-1.4 4.6-4.6H4z'/%3E%3C/svg%3E") center/contain no-repeat;
+            mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 11h12.2l-4.6-4.6L13 5l7 7-7 7-1.4-1.4 4.6-4.6H4z'/%3E%3C/svg%3E") center/contain no-repeat;
+  }
+  .cards{display:flex;flex-direction:column;gap:8px}
+  .seg{display:block;width:100%;text-align:left;background:var(--paper);border:1px solid var(--line);border-left:3px solid var(--c);border-radius:9px;padding:9px 10px 10px;cursor:pointer;transition:transform .15s,box-shadow .15s,opacity .2s,border-color .2s}
+  .seg:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--line-2);border-left-color:var(--c)}
+  .seg .bar-t{display:block;height:5px;margin-top:4px}
+  .seg .nm{display:block;font-size:13.5px;font-weight:700;line-height:1.4}
+  .seg .sen{display:block;font-family:var(--disp);font-size:10.5px;color:var(--ink-3);letter-spacing:.02em;margin-bottom:6px}
+  .chips{display:flex;flex-wrap:wrap;gap:4px;align-items:flex-start;align-content:flex-start}
+  .chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;line-height:1.3;padding:2px 7px;border-radius:999px;background:var(--bg-2);color:var(--ink);max-width:100%;overflow-wrap:anywhere;transition:opacity .2s,background .2s,color .2s}
+  .chip i{flex:none;font-style:normal;font-family:var(--disp);font-size:9px;font-weight:700;color:var(--ink-3);letter-spacing:.04em}
+  .chip.more{background:transparent;color:var(--ink-3);border:1px dashed var(--line-2)}
+  body.jp .chip:not([data-cc="JP"]):not(.more){opacity:.32}
+  body.jp .chip[data-cc="JP"]{background:var(--jp);color:#fff}
+  body.jp .chip[data-cc="JP"] i{color:rgba(255,255,255,.8)}
+  body.searching .seg:not(.match){opacity:.28}
+  body.searching .chip.hit{background:var(--hit);color:#1a1a1a}
+  body.searching .chip.hit i{color:#5a4c00}
+  .seg.match{box-shadow:0 0 0 2px var(--hit)}
+  body.jp .seg.hasjp{border-color:color-mix(in srgb,var(--jp) 45%,var(--line))}
+
+  .supply{margin-top:22px;padding-top:22px;border-top:1px dashed var(--line-2);display:grid;grid-template-columns:1fr 1fr;gap:26px;position:relative}
+  .supply-note{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--paper);padding:0 12px;font-size:12px;color:var(--ink-2);white-space:nowrap;display:flex;align-items:center;gap:6px}
+  .supply .col .col-head::after{display:none}
+  .supply .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+
+  @media (max-width:1180px){
+    .chain{grid-template-columns:1fr;gap:30px}
+    .chain .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+    .chain .col-head::after{display:none}
+    .chain .col:not(:last-child)::after{content:"";display:block;width:20px;height:20px;margin:14px auto -24px;background:var(--ink-3);transform:rotate(90deg);
+      -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 11h12.2l-4.6-4.6L13 5l7 7-7 7-1.4-1.4 4.6-4.6H4z'/%3E%3C/svg%3E") center/contain no-repeat;
+              mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 11h12.2l-4.6-4.6L13 5l7 7-7 7-1.4-1.4 4.6-4.6H4z'/%3E%3C/svg%3E") center/contain no-repeat}
+    .supply{grid-template-columns:1fr}
+  }
+  @media (max-width:640px){.map{padding:14px}.supply-note{font-size:11px}}
+
+  .legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:14px;font-size:12px;color:var(--ink-2)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:10px;height:10px;border-radius:3px;background:var(--c)}
+
+  /* ---------------- process ---------------- */
+  .proc{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:20px;align-items:start}
+  @media (max-width:980px){.proc{grid-template-columns:1fr}}
+  .phase{border-radius:14px;padding:12px;margin-bottom:12px;border:1px solid var(--line);background:var(--paper)}
+  .phase.loop{border:1.5px dashed color-mix(in srgb,var(--st-fab) 60%,transparent);background:color-mix(in srgb,var(--st-fab) 5%,var(--paper))}
+  .phase-h{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;font-weight:700;color:var(--ink-2);margin:0 2px 8px}
+  .phase-h .tag{font-weight:500;font-size:11.5px;display:inline-flex;align-items:center;gap:4px;color:var(--st-fab)}
+  .steps{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px}
+  .step{display:flex;align-items:center;gap:8px;text-align:left;border:1px solid var(--line);background:var(--paper);border-radius:9px;padding:7px 9px;cursor:pointer;font-size:12.5px;line-height:1.35;transition:border-color .15s,background .15s}
+  .step b{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-family:var(--disp);font-size:11px;background:var(--bg-2);color:var(--ink-2)}
+  .step:hover{border-color:var(--line-2)}
+  .step[aria-selected="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 10%,var(--paper))}
+  .step[aria-selected="true"] b{background:var(--c);color:#fff}
+  .detail{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:var(--shadow);min-height:420px}
+  .detail h3{margin:4px 0 6px;font-size:22px;line-height:1.35}
+  .detail .what{color:var(--ink-2);font-size:14.5px;margin:0 0 14px}
+  .xsect{display:block;width:100%;max-width:420px;height:auto;margin:6px 0 16px}
+  .grp{margin-top:14px}
+  .grp h4{display:flex;align-items:center;gap:8px;font-size:13px;margin:0 0 8px;color:var(--ink-2)}
+  .grp h4 i{width:10px;height:10px;border-radius:3px;background:var(--c)}
+  .sub-seg{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;cursor:pointer;background:var(--paper);display:block;width:100%;text-align:left}
+  .sub-seg:hover{border-color:var(--line-2)}
+  .sub-seg .t{font-size:13px;font-weight:700;margin-bottom:6px;display:flex;justify-content:space-between;gap:8px}
+  .sub-seg .t span{font-weight:500;font-size:11.5px;color:var(--ink-3)}
+  .point{margin-top:14px;font-size:13px;background:var(--bg-2);border-radius:10px;padding:10px 12px;color:var(--ink-2)}
+  .point b{color:var(--ink)}
+
+  /* ---------------- applications ---------------- */
+  .apps{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:20px;align-items:start}
+  @media (max-width:980px){.apps{grid-template-columns:1fr}}
+  .donut-card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow)}
+  .donut-card svg{display:block;width:100%;max-width:300px;height:auto;margin:0 auto}
+  .donut-card svg .arc{cursor:pointer;transition:stroke-width .2s,opacity .2s}
+  .donut-card svg .arc.dim{opacity:.35}
+  .alist{display:flex;flex-direction:column;gap:4px;margin-top:14px}
+  .arow{display:grid;grid-template-columns:12px 1fr auto;gap:10px;align-items:center;border:0;background:transparent;text-align:left;padding:6px 8px;border-radius:8px;cursor:pointer;font-size:13.5px}
+  .arow i{width:12px;height:12px;border-radius:3px;background:var(--c)}
+  .arow em{font-style:normal;font-family:var(--disp);font-weight:600;color:var(--ink-2)}
+  .arow:hover{background:var(--bg-2)}
+  .arow[aria-selected="true"]{background:color-mix(in srgb,var(--c) 14%,var(--paper))}
+  .small{font-size:11.5px;color:var(--ink-3);margin-top:10px;line-height:1.6}
+  .app-detail{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:var(--shadow)}
+  .app-detail h3{margin:2px 0 4px;font-size:22px}
+  .app-detail .lead2{color:var(--ink-2);font-size:14.5px;margin:0 0 16px}
+  .chiprows{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+  .crow{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .crow .t{font-size:13px;font-weight:700;margin-bottom:2px}
+  .crow .d{font-size:12px;color:var(--ink-2);margin-bottom:7px;line-height:1.55}
+  .trend{margin-top:14px;font-size:13px;border-left:3px solid var(--c);padding:6px 12px;background:var(--bg-2);border-radius:0 8px 8px 0;color:var(--ink-2)}
+  .trend b{color:var(--ink)}
+
+  .heat-wrap{margin-top:20px;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+  .heat-wrap h3{margin:0 0 4px;font-size:16px}
+  .heat-wrap > p{margin:0 0 12px;font-size:13px;color:var(--ink-2)}
+  .heat-scroll{overflow-x:auto}
+  table.heat{border-collapse:separate;border-spacing:4px;width:100%;min-width:720px}
+  table.heat th{font-size:11.5px;font-weight:500;color:var(--ink-2);text-align:center;padding:4px;line-height:1.35}
+  table.heat th.rh{text-align:left;font-size:13px;color:var(--ink);font-weight:700;white-space:nowrap;cursor:pointer;padding-right:10px}
+  table.heat th.rh i{display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--c);margin-right:7px}
+  table.heat td{height:40px;border-radius:7px;text-align:center;font-size:11px;font-weight:700;font-family:var(--disp);color:var(--ink);background:color-mix(in srgb,var(--st-design) calc(var(--v) * 1%),var(--bg-2))}
+  table.heat td.w{color:#fff}
+  table.heat tr.sel th.rh{color:var(--st-design)}
+  table.heat tr.sel td{outline:2px solid var(--ink);outline-offset:-2px}
+  .heat-key{display:flex;gap:14px;font-size:11.5px;color:var(--ink-3);margin-top:10px;flex-wrap:wrap}
+  .heat-key span{display:inline-flex;align-items:center;gap:5px}
+  .heat-key i{width:14px;height:14px;border-radius:4px;background:color-mix(in srgb,var(--st-design) calc(var(--v) * 1%),var(--bg-2))}
+
+  /* ---------------- choke points ---------------- */
+  .chokes{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+  .choke{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px}
+  .choke .cat{font-size:11.5px;font-weight:700;color:var(--c);letter-spacing:.04em}
+  .choke h3{margin:0;font-size:15px;line-height:1.4}
+  .choke .big{font-family:var(--disp);font-size:21px;font-weight:700;line-height:1}
+  .choke .big small{font-size:13px;color:var(--ink-2);font-weight:500;margin-left:6px;font-family:var(--body)}
+  .bar-t{height:8px;border-radius:4px;background:var(--bg-2);overflow:hidden}
+  .bar-t span{display:block;height:100%;background:var(--c);border-radius:4px}
+  .choke p{margin:2px 0 0;font-size:12.5px;color:var(--ink-2);line-height:1.6}
+
+  /* ---------------- japan ---------------- */
+  .jp-grid{columns:3 360px;column-gap:12px}
+  .jp-card{break-inside:avoid;margin-bottom:12px;background:var(--paper);border:1px solid var(--line);border-top:3px solid var(--c);border-radius:14px;padding:16px}
+  .jp-card h3{margin:0;font-size:16px;display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+  .jp-card h3 small{font-family:var(--disp);font-size:12px;color:var(--ink-2);font-weight:500}
+  .jp-ratio{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--bg-2);margin:8px 0 12px}
+  .jp-ratio span{background:var(--jp)}
+  .jp-row{display:grid;grid-template-columns:130px 1fr;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px}
+  .jp-row > b{font-weight:500;color:var(--ink-2)}
+  .jp-card .chips .chip{background:color-mix(in srgb,var(--jp) 12%,var(--paper))}
+  @media (max-width:520px){.jp-row{grid-template-columns:1fr;gap:4px}}
+  .jp-count{font-family:var(--disp);font-weight:700}
+
+  /* ---------------- dialog ---------------- */
+  dialog.drawer{border:0;padding:0;margin:0 0 0 auto;height:100dvh;max-height:100dvh;width:min(560px,100vw);max-width:100vw;background:var(--paper);color:var(--ink);box-shadow:-20px 0 60px rgba(0,0,0,.25)}
+  dialog.drawer::backdrop{background:rgba(10,14,20,.45);backdrop-filter:blur(2px)}
+  dialog.drawer[open]{animation:slide .22s ease-out}
+  @keyframes slide{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
+  @media (prefers-reduced-motion:reduce){dialog.drawer[open]{animation:none}}
+  .dw{display:flex;flex-direction:column;height:100%}
+  .dw-head{padding:18px 20px 14px;border-bottom:1px solid var(--line);position:relative}
+  .dw-head .pill{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 10px;border-radius:999px;background:color-mix(in srgb,var(--c) 15%,var(--paper));color:var(--c)}
+  .dw-head h3{margin:8px 0 0;font-size:22px;line-height:1.3;padding-right:40px}
+  .dw-head .sen{font-family:var(--disp);font-size:12.5px;color:var(--ink-3)}
+  .close{position:absolute;right:14px;top:14px;width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--paper);cursor:pointer;display:grid;place-items:center}
+  .dw-body{overflow-y:auto;padding:16px 20px 28px;flex:1}
+  .dw-body .desc{font-size:14.5px;color:var(--ink-2);margin:0 0 16px}
+  table.pl{width:100%;border-collapse:collapse;font-size:13.5px}
+  table.pl th{text-align:left;font-size:11.5px;color:var(--ink-3);font-weight:500;padding:6px 6px;border-bottom:1px solid var(--line)}
+  table.pl td{padding:9px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.pl td.n{font-weight:700;white-space:nowrap}
+  table.pl td.n small{display:block;font-weight:400;font-family:var(--disp);font-size:11px;color:var(--ink-3)}
+  table.pl td.note{color:var(--ink-2);font-size:12.5px}
+  .cc{display:inline-block;font-family:var(--disp);font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:4px;background:var(--bg-2);color:var(--ink-2);white-space:nowrap}
+  .cc.JP{background:var(--jp);color:#fff}
+  .rel{margin-top:18px}
+  .rel h4{font-size:12.5px;color:var(--ink-2);margin:0 0 8px}
+  .rel button{margin:0 6px 6px 0;font-size:12.5px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--paper);cursor:pointer}
+  .rel button:hover{border-color:var(--line-2)}
+
+  footer{padding:40px 0 60px;color:var(--ink-3);font-size:12.5px;border-top:1px solid var(--line);margin-top:56px}
+  footer p{margin:0 0 8px;max-width:900px}
+  footer a{color:var(--ink-2)}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="ページ先頭へ">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="13" cy="13" r="12" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <g fill="currentColor" opacity=".85">
+          <rect x="7" y="7" width="3.4" height="3.4" rx=".6"/><rect x="11.3" y="7" width="3.4" height="3.4" rx=".6"/><rect x="15.6" y="7" width="3.4" height="3.4" rx=".6"/>
+          <rect x="7" y="11.3" width="3.4" height="3.4" rx=".6"/><rect x="11.3" y="11.3" width="3.4" height="3.4" rx=".6" fill="#0e9488"/><rect x="15.6" y="11.3" width="3.4" height="3.4" rx=".6"/>
+          <rect x="7" y="15.6" width="3.4" height="3.4" rx=".6"/><rect x="11.3" y="15.6" width="3.4" height="3.4" rx=".6"/><rect x="15.6" y="15.6" width="3.4" height="3.4" rx=".6"/>
+        </g>
+      </svg>
+      <span>SEMICONDUCTOR VALUE CHAIN</span>
+    </a>
+    <nav aria-label="セクション">
+      <a href="#map">全体マップ</a>
+      <a href="#process">製造工程</a>
+      <a href="#apps">用途(出口)</a>
+      <a href="#choke">要衝</a>
+      <a href="#japan">日本企業</a>
+    </nav>
+    <button class="theme-btn" id="themeBtn" aria-label="配色を切り替え" title="配色を切り替え">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="top">
+  <!-- ======================= HERO ======================= -->
+  <section class="hero">
+    <div class="wrap">
+      <div class="eyebrow">Semiconductor Value Chain Atlas</div>
+      <h1>砂から<em>AIサーバー</em>まで。<br>半導体バリューチェーンの全体図</h1>
+      <p class="lead">1つのチップが製品に届くまでには、設計ツール・設計・ウェーハ製造(前工程)・組立と検査(後工程)・機器への組み込みという長い連鎖があり、その各段に製造装置と材料のサプライヤーが張り付いています。このページでは「出口=用途」から「部材・機材」まで、主要プレイヤーを一枚の地図に整理しました。</p>
+
+      <div class="journey" aria-label="半導体が製品になるまでの流れ">
+        <svg viewBox="0 0 1200 244" role="img" aria-labelledby="jt">
+          <title id="jt">珪石からウェーハ、チップ、パッケージ、製品、用途までの流れ</title>
+          <defs>
+            <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink-3)"/></marker>
+            <linearGradient id="wf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c9ced8"/><stop offset=".5" stop-color="#eef1f6"/><stop offset="1" stop-color="#a9b1bf"/></linearGradient>
+          </defs>
+          <g font-family="Zen Kaku Gothic New, sans-serif" text-anchor="middle">
+            <!-- 1 珪石 -->
+            <g transform="translate(80 92)">
+              <path d="M-42 26 L-30 -14 L-6 -30 L22 -22 L40 4 L30 30 Z" fill="var(--bg-2)" stroke="var(--ink-3)" stroke-width="1.5"/>
+              <path d="M-30 -14 L-4 -2 L22 -22 M-4 -2 L-6 30" stroke="var(--line-2)" stroke-width="1.2" fill="none"/>
+              <text y="72" font-size="15" font-weight="700" fill="var(--ink)">珪石・多結晶Si</text>
+              <text y="92" font-size="12" fill="var(--ink-3)">原料</text>
+            </g>
+            <!-- 2 インゴット/ウェーハ -->
+            <g transform="translate(270 92)">
+              <circle r="42" fill="url(#wf)" stroke="var(--ink-3)" stroke-width="1.5"/>
+              <path d="M-14 40 h28" stroke="var(--ink-3)" stroke-width="3"/>
+              <text y="72" font-size="15" font-weight="700" fill="var(--ink)">シリコンウェーハ</text>
+              <text y="92" font-size="12" fill="var(--st-mat)">材料メーカー</text>
+            </g>
+            <!-- 3 回路形成 -->
+            <g transform="translate(470 92)">
+              <circle r="42" fill="url(#wf)" stroke="var(--st-fab)" stroke-width="2"/>
+              <g fill="var(--st-fab)" opacity=".75" id="dies"></g>
+              <text y="72" font-size="15" font-weight="700" fill="var(--ink)">回路形成済みウェーハ</text>
+              <text y="92" font-size="12" fill="var(--st-fab)">前工程 (ファウンドリ/IDM)</text>
+            </g>
+            <!-- 4 チップ→パッケージ -->
+            <g transform="translate(670 92)">
+              <rect x="-34" y="-34" width="68" height="68" rx="6" fill="#2b3240" stroke="var(--st-back)" stroke-width="2"/>
+              <rect x="-16" y="-16" width="32" height="32" rx="2" fill="#8fa3b8"/>
+              <g stroke="var(--st-back)" stroke-width="3">
+                <path d="M-24 -34v-10M-8 -34v-10M8 -34v-10M24 -34v-10M-24 34v10M-8 34v10M8 34v10M24 34v10M-34 -24h-10M-34 -8h-10M-34 8h-10M-34 24h-10M34 -24h10M34 -8h10M34 8h10M34 24h10"/>
+              </g>
+              <text y="72" font-size="15" font-weight="700" fill="var(--ink)">パッケージ済みチップ</text>
+              <text y="92" font-size="12" fill="var(--st-back)">後工程 (OSAT/IDM)</text>
+            </g>
+            <!-- 5 製品 -->
+            <g transform="translate(870 92)">
+              <rect x="-46" y="-30" width="58" height="58" rx="4" fill="var(--bg-2)" stroke="var(--st-system)" stroke-width="2"/>
+              <path d="M-40 -18h46M-40 -6h46M-40 6h46M-40 18h46" stroke="var(--st-system)" stroke-width="1.5" opacity=".6"/>
+              <rect x="18" y="-38" width="30" height="58" rx="6" fill="var(--bg-2)" stroke="var(--st-system)" stroke-width="2"/>
+              <circle cx="33" cy="14" r="2.5" fill="var(--st-system)"/>
+              <text y="72" font-size="15" font-weight="700" fill="var(--ink)">電子機器・サーバー・車</text>
+              <text y="92" font-size="12" fill="var(--st-system)">セットメーカー / EMS</text>
+            </g>
+            <!-- 6 用途 -->
+            <g transform="translate(1080 92)">
+              <circle r="42" fill="none" stroke="var(--st-app)" stroke-width="2" stroke-dasharray="4 5"/>
+              <text y="-8" font-size="13" font-weight="700" fill="var(--ink)">AI・通信</text>
+              <text y="10" font-size="13" font-weight="700" fill="var(--ink)">モビリティ</text>
+              <text y="28" font-size="11" fill="var(--ink-2)">産業・民生</text>
+              <text y="72" font-size="15" font-weight="700" fill="var(--ink)">用途 (出口)</text>
+              <text y="92" font-size="12" fill="var(--ink-3)">最終需要</text>
+            </g>
+            <g stroke="var(--ink-3)" stroke-width="1.6" fill="none" marker-end="url(#ah)">
+              <path d="M135 92 H215"/><path d="M325 92 H415"/><path d="M525 92 H620"/><path d="M725 92 H808"/><path d="M935 92 H1026"/>
+            </g>
+            <!-- 設計 -->
+            <g>
+              <path d="M370 14 H770" stroke="var(--st-design)" stroke-width="1.6" stroke-dasharray="5 4" fill="none"/>
+              <rect x="470" y="2" width="200" height="24" rx="12" fill="var(--paper)" stroke="var(--st-design)" stroke-width="1.3"/>
+              <text x="570" y="19" font-size="12.5" font-weight="700" fill="var(--st-design)">設計データ (EDA・IP・ファブレス)</text>
+              <path d="M470 26 V44" stroke="var(--st-design)" stroke-width="1.6" marker-end="url(#ah)"/>
+            </g>
+            <!-- 装置と材料 -->
+            <g>
+              <rect x="300" y="212" width="460" height="26" rx="13" fill="var(--paper)" stroke="var(--st-equip)" stroke-width="1.3"/>
+              <text x="530" y="230" font-size="12.5" font-weight="700" fill="var(--st-equip)">▲ 製造装置 ・ 材料 / 部材 が前工程・後工程に供給される</text>
+            </g>
+          </g>
+        </svg>
+        <div class="cap">設計データ(上)と、装置・材料(下)が、前工程と後工程へ流れ込む構造になっている</div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><b>約6,300<small>億ドル</small></b><span>世界の半導体市場 (2024年, WSTS)</span></div>
+        <div class="kpi"><b>約1,170<small>億ドル</small></b><span>半導体製造装置の市場 (2024年, SEMI)</span></div>
+        <div class="kpi"><b>約675<small>億ドル</small></b><span>半導体材料の市場 (2024年, SEMI)</span></div>
+        <div class="kpi"><b id="kpiPlayers">—</b><span>このマップに載せた企業・組織の数</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= MAP ======================= -->
+  <section class="block" id="map">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <div class="num">01 — VALUE CHAIN MAP</div>
+          <h2>バリューチェーン全体マップ</h2>
+          <p>左から右へ、設計から用途(出口)までを並べ、下段に製造装置と材料・部材を置きました。カードを押すと、そのセグメントの役割と主要プレイヤーの一覧が開きます。</p>
+        </div>
+        <div class="tools">
+          <label class="search">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input id="q" type="search" placeholder="企業名で検索 (例: 信越, TSMC, ASML)" aria-label="企業名で検索" autocomplete="off">
+          </label>
+          <button class="toggle" id="jpBtn" aria-pressed="false"><span class="sw" aria-hidden="true"></span>日本企業をハイライト</button>
+        </div>
+      </div>
+      <div class="results" id="results" aria-live="polite"></div>
+
+      <div class="map">
+        <div class="chain" id="chain"></div>
+        <div class="supply">
+          <div class="supply-note">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11 20V7.8l-4.6 4.6L5 11l7-7 7 7-1.4 1.4L13 7.8V20z"/></svg>
+            前工程・後工程の工場へ供給
+          </div>
+          <div class="col" id="col-equip"></div>
+          <div class="col" id="col-mat"></div>
+        </div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= PROCESS ======================= -->
+  <section class="block" id="process">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <div class="num">02 — MANUFACTURING FLOW</div>
+          <h2>製造工程ごとに見る、装置と材料のプレイヤー</h2>
+          <p>前工程では「成膜 → 塗布 → 露光 → 現像 → エッチング → …」のループを、回路の層の数だけ(先端品では数十〜100回以上)繰り返します。工程を選ぶと、その工程で使う装置・材料とプレイヤーが表示されます。</p>
+        </div>
+      </div>
+      <div class="proc">
+        <div id="phases"></div>
+        <div class="detail" id="stepDetail" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= APPS ======================= -->
+  <section class="block" id="apps">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <div class="num">03 — END MARKETS</div>
+          <h2>出口:半導体はどんな用途に使われているか</h2>
+          <p>半導体需要の内訳と、用途ごとに必要とされるチップの種類、主要プレイヤーです。用途を選ぶと、どのチップを誰が供給しているかが分かります。</p>
+        </div>
+      </div>
+      <div class="apps">
+        <div class="donut-card">
+          <svg viewBox="0 0 240 240" id="donut" role="img" aria-label="用途別の半導体需要構成"></svg>
+          <div class="alist" id="alist" role="tablist" aria-label="用途"></div>
+          <div class="small">構成比は2024年前後の各種業界統計を参考にした概算の目安です。生成AI向け投資の拡大で、データセンターの比率は急速に上がっています。</div>
+        </div>
+        <div class="app-detail" id="appDetail" aria-live="polite"></div>
+      </div>
+
+      <div class="heat-wrap">
+        <h3>用途 × チップの種類 マトリクス</h3>
+        <p>濃いほど、その用途で金額・重要度ともに大きいチップの種類です(定性的な目安)。行を押すと上の詳細が切り替わります。</p>
+        <div class="heat-scroll"><table class="heat" id="heat"></table></div>
+        <div class="heat-key"><span><i style="--v:6"></i>小さい</span><span><i style="--v:30"></i>中</span><span><i style="--v:58"></i>大</span><span><i style="--v:88"></i>中核</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= CHOKE ======================= -->
+  <section class="block" id="choke">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <div class="num">04 — CHOKE POINTS</div>
+          <h2>寡占が進む「要衝」</h2>
+          <p>バリューチェーンには、少数の企業が世界シェアの大半を握り、代替が難しい工程がいくつもあります。経済安全保障や輸出規制の議論の中心になるのがこうした領域です。</p>
+        </div>
+      </div>
+      <div class="chokes" id="chokes"></div>
+      <p class="small">シェアは公開情報・業界レポートをもとにした概算で、集計範囲や年によって変わります。</p>
+    </div>
+  </section>
+
+  <!-- ======================= JAPAN ======================= -->
+  <section class="block" id="japan">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <div class="num">05 — JAPAN</div>
+          <h2>日本企業のポジション</h2>
+          <p>マップに登場する日本企業は <span class="jp-count" id="jpCount">—</span> 社。チップそのもの(設計・製造)よりも、製造装置と材料・部材の領域に厚みがあるのが特徴です。</p>
+        </div>
+      </div>
+      <div class="jp-grid" id="jpGrid"></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>掲載企業は各セグメントの代表例であり、網羅的なリストやランキングではありません。企業名・事業内容・シェアは2025年時点の公開情報をもとにした概算・目安です。</p>
+    <p>参考: WSTS 半導体市場統計 / SEMI 製造装置・材料市場統計 / 各社の公開IR資料 / 業界団体・調査会社の公表資料。</p>
+    <p><a href="../index.html">← ポートフォリオに戻る</a></p>
+  </div>
+</footer>
+
+<dialog class="drawer" id="drawer" aria-labelledby="dwTitle">
+  <div class="dw">
+    <div class="dw-head" id="dwHead">
+      <span class="pill" id="dwPill"></span>
+      <h3 id="dwTitle"></h3>
+      <div class="sen" id="dwEn"></div>
+      <button class="close" id="dwClose" aria-label="閉じる">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="dw-body" id="dwBody"></div>
+  </div>
+</dialog>
+
+<script>
+/* ==================================================================
+   データ
+   p: [表示名, 国コード, 役割・強み, 検索用別名]
+   ================================================================== */
+const CC = {JP:"日本",US:"米国",TW:"台湾",KR:"韓国",CN:"中国",NL:"オランダ",DE:"ドイツ",FR:"フランス",UK:"英国",CH:"スイス",AT:"オーストリア",IT:"イタリア",IL:"イスラエル",HK:"香港",SG:"シンガポール"};
+
+const STAGES = {
+  ip:     {k:"STAGE 1", name:"設計基盤", en:"EDA & IP", sub:"設計ツールと回路の部品(IP)", c:"--st-ip"},
+  design: {k:"STAGE 2", name:"設計", en:"Chip Design", sub:"ファブレス・IDM・自社設計", c:"--st-design"},
+  fab:    {k:"STAGE 3", name:"前工程", en:"Wafer Fabrication", sub:"ウェーハ上に回路を作り込む", c:"--st-fab"},
+  back:   {k:"STAGE 4", name:"後工程", en:"Assembly, Packaging & Test", sub:"切り出し・封止・検査", c:"--st-back"},
+  system: {k:"STAGE 5", name:"最終製品", en:"Systems & OEM", sub:"機器・システムへの組み込み", c:"--st-system"},
+  app:    {k:"EXIT",    name:"用途(出口)", en:"End Markets", sub:"最終需要", c:"--st-app"},
+  equip:  {k:"SUPPLY A", name:"製造装置", en:"Equipment", sub:"工程ごとの専用装置とサブシステム", c:"--st-equip"},
+  mat:    {k:"SUPPLY B", name:"材料・部材", en:"Materials", sub:"ウェーハ・薬液・ガス・基板など", c:"--st-mat"}
+};
+
+const SEG = [
+  /* ---------- STAGE 1: EDA & IP ---------- */
+  {id:"eda", st:"ip", name:"EDAツール", en:"Electronic Design Automation",
+   desc:"回路の設計・シミュレーション・検証・レイアウトを行うソフトウェア。数百億個のトランジスタを人手で設計することは不可能で、EDAなしにチップは作れない。米国3社(Siemens EDAは独シーメンス傘下)で世界の大半を占める。",
+   p:[["Synopsys","US","論理合成・検証・IPで首位。2025年にAnsysを買収"],["Cadence","US","配置配線・アナログ設計・検証"],["Siemens EDA","DE","旧Mentor Graphics。物理検証・DFMに強い"],["Keysight","US","RF・高周波回路の設計/シミュレーション"],["Empyrean (華大九天)","CN","中国最大のEDAベンダー"]]},
+  {id:"ip", st:"ip", name:"半導体IP", en:"Semiconductor IP",
+   desc:"CPUコア・GPU・インターフェース回路など、再利用可能な設計ブロック。設計会社はIPをライセンスで購入し、自社回路と組み合わせてチップを作る。",
+   p:[["Arm","UK","スマホ向けCPUアーキテクチャをほぼ独占。データセンターにも拡大"],["Synopsys IP","US","USB/PCIe/DDRなどインターフェースIPで首位"],["Cadence IP","US","DSP・インターフェースIP"],["Imagination","UK","GPU IP"],["SiFive","US","RISC-Vプロセッサ IP"],["Rambus","US","メモリインターフェース・セキュリティIP"]]},
+  {id:"dsvc", st:"ip", name:"デザインサービス", en:"Design Services / ASIC",
+   desc:"顧客の仕様をもとにチップの物理設計や製造手配を請け負う。ハイパースケーラーのカスタムAIチップの増加で存在感が増している。",
+   p:[["Alchip (世芯)","TW","先端ASICの設計受託"],["GUC (創意電子)","TW","TSMC系のデザインサービス"],["ソシオネクスト","JP","カスタムSoCの設計・開発","Socionext"],["Faraday (智原)","TW","ASIC・IP"],["VeriSilicon (芯原)","CN","IP・デザインサービス"]]},
+
+  /* ---------- STAGE 2: 設計 ---------- */
+  {id:"fabless", st:"design", name:"ファブレス", en:"Fabless",
+   desc:"工場を持たず設計と販売に特化する企業。製造はファウンドリに委託する。AI向けGPUやスマホSoCなど、高付加価値ロジックの多くを担う。",
+   p:[["NVIDIA","US","AI向けGPUで圧倒的シェア。NVLink等の周辺技術も"],["Broadcom","US","ネットワークチップ、カスタムAI ASIC"],["AMD","US","CPU (EPYC/Ryzen)・GPU (Instinct)・FPGA"],["Qualcomm","US","スマホSoC (Snapdragon)・モデム"],["MediaTek","TW","スマホ・TV・Wi-Fi向けSoC"],["Marvell","US","データセンター向けカスタムチップ・光通信"],["Realtek","TW","ネットワーク・オーディオIC"],["Novatek","TW","ディスプレイドライバIC"],["メガチップス","JP","ゲーム機向けASIC等","MegaChips"]]},
+  {id:"inhouse", st:"design", name:"自社設計(システム企業)", en:"In-house Silicon",
+   desc:"巨大IT企業や機器メーカーが自社製品専用のチップを設計する動き。製品差別化とコスト削減が狙いで、設計後の製造はファウンドリに委託する。",
+   p:[["Apple","US","A/Mシリーズ・モデムを自社設計"],["Google","US","TPU・Tensor・Axion"],["Amazon (AWS)","US","Trainium・Inferentia・Graviton"],["Microsoft","US","Maia・Cobalt"],["Meta","US","MTIA (推論用AIチップ)"],["Tesla","US","自動運転用FSDチップ・Dojo"],["HiSilicon (華為)","CN","Kirin・Ascend"]]},
+  {id:"idm", st:"design", name:"IDM(ロジック・アナログ・マイコン)", en:"Integrated Device Manufacturers",
+   desc:"設計から製造まで一貫して自社で行う垂直統合型。アナログ・マイコン・車載向けなど、プロセス技術と設計の擦り合わせが重要な分野に多い。",
+   p:[["Intel","US","PC/サーバーCPU。ファウンドリ事業も展開"],["Texas Instruments","US","アナログIC首位。300mmで自社生産"],["Infineon","DE","パワー半導体・車載マイコンで首位級"],["STMicroelectronics","CH","マイコン・SiC・センサー"],["NXP","NL","車載・産業向けマイコン/プロセッサ"],["ルネサス エレクトロニクス","JP","車載マイコンで首位級","Renesas"],["Analog Devices","US","高性能アナログ・データ変換"],["Microchip","US","マイコン・FPGA"],["onsemi","US","パワー (SiC)・イメージセンサー"]]},
+  {id:"idm2", st:"design", name:"IDM(パワー・センサー・光)", en:"Power, Sensor & Opto",
+   desc:"電力制御を担うパワー半導体、光を電気に変えるイメージセンサー、LEDなど。日本企業が強い領域。",
+   p:[["ソニーセミコンダクタソリューションズ","JP","CMOSイメージセンサーで世界首位","Sony"],["ローム","JP","SiCパワー・アナログ","ROHM"],["三菱電機","JP","IGBT・パワーモジュール","Mitsubishi Electric"],["富士電機","JP","IGBTモジュール","Fuji Electric"],["東芝デバイス&ストレージ","JP","パワー・ディスクリート","Toshiba"],["Wolfspeed","US","SiCウェーハ・デバイス"],["Bosch","DE","MEMSセンサー・SiC"],["日亜化学工業","JP","青色/白色LEDで首位","Nichia"]]},
+  {id:"memory", st:"design", name:"メモリ", en:"Memory (DRAM / NAND)",
+   desc:"データを記憶するDRAMとNANDフラッシュ。少数の大手が設計から製造まで手がける。AI向けのHBM(広帯域メモリ)が急成長している。",
+   p:[["Samsung Electronics","KR","DRAM・NANDで首位"],["SK hynix","KR","HBMで首位。DRAM2位"],["Micron","US","DRAM・NAND・HBM"],["キオクシア","JP","NANDフラッシュ (SanDiskと共同生産)","Kioxia"],["SanDisk","US","NAND (2025年にWDから分離)"],["CXMT (長鑫存儲)","CN","中国のDRAM大手"],["YMTC (長江存儲)","CN","中国のNAND大手"]]},
+
+  /* ---------- STAGE 3: 前工程 ---------- */
+  {id:"fdy_adv", st:"fab", name:"先端ファウンドリ", en:"Leading-edge Foundry",
+   desc:"他社が設計したチップを受託製造する工場。3nm・2nm世代の最先端ロジックを量産できるのは世界でも数社のみで、巨額の設備投資(1工場で数兆円規模)が必要。",
+   p:[["TSMC","TW","世界ファウンドリ市場の約7割。2nm量産開始"],["Samsung Foundry","KR","GAA構造の3nm/2nm"],["Intel Foundry","US","Intel 18A。外部受託を拡大中"],["Rapidus","JP","2nmロジックを北海道で2027年量産目標"],["JASM","JP","TSMC・ソニー・デンソー・トヨタの熊本合弁工場"]]},
+  {id:"fdy_mat", st:"fab", name:"成熟・特殊プロセスファウンドリ", en:"Mature & Specialty Foundry",
+   desc:"28nm以上の成熟ノードや、アナログ・パワー・RF・イメージセンサー向けの特殊プロセスを受託生産。車載・産業機器向けで需要が厚い。",
+   p:[["GlobalFoundries","US","FD-SOI・RF・特殊プロセス"],["UMC (聯華電子)","TW","成熟ノード大手"],["SMIC (中芯国際)","CN","中国最大のファウンドリ"],["Hua Hong (華虹)","CN","パワー・組込み不揮発メモリ"],["PSMC (力晶積成)","TW","メモリ・ロジック"],["Tower Semiconductor","IL","アナログ・RF・イメージセンサー"],["VIS (世界先進)","TW","パワー・ディスプレイドライバ"]]},
+  {id:"idmfab", st:"fab", name:"IDM・メモリの自社工場", en:"IDM & Memory Fabs",
+   desc:"IDMやメモリメーカーは自社の工場で前工程を行う。メモリはDRAM・NANDとも専用の巨大工場で大量生産される。",
+   p:[["Samsung Electronics","KR","平沢・華城のメモリ/ロジック工場"],["SK hynix","KR","利川・清州・龍仁"],["Micron","US","広島・台湾・米国でDRAM生産"],["キオクシア","JP","四日市・北上でNAND生産","Kioxia"],["Intel","US","米国・アイルランド・イスラエル"],["Texas Instruments","US","300mmアナログ工場"],["Infineon","DE","ドレスデン・フィラッハ・クリム"]]},
+
+  /* ---------- STAGE 4: 後工程 ---------- */
+  {id:"osat", st:"back", name:"OSAT(組立・テスト受託)", en:"Outsourced Assembly & Test",
+   desc:"ウェーハからチップを切り出し、パッケージに封止し、検査する工程を受託する企業。台湾・中国・東南アジアに生産拠点が集まる。",
+   p:[["ASE (日月光)","TW","OSAT世界首位"],["Amkor","US","OSAT世界2位。日本にも拠点"],["JCET (長電科技)","CN","中国最大のOSAT"],["Tongfu (通富微電)","CN","AMD向けが大きい"],["PTI (力成)","TW","メモリ向けパッケージ"],["Huatian (華天科技)","CN","中国大手"]]},
+  {id:"advpkg", st:"back", name:"先端パッケージング", en:"Advanced Packaging",
+   desc:"複数のチップを高密度に並べたり積み重ねたりして1つの製品にする技術(2.5D/3D実装、チップレット)。AI向けGPUとHBMの一体化で需要が逼迫し、ボトルネックになっている。",
+   p:[["TSMC","TW","CoWoS・SoIC。AI GPUのほぼ全て"],["Intel","US","EMIB・Foveros"],["Samsung Electronics","KR","I-Cube・X-Cube"],["ASE (日月光)","TW","VIPack・CoWoS後工程の受託"],["Amkor","US","2.5D/HDFO"],["SK hynix","KR","HBMの積層 (MR-MUF)"]]},
+  {id:"testhouse", st:"back", name:"テストハウス", en:"Test Services",
+   desc:"ウェーハ検査や最終検査を専門に請け負う企業。AIチップは検査時間が長く、テスト需要も急増している。",
+   p:[["KYEC (京元電子)","TW","テスト専業の世界最大手"],["Sigurd (矽格)","TW","テスト・パッケージ"],["Ardentec (欣銓)","TW","ウェーハテスト"],["テラプローブ","JP","ウェーハテスト受託","Tera Probe"]]},
+
+  /* ---------- STAGE 5: 最終製品 ---------- */
+  {id:"devices", st:"system", name:"電子機器メーカー", en:"Device OEMs",
+   desc:"スマホ・PC・ゲーム機・家電などを企画・販売するブランド企業。チップの最大の買い手で、最近は自社設計にも踏み込む。",
+   p:[["Apple","US","iPhone・Mac"],["Samsung Electronics","KR","Galaxy・家電"],["Xiaomi (小米)","CN","スマホ・家電・EV"],["Lenovo (聯想)","CN","PC世界首位"],["HP","US","PC・プリンター"],["Dell","US","PC・サーバー"],["ソニーグループ","JP","PlayStation・カメラ","Sony"],["任天堂","JP","ゲーム機","Nintendo"]]},
+  {id:"servers", st:"system", name:"サーバー・ネットワーク", en:"Servers & Networking",
+   desc:"データセンター向けのサーバー・AIラック・スイッチ。生成AIの普及で最も成長している出口。",
+   p:[["NVIDIA","US","GB200 NVL72などラック単位で提供"],["Dell","US","AIサーバー"],["HPE","US","サーバー・スパコン"],["Supermicro","US","GPUサーバー"],["Cisco","US","ネットワーク機器"],["Arista","US","データセンタースイッチ"],["Huawei (華為)","CN","通信基地局・サーバー"],["富士通","JP","サーバー・スパコン(富岳)","Fujitsu"]]},
+  {id:"ems", st:"system", name:"EMS / ODM", en:"Contract Manufacturers",
+   desc:"ブランド企業から機器の組み立てを受託する企業。iPhoneやAIサーバーの多くは台湾系EMS/ODMが組み立てている。",
+   p:[["Foxconn (鴻海)","TW","EMS世界最大。iPhone・AIサーバー"],["Quanta (広達)","TW","ノートPC・AIサーバーODM"],["Wistron (緯創)","TW","AIサーバー基板"],["Pegatron (和碩)","TW","スマホ・PC"],["Luxshare (立訊)","CN","iPhone・コネクタ"],["Jabil","US","EMS大手"],["Inventec (英業達)","TW","サーバーODM"]]},
+  {id:"auto", st:"system", name:"自動車・Tier1", en:"Automotive",
+   desc:"自動車メーカーと、ECUなどの電子システムを供給するTier1部品メーカー。EV化・ADAS化で1台あたりの半導体搭載額が増えている。",
+   p:[["Bosch","DE","Tier1最大手。自社で半導体も製造"],["デンソー","JP","Tier1大手。パワー半導体も内製","Denso"],["Continental","DE","Tier1"],["ZF","DE","Tier1"],["トヨタ自動車","JP","自動車","Toyota"],["BYD (比亜迪)","CN","EV・パワー半導体も内製"],["Tesla","US","EV・自社設計チップ"],["Volkswagen","DE","自動車"]]},
+  {id:"indus", st:"system", name:"産業機器", en:"Industrial",
+   desc:"FA機器・ロボット・電力インフラ・医療機器など。マイコン・パワー・アナログを長期にわたり安定して使う。",
+   p:[["Siemens","DE","FA・電力インフラ"],["ファナック","JP","CNC・ロボット","Fanuc"],["キーエンス","JP","センサー・FA機器","Keyence"],["安川電機","JP","サーボ・ロボット","Yaskawa"],["ABB","CH","ロボット・電力"],["Schneider Electric","FR","電力管理・FA"]]},
+
+  /* ---------- SUPPLY A: 装置 ---------- */
+  {id:"litho", st:"equip", name:"露光・リソグラフィ", en:"Lithography",
+   desc:"マスクの回路パターンを光でウェーハ上に転写する、微細化の鍵を握る工程の装置群。最先端のEUV露光装置は1台数百億円とされ、ASMLだけが製造できる。塗布・現像を行うコータ/デベロッパと組み合わせて使う。",
+   p:[["ASML","NL","EUV露光装置を独占。ArF液浸でも首位"],["ニコン","JP","ArF液浸・ArF/KrF露光装置","Nikon"],["キヤノン","JP","KrF/i線露光装置・ナノインプリント","Canon"],["東京エレクトロン","JP","コータ/デベロッパ。EUV向けはほぼ独占","Tokyo Electron TEL"],["SCREENホールディングス","JP","コータ/デベロッパ","SCREEN"],["ニューフレアテクノロジー","JP","電子ビームマスク描画装置","NuFlare"],["Carl Zeiss SMT","DE","EUV露光装置の光学系"],["Trumpf","DE","EUV光源用CO2レーザー"],["ギガフォトン","JP","ArF/KrFエキシマレーザー光源","Gigaphoton"]]},
+  {id:"etch", st:"equip", name:"エッチング", en:"Etch",
+   desc:"露光で形成したパターンに沿って膜を削り、回路を立体的に作り込む装置。3D NANDの深い穴あけや、GAAトランジスタの形成で重要性が増している。",
+   p:[["Lam Research","US","エッチング装置で首位"],["東京エレクトロン","JP","絶縁膜エッチングに強い","Tokyo Electron TEL"],["Applied Materials","US","導体エッチング"],["日立ハイテク","JP","導体エッチング","Hitachi High-Tech"],["AMEC (中微)","CN","中国のエッチング大手"],["NAURA (北方華創)","CN","中国の総合装置大手"]]},
+  {id:"dep", st:"equip", name:"成膜(CVD/PVD/ALD/エピ)", en:"Deposition",
+   desc:"ウェーハ上に絶縁膜・金属膜などの薄膜を形成する装置。原子1層ずつ積むALDなど、方式ごとに得意企業が分かれる。",
+   p:[["Applied Materials","US","成膜装置で首位 (CVD/PVD/エピ)"],["Lam Research","US","CVD・ALD・めっき"],["東京エレクトロン","JP","CVD・ALD・熱処理","Tokyo Electron TEL"],["KOKUSAI ELECTRIC","JP","バッチ式ALD・成膜","Kokusai"],["ASM International","NL","枚葉式ALDで首位"],["NAURA (北方華創)","CN","PVD・CVD"]]},
+  {id:"clean", st:"equip", name:"洗浄", en:"Cleaning",
+   desc:"工程の合間に、微粒子・有機物・金属汚染を取り除く装置。全工程の約3割を洗浄が占めると言われる。",
+   p:[["SCREENホールディングス","JP","枚葉/バッチ洗浄装置で首位","SCREEN"],["東京エレクトロン","JP","洗浄装置","Tokyo Electron TEL"],["Lam Research","US","枚葉洗浄"],["SEMES","KR","Samsung系の装置メーカー"],["ACM Research (盛美)","US","洗浄装置"],["芝浦メカトロニクス","JP","洗浄・エッチング","Shibaura"]]},
+  {id:"cmp", st:"equip", name:"CMP(平坦化)", en:"Chemical Mechanical Planarization",
+   desc:"スラリーとパッドを使って、ウェーハ表面を化学的・機械的に研磨し平らにする装置。多層配線を積み上げるために欠かせない。",
+   p:[["Applied Materials","US","CMP装置で首位"],["荏原製作所","JP","CMP装置2位","Ebara"]]},
+  {id:"implant", st:"equip", name:"イオン注入・熱処理", en:"Ion Implant & Thermal",
+   desc:"不純物を打ち込んで電気的性質を変えるイオン注入装置と、結晶の回復や酸化を行う熱処理(アニール・酸化炉)装置。",
+   p:[["Applied Materials","US","イオン注入 (旧Varian) 首位"],["Axcelis","US","イオン注入。パワー半導体向けに強い"],["住友重機械イオンテクノロジー","JP","イオン注入","SMIT Sumitomo"],["東京エレクトロン","JP","縦型熱処理炉","Tokyo Electron TEL"],["KOKUSAI ELECTRIC","JP","縦型熱処理炉","Kokusai"],["SCREENホールディングス","JP","レーザーアニール","SCREEN"]]},
+  {id:"metro", st:"equip", name:"検査・計測", en:"Inspection & Metrology",
+   desc:"パターン寸法・膜厚・欠陥を検査・計測する装置。歩留まり(良品率)を上げるための目であり、微細化とともに投資比率が上がっている。",
+   p:[["KLA","US","検査・計測装置で首位"],["Applied Materials","US","電子ビーム検査"],["日立ハイテク","JP","測長SEM (CD-SEM) で首位","Hitachi High-Tech"],["レーザーテック","JP","EUVマスクブランクス検査をほぼ独占","Lasertec"],["Onto Innovation","US","計測・検査"],["Nova","IL","光学計測"],["Camtek","IL","後工程向け検査"]]},
+  {id:"backeq", st:"equip", name:"後工程装置", en:"Back-end Equipment",
+   desc:"ウェーハを薄く削り、チップに切り分け、基板に接合し、樹脂で封止するための装置群。先端パッケージ向けのボンダーやHBM向け装置が成長している。",
+   p:[["ディスコ","JP","ダイサー・グラインダーで7〜8割","DISCO"],["東京精密","JP","プローバ・ダイサー","ACCRETECH Tokyo Seimitsu"],["Besi","NL","ダイボンダー・ハイブリッドボンダー"],["ASMPT","HK","ボンダー・実装装置"],["Kulicke & Soffa","US","ワイヤボンダー"],["Hanmi Semiconductor","KR","HBM向けTCボンダー"],["TOWA","JP","モールディング装置で首位","Towa"],["ヤマハロボティクス","JP","ボンダー (旧新川)","Yamaha Shinkawa"]]},
+  {id:"tester", st:"equip", name:"テスター・プローブ", en:"Test Equipment",
+   desc:"チップが正しく動くかを電気的に試験する装置。ウェーハ状態で針(プローブカード)を当てる試験と、パッケージ後の最終試験がある。",
+   p:[["アドバンテスト","JP","SoC・メモリテスターで首位","Advantest"],["Teradyne","US","SoCテスター"],["東京エレクトロン","JP","ウェーハプローバ","Tokyo Electron TEL"],["東京精密","JP","ウェーハプローバ","ACCRETECH Tokyo Seimitsu"],["FormFactor","US","プローブカード首位"],["Technoprobe","IT","プローブカード"],["日本マイクロニクス","JP","メモリ向けプローブカード","MJC Micronics"]]},
+  {id:"infra", st:"equip", name:"周辺機器・ファブインフラ", en:"Subsystems & Fab Infra",
+   desc:"装置を構成する真空ポンプ・高周波電源・流量制御器や、工場の超純水・自動搬送システムなど。装置メーカーを支える縁の下の力持ち。",
+   p:[["Edwards (Atlas Copco)","UK","ドライ真空ポンプ"],["荏原製作所","JP","真空ポンプ","Ebara"],["MKS","US","圧力・流量・電源サブシステム"],["Advanced Energy","US","プラズマ用RF電源"],["堀場製作所","JP","マスフローコントローラで首位","Horiba"],["ダイフク","JP","クリーンルーム搬送システム","Daifuku"],["村田機械","JP","クリーン搬送","Murata Machinery"],["栗田工業","JP","超純水","Kurita"],["オルガノ","JP","超純水","Organo"]]},
+
+  /* ---------- SUPPLY B: 材料 ---------- */
+  {id:"wafer", st:"mat", name:"シリコンウェーハ", en:"Silicon Wafers",
+   desc:"チップの土台となる単結晶シリコンの円板。99.999999999%(イレブンナイン)の純度と原子レベルの平坦さが求められる。日本の2社で世界の過半を供給。",
+   p:[["信越化学工業","JP","シリコンウェーハで世界首位","Shin-Etsu"],["SUMCO","JP","世界2位"],["GlobalWafers (環球晶圓)","TW","世界3位"],["Siltronic","DE","世界4位"],["SK siltron","KR","世界5位"]]},
+  {id:"compound", st:"mat", name:"化合物・パワー半導体基板", en:"SiC / GaN Substrates",
+   desc:"EVや電力機器向けのSiC(炭化ケイ素)、高周波・急速充電向けのGaN(窒化ガリウム)などの基板とエピタキシャルウェーハ。",
+   p:[["Wolfspeed","US","SiCウェーハ大手"],["Coherent","US","SiC基板"],["SICC (天岳先進)","CN","SiC基板で急成長"],["レゾナック","JP","SiCエピウェーハ","Resonac"],["住友電気工業","JP","GaN/GaAs基板","Sumitomo Electric"]]},
+  {id:"mask", st:"mat", name:"フォトマスク・ブランクス", en:"Photomasks & Blanks",
+   desc:"回路の原版となるフォトマスクと、その素材となるマスクブランクス、マスクをほこりから守るペリクル。EUV向けは特に技術障壁が高い。",
+   p:[["テクセンド フォトマスク","JP","旧トッパンのフォトマスク事業","Tekscend Toppan"],["大日本印刷","JP","フォトマスク","DNP"],["Photronics","US","フォトマスク"],["HOYA","JP","EUVマスクブランクスで首位"],["AGC","JP","EUVマスクブランクス"],["三井化学","JP","EUVペリクル","Mitsui Chemicals"],["信越化学工業","JP","ペリクル・マスクブランクス","Shin-Etsu"]]},
+  {id:"resist", st:"mat", name:"フォトレジスト・塗布材料", en:"Photoresists",
+   desc:"光に反応して性質が変わる感光性樹脂。露光の解像度を決める重要材料で、日本企業が世界の大半を占める。反射防止膜などの周辺材料も含む。",
+   p:[["JSR","JP","ArF/EUVレジスト。Inpriaを傘下に"],["東京応化工業","JP","レジスト世界首位級","TOK"],["信越化学工業","JP","ArF/EUVレジスト","Shin-Etsu"],["住友化学","JP","ArFレジスト","Sumitomo Chemical"],["富士フイルム","JP","レジスト・周辺材料","Fujifilm"],["DuPont","US","レジスト・周辺材料"],["日産化学","JP","反射防止膜","Nissan Chemical"],["Dongjin Semichem","KR","レジスト"]]},
+  {id:"gas", st:"mat", name:"ガス(バルク・特殊)", en:"Industrial & Specialty Gases",
+   desc:"窒素・アルゴンなど大量に使うバルクガスと、エッチングや成膜に使う特殊ガス(NF3、WF6、C4F6など)。工場に専用プラントを併設することも多い。",
+   p:[["Linde","UK","産業ガス世界最大"],["Air Liquide","FR","産業ガス・電子材料"],["日本酸素ホールディングス","JP","大陽日酸。産業ガス","Nippon Sanso Taiyo"],["Air Products","US","産業ガス"],["レゾナック","JP","高純度特殊ガス","Resonac"],["関東電化工業","JP","NF3等のフッ素系ガス","Kanto Denka"],["SK specialty","KR","NF3"],["セントラル硝子","JP","特殊ガス","Central Glass"]]},
+  {id:"chem", st:"mat", name:"ウェットケミカル", en:"Wet Chemicals",
+   desc:"洗浄やエッチングに使う高純度の酸・溶剤など。不純物はppt(1兆分の1)レベルまで管理される。",
+   p:[["ステラ ケミファ","JP","高純度フッ化水素酸","Stella Chemifa"],["森田化学工業","JP","高純度フッ化水素酸","Morita"],["関東化学","JP","高純度薬品","Kanto Chemical"],["三菱ケミカル","JP","高純度薬品","Mitsubishi Chemical"],["BASF","DE","電子グレード薬品"],["Entegris","US","薬液・フィルター・供給機器"]]},
+  {id:"cmpmat", st:"mat", name:"CMPスラリー・パッド", en:"CMP Slurries & Pads",
+   desc:"CMP工程で使う研磨剤(スラリー)と研磨パッド。研磨する膜の種類ごとに配合が異なる。",
+   p:[["フジミインコーポレーテッド","JP","研磨材","Fujimi"],["レゾナック","JP","CMPスラリー","Resonac"],["Entegris","US","CMPスラリー (旧CMC Materials)"],["DuPont","US","研磨パッドで首位"],["富士フイルム","JP","CMPスラリー","Fujifilm"]]},
+  {id:"target", st:"mat", name:"ターゲット・前駆体", en:"Targets & Precursors",
+   desc:"PVD(スパッタ)で金属膜を作るためのスパッタリングターゲットと、CVD/ALDで膜を作る原料(前駆体)。",
+   p:[["JX金属","JP","スパッタリングターゲットで首位","JX Advanced Metals"],["Honeywell","US","ターゲット"],["Materion","US","ターゲット"],["東ソー","JP","ターゲット","Tosoh"],["Merck (EMD)","DE","前駆体・電子材料"],["ADEKA","JP","High-k前駆体"],["Air Liquide","FR","前駆体"],["SK trichem","KR","前駆体"]]},
+  {id:"parts", st:"mat", name:"石英・セラミック部材", en:"Quartz & Ceramic Parts",
+   desc:"装置の中で使われる石英チューブ、静電チャック、セラミック部品など。プラズマや高温に耐える消耗部材。",
+   p:[["信越化学工業","JP","合成石英","Shin-Etsu"],["東ソー","JP","石英ガラス","Tosoh"],["フェローテック","JP","石英・セラミック・装置部品","Ferrotec"],["クアーズテック","JP","石英・セラミック部材","CoorsTek"],["京セラ","JP","セラミック部品","Kyocera"],["日本ガイシ","JP","静電チャック・ヒーター","NGK"]]},
+  {id:"substrate", st:"mat", name:"パッケージ基板・ABF", en:"Package Substrates",
+   desc:"チップとプリント基板をつなぐ中継基板。高性能CPU/GPUにはABF(味の素ビルドアップフィルム)を使うFC-BGA基板が必須で、AI需要で大型化が進む。",
+   p:[["イビデン","JP","FC-BGA基板。CPU/GPU向け大手","Ibiden"],["新光電気工業","JP","FC-BGA基板","Shinko"],["Unimicron (欣興)","TW","基板世界最大級"],["AT&S","AT","IC基板"],["Nan Ya PCB (南亜電路板)","TW","IC基板"],["Kinsus (景碩)","TW","IC基板"],["Samsung Electro-Mechanics","KR","FC-BGA基板"],["味の素","JP","ABF層間絶縁フィルムをほぼ独占","Ajinomoto"]]},
+  {id:"pkgmat", st:"mat", name:"封止材・実装材料", en:"Packaging Materials",
+   desc:"チップを保護する封止樹脂、ダイボンド材、アンダーフィル、リードフレーム、ボンディングワイヤ、ダイシングテープなど。",
+   p:[["レゾナック","JP","封止材・ダイボンドフィルム","Resonac"],["住友ベークライト","JP","エポキシ封止材","Sumitomo Bakelite"],["Henkel","DE","接着剤・アンダーフィル"],["ナミックス","JP","アンダーフィル","Namics"],["三井ハイテック","JP","リードフレーム","Mitsui High-tec"],["田中貴金属工業","JP","ボンディングワイヤ","Tanaka"],["Heraeus","DE","ボンディングワイヤ"],["リンテック","JP","ダイシング・BGテープ","Lintec"],["日東電工","JP","工程用テープ","Nitto"],["古河電気工業","JP","ダイシングテープ","Furukawa"]]}
+];
+
+/* 用途(出口) */
+const APPS = [
+  {id:"dc", name:"データセンター・AI", en:"Data Center & AI", share:22, c:"#2f6fed",
+   lead:"生成AIの学習と推論を担うAIサーバーが、半導体需要を牽引する最大の成長ドライバー。GPU 1基にHBMを複数積み、それを数万基単位で並べる。",
+   chips:[["AIアクセラレータ (GPU/ASIC)","学習・推論を行う演算チップ",["NVIDIA","AMD","Broadcom","Google","Amazon (AWS)"]],
+          ["HBM・サーバーDRAM","GPUに直結する広帯域メモリ",["SK hynix","Samsung Electronics","Micron"]],
+          ["サーバーCPU","汎用処理・AIサーバーのホスト",["Intel","AMD","Arm","NVIDIA"]],
+          ["ネットワーク・光","GPU間をつなぐスイッチ・光トランシーバ",["Broadcom","NVIDIA","Marvell"]],
+          ["SSD (NAND)","学習データ・推論用ストレージ",["Samsung Electronics","SK hynix","キオクシア","Micron","SanDisk"]],
+          ["電源IC・パワー","1ラック100kW超の電力を変換",["Infineon","Texas Instruments","Analog Devices"]]],
+   trend:"<b>トレンド:</b> チップレット化と先端パッケージ(CoWoS)、HBMの多段積層、光電融合(CPO)が進み、前工程だけでなく後工程・基板・検査にも投資が波及している。"},
+  {id:"phone", name:"スマートフォン", en:"Smartphones", share:21, c:"#7357e8",
+   lead:"1台に数十個の半導体が載る、最も数量の多い出口。高性能SoCの先端プロセス需要を長年牽引してきた。",
+   chips:[["アプリケーションプロセッサ (SoC)","CPU・GPU・NPUを1チップに集積",["Apple","Qualcomm","MediaTek","Samsung Electronics"]],
+          ["モデム・RF","通信用モデムと高周波部品",["Qualcomm","MediaTek","Broadcom"]],
+          ["イメージセンサー","カメラの目",["ソニーセミコンダクタソリューションズ","Samsung Electronics"]],
+          ["モバイルDRAM・NAND","LPDDR・UFSストレージ",["Samsung Electronics","SK hynix","Micron","キオクシア"]],
+          ["電源管理IC (PMIC)","電池の電力を各部に分配",["Qualcomm","Apple","MediaTek"]],
+          ["ディスプレイドライバ","画面の画素を駆動",["Novatek","Samsung Electronics"]]],
+   trend:"<b>トレンド:</b> 端末上で生成AIを動かす「オンデバイスAI」のため、NPU性能とメモリ容量が増加している。"},
+  {id:"pc", name:"PC", en:"Personal Computers", share:12, c:"#0e9488",
+   lead:"CPU・GPU・メモリ・SSDが主役。買い替えサイクルとOSの更新、AI PC化が需要を左右する。",
+   chips:[["CPU / SoC","PCの頭脳",["Intel","AMD","Apple","Qualcomm"]],
+          ["GPU","グラフィックス・ゲーム・ローカルAI",["NVIDIA","AMD","Intel"]],
+          ["DRAM・SSD","メインメモリとストレージ",["Samsung Electronics","SK hynix","Micron","キオクシア"]],
+          ["周辺IC","電源・インターフェース・オーディオ",["Realtek","Texas Instruments"]]],
+   trend:"<b>トレンド:</b> NPUを内蔵した「AI PC」が標準化しつつあり、Arm系SoCのPC参入も広がっている。"},
+  {id:"comm", name:"通信インフラ", en:"Communications Infra", share:8, c:"#0891b2",
+   lead:"5G基地局・光伝送・ルーターなど、通信ネットワークを構成する機器向け。高周波・光の特殊デバイスが多い。",
+   chips:[["ベースバンド・ネットワークSoC","基地局・ルーターの処理",["Marvell","Broadcom","Intel"]],
+          ["RF・パワーアンプ (GaN)","電波の送受信",["住友電気工業","NXP","Infineon"]],
+          ["光デバイス","光トランシーバ・レーザー",["Broadcom","Marvell","Coherent"]],
+          ["FPGA","柔軟な信号処理",["AMD","Intel"]]],
+   trend:"<b>トレンド:</b> AIデータセンター内外を結ぶ光通信の高速化(800G→1.6T)が新たな成長領域に。"},
+  {id:"auto", name:"自動車", en:"Automotive", share:13, c:"#d27d00",
+   lead:"エンジン制御から電動化・自動運転まで。1台あたりの半導体搭載額はEVで内燃機関車の2倍以上とされる。長期供給と高信頼性が求められる。",
+   chips:[["マイコン (MCU)","ECUの制御。1台に数十〜100個以上",["ルネサス エレクトロニクス","Infineon","NXP","STMicroelectronics"]],
+          ["パワー半導体 (SiC/IGBT)","モーター駆動・充電の電力変換",["Infineon","STMicroelectronics","onsemi","ローム","三菱電機","デンソー"]],
+          ["ADAS・自動運転SoC","カメラ映像の認識・判断",["NVIDIA","Qualcomm","Tesla","Mobileye"]],
+          ["センサー","イメージセンサー・MEMS・レーダー",["ソニーセミコンダクタソリューションズ","onsemi","Bosch","NXP"]],
+          ["アナログ・電源IC","電池監視・電源",["Texas Instruments","Analog Devices","Infineon"]]],
+   trend:"<b>トレンド:</b> ECUを統合する「ゾーン/セントラル型」アーキテクチャとSDV化で、高性能SoCの比重が高まる。"},
+  {id:"indus", name:"産業機器", en:"Industrial", share:12, c:"#4f9a2c",
+   lead:"FA・ロボット・電力インフラ・医療・計測機器など多種多様。製品寿命が長く、成熟ノードのチップを安定して使い続ける。",
+   chips:[["マイコン・FPGA","機器の制御",["ルネサス エレクトロニクス","STMicroelectronics","Microchip","AMD"]],
+          ["パワー半導体","インバーター・電源・再エネ",["Infineon","三菱電機","富士電機","onsemi"]],
+          ["アナログIC","センサー信号の変換・絶縁",["Texas Instruments","Analog Devices"]],
+          ["センサー","画像・位置・温度など",["ソニーセミコンダクタソリューションズ","Bosch"]]],
+   trend:"<b>トレンド:</b> 再エネ・蓄電・データセンター電源向けのパワー半導体と、エッジAIによる産業機器の知能化が成長。"},
+  {id:"cons", name:"民生・IoT・ゲーム", en:"Consumer & IoT", share:12, c:"#d63f74",
+   lead:"テレビ・ゲーム機・家電・ウェアラブル・スマートホーム機器など。価格競争が激しく、統合度の高いSoCが好まれる。",
+   chips:[["SoC","TV・ゲーム機・家電の頭脳",["MediaTek","AMD","NVIDIA","Realtek"]],
+          ["接続IC","Wi-Fi・Bluetooth",["Broadcom","Qualcomm","MediaTek","Realtek"]],
+          ["マイコン","家電・IoT機器の制御",["ルネサス エレクトロニクス","STMicroelectronics","Microchip"]],
+          ["センサー・LED","カメラ・照明",["ソニーセミコンダクタソリューションズ","日亜化学工業"]]],
+   trend:"<b>トレンド:</b> AR/VRヘッドセットやスマートグラスなど、新しいデバイス形態でセンサーと低消費電力SoCが鍵に。"}
+];
+const DEVICES = ["ロジック<br>CPU/GPU/SoC","メモリ<br>DRAM/HBM/NAND","アナログ<br>電源IC","マイコン<br>MCU","パワー<br>IGBT/SiC/GaN","センサー<br>画像/MEMS","RF・光<br>通信デバイス"];
+const HEAT = {dc:[3,3,2,0,2,0,3], phone:[3,3,2,1,1,3,3], pc:[3,3,2,1,1,1,1], comm:[3,2,2,1,1,0,3], auto:[2,1,3,3,3,3,2], indus:[2,1,3,3,3,2,1], cons:[2,2,2,2,1,2,2]};
+
+/* 製造工程 */
+const PHASES = [
+  {id:"pre", name:"準備", tag:"", steps:[
+    {id:"s-wafer", name:"ウェーハ製造", en:"Wafer Manufacturing", c:"--st-mat",
+     what:"高純度の多結晶シリコンを溶かして単結晶インゴットを引き上げ、薄くスライスして鏡面に研磨する。チップメーカーはこのウェーハを材料メーカーから購入する。",
+     eq:[], mat:["wafer","compound"], point:"<b>ポイント:</b> 300mmウェーハが主流。直径が大きいほど1枚から取れるチップ数が増える。", x:"wafer"},
+    {id:"s-mask", name:"マスク作製", en:"Photomask Making", c:"--st-mat",
+     what:"設計データ(回路パターン)を電子ビームでマスクブランクスに描画し、回路の原版=フォトマスクを作る。1つのチップに数十枚のマスクが必要。",
+     eq:["litho","metro"], mat:["mask"], point:"<b>ポイント:</b> 先端品のマスクセットは数十億円規模。EUVマスクは欠陥検査も特殊で、レーザーテックの検査装置が事実上の標準。", x:"mask"}
+  ]},
+  {id:"front", name:"前工程 — 回路形成", tag:"↻ 層の数だけ繰り返し (数十〜100回以上)", loop:true, steps:[
+    {id:"s-dep", name:"成膜・酸化", en:"Deposition / Oxidation", c:"--st-fab",
+     what:"ウェーハ表面に絶縁膜(酸化膜・窒化膜)や金属膜などの薄膜を形成する。CVD・PVD(スパッタ)・ALD・熱酸化など方式は多様。",
+     eq:["dep","implant"], mat:["gas","target","parts"], point:"<b>ポイント:</b> GAAトランジスタや3D NANDでは、原子レベルで膜厚を制御するALDの比重が上がっている。", x:"dep"},
+    {id:"s-coat", name:"レジスト塗布", en:"Resist Coating", c:"--st-fab",
+     what:"ウェーハを高速回転させながら、感光材であるフォトレジストを均一に塗り広げる。",
+     eq:["litho"], mat:["resist"], point:"<b>ポイント:</b> 塗布・現像を行うコータ/デベロッパは露光装置と直結して使われ、EUV向けは東京エレクトロンがほぼ独占。", x:"coat"},
+    {id:"s-expo", name:"露光", en:"Exposure", c:"--st-fab",
+     what:"マスクを通した光をレンズで縮小してレジストに照射し、回路パターンを焼き付ける。最先端は波長13.5nmのEUV光を使う。",
+     eq:["litho"], mat:["mask","resist"], point:"<b>ポイント:</b> 微細化を決める最重要工程。EUV露光装置はASMLのみが供給し、光学系はZeiss、光源レーザーはTrumpfが担う。", x:"expo"},
+    {id:"s-dev", name:"現像", en:"Develop", c:"--st-fab",
+     what:"現像液で、光が当たった(または当たらなかった)部分のレジストを溶かし、パターンを浮かび上がらせる。",
+     eq:["litho","metro"], mat:["chem","resist"], point:"<b>ポイント:</b> 現像後に寸法を測長SEMで計測し、露光条件にフィードバックする。", x:"dev"},
+    {id:"s-etch", name:"エッチング", en:"Etch", c:"--st-fab",
+     what:"レジストをマスクにして、下の膜をプラズマ(ドライ)や薬液(ウェット)で削り取り、回路の形を作る。",
+     eq:["etch"], mat:["gas","chem","parts"], point:"<b>ポイント:</b> 3D NANDでは数百層を貫く深い穴を垂直にあける高アスペクト比エッチングが必要。", x:"etch"},
+    {id:"s-imp", name:"イオン注入・熱処理", en:"Ion Implant / Anneal", c:"--st-fab",
+     what:"ホウ素やリンなどの不純物イオンを打ち込み、トランジスタの電気的性質を作る。その後、熱処理で結晶を回復・活性化させる。",
+     eq:["implant"], mat:["gas"], point:"<b>ポイント:</b> SiCパワー半導体は高温でのイオン注入が必要で、専用装置の需要が伸びている。", x:"imp"},
+    {id:"s-cmp", name:"CMP(平坦化)", en:"CMP", c:"--st-fab",
+     what:"積み重ねた膜の凹凸を、スラリーとパッドで研磨して平らにする。多層配線を積み上げるために必須。",
+     eq:["cmp"], mat:["cmpmat","chem"], point:"<b>ポイント:</b> 配線層は先端ロジックで15層以上。層ごとにCMPが入る。", x:"cmp"},
+    {id:"s-clean", name:"洗浄", en:"Cleaning", c:"--st-fab",
+     what:"各工程の前後で、パーティクルや金属汚染・有機物を薬液と超純水で取り除く。",
+     eq:["clean","infra"], mat:["chem"], point:"<b>ポイント:</b> 工程数の約3割が洗浄。超純水の使用量は1工場で1日数万トン規模になる。", x:"clean"},
+    {id:"s-insp", name:"検査・計測", en:"Inspection & Metrology", c:"--st-fab",
+     what:"膜厚・寸法・重ね合わせ精度・欠陥を検査し、問題があれば工程にフィードバックする。",
+     eq:["metro"], mat:[], point:"<b>ポイント:</b> 歩留まり1%の差が数百億円の利益差になるため、先端工場ほど検査装置への投資が大きい。", x:"insp"}
+  ]},
+  {id:"back", name:"後工程 — 組立・検査", tag:"", steps:[
+    {id:"s-probe", name:"ウェーハテスト", en:"Wafer Probe Test", c:"--st-back",
+     what:"ウェーハ上の各チップに、プローブカードの微細な針を当てて電気的に検査し、不良チップを特定する。",
+     eq:["tester"], mat:[], point:"<b>ポイント:</b> AIチップは回路規模が大きく検査時間が長いため、テスター需要が急増している。", x:"probe"},
+    {id:"s-dice", name:"研削・ダイシング", en:"Back-grind & Dicing", c:"--st-back",
+     what:"ウェーハの裏面を削って薄くし、ブレードやレーザーで個々のチップ(ダイ)に切り分ける。",
+     eq:["backeq"], mat:["pkgmat"], point:"<b>ポイント:</b> HBMは12〜16枚のDRAMを積むため、チップを数十μmまで薄くする。ディスコの装置が世界の大半を占める。", x:"dice"},
+    {id:"s-bond", name:"ボンディング", en:"Die Attach & Bonding", c:"--st-back",
+     what:"チップをパッケージ基板やリードフレームに固定し、ワイヤやバンプで電気的に接続する。先端品ではチップ同士を直接接合する。",
+     eq:["backeq"], mat:["substrate","pkgmat"], point:"<b>ポイント:</b> チップレット時代の主役。CoWoS、HBMのTCボンディング、ハイブリッドボンディングが成長領域。", x:"bond"},
+    {id:"s-mold", name:"モールド(封止)", en:"Molding", c:"--st-back",
+     what:"チップを樹脂で覆い、熱・湿気・衝撃から保護する。",
+     eq:["backeq"], mat:["pkgmat"], point:"<b>ポイント:</b> モールディング装置はTOWA、封止材はレゾナック・住友ベークライトなど日本企業が強い。", x:"mold"},
+    {id:"s-ft", name:"最終テスト・出荷", en:"Final Test", c:"--st-back",
+     what:"パッケージ後のチップを温度条件を変えながら試験し、性能別に選別して出荷する。",
+     eq:["tester"], mat:[], point:"<b>ポイント:</b> 車載品は-40℃〜150℃などの過酷な条件で試験される。", x:"ft"}
+  ]}
+];
+
+/* 要衝 */
+const CHOKE = [
+  {cat:"製造装置", st:"equip", t:"EUV露光装置", v:100, label:"ほぼ100%", who:"ASML", d:"7nm以下の最先端ロジック・DRAMの量産に不可欠。代替メーカーが存在しない。"},
+  {cat:"製造装置", st:"equip", t:"EUV向けコータ/デベロッパ", v:95, label:"ほぼ独占", who:"東京エレクトロン", d:"EUV露光機とインラインで接続される塗布・現像装置。"},
+  {cat:"製造装置", st:"equip", t:"EUVマスクブランクス検査", v:95, label:"ほぼ独占", who:"レーザーテック", d:"EUVマスクの欠陥を見つける検査装置。"},
+  {cat:"製造装置", st:"equip", t:"ダイサー・グラインダー", v:75, label:"約7〜8割", who:"ディスコ", d:"ウェーハを削り、切り分ける後工程装置。HBM向けで需要増。"},
+  {cat:"前工程", st:"fab", t:"ファウンドリ市場", v:70, label:"約7割", who:"TSMC", d:"先端ノード(3nm以下)に限ればさらに高く、AIチップの大半を製造。"},
+  {cat:"設計", st:"design", t:"AI向けデータセンターGPU", v:85, label:"約8〜9割", who:"NVIDIA", d:"ソフトウェア基盤CUDAと合わせた強固なエコシステム。"},
+  {cat:"設計", st:"design", t:"HBM(広帯域メモリ)", v:55, label:"約5〜6割", who:"SK hynix", d:"SK hynix・Samsung・Micronの3社のみが供給。"},
+  {cat:"設計基盤", st:"ip", t:"EDAツール", v:75, label:"大手3社で約7〜8割", who:"Synopsys / Cadence / Siemens", d:"米国発の3社に集中しており、輸出規制の対象にもなる。"},
+  {cat:"材料", st:"mat", t:"フォトレジスト", v:90, label:"日本勢で約9割", who:"JSR・東京応化・信越化学 ほか", d:"特にEUV・ArF向けの先端レジストで日本企業の寡占が強い。"},
+  {cat:"材料", st:"mat", t:"シリコンウェーハ", v:55, label:"日本2社で約5割強", who:"信越化学工業・SUMCO", d:"上位5社で9割超を占める寡占市場。"},
+  {cat:"材料", st:"mat", t:"ABF(層間絶縁フィルム)", v:95, label:"ほぼ独占", who:"味の素", d:"高性能CPU/GPUのパッケージ基板に不可欠な絶縁材料。"},
+  {cat:"材料", st:"mat", t:"EUVマスクブランクス", v:90, label:"日本2社でほぼ全量", who:"HOYA・AGC", d:"EUVマスクの素材となる多層膜付きガラス基板。"}
+];
+
+/* ==================================================================
+   描画
+   ================================================================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const norm = s => String(s).normalize("NFKC").toLowerCase().replace(/\s+/g,"");
+const segById = Object.fromEntries(SEG.map(s => [s.id, s]));
+const cvar = st => `var(${STAGES[st].c})`;
+
+function chipHTML(p){
+  return `<span class="chip" data-cc="${p[1]}" data-k="${esc(norm(p[0]+" "+(p[3]||"")))}">${esc(p[0])}<i>${p[1]}</i></span>`;
+}
+function segCard(s, max = 5){
+  const shown = s.p.slice(0, max).map(chipHTML).join("");
+  const rest = s.p.length - max;
+  const hidden = s.p.slice(max).map(p => `<span hidden data-k="${esc(norm(p[0]+" "+(p[3]||"")))}" data-cc="${p[1]}"></span>`).join("");
+  const hasjp = s.p.some(p => p[1] === "JP") ? " hasjp" : "";
+  return `<button class="seg${hasjp}" data-seg="${s.id}" style="--c:${cvar(s.st)}">
+    <span class="nm">${esc(s.name)}</span><span class="sen">${esc(s.en)}</span>
+    <span class="chips">${shown}${rest>0?`<span class="chip more">+${rest}</span>`:""}${hidden}</span></button>`;
+}
+function colHead(st){
+  const S = STAGES[st];
+  return `<div class="col-head" style="--c:${cvar(st)}"><div class="k">${S.k} · <span class="en">${S.en}</span></div><h3>${S.name}</h3><div class="sub">${S.sub}</div></div>`;
+}
+
+/* --- chain map --- */
+function renderMap(){
+  const order = ["ip","design","fab","back","system"];
+  let html = order.map(st => `<div class="col">${colHead(st)}<div class="cards">${SEG.filter(s=>s.st===st).map(s=>segCard(s, st==="system"?4:5)).join("")}</div></div>`).join("");
+  html += `<div class="col">${colHead("app")}<div class="cards">${APPS.map(a=>`
+    <button class="seg" data-app="${a.id}" style="--c:${a.c}">
+      <span class="nm">${esc(a.name)}</span><span class="sen">${esc(a.en)} · 約${a.share}%</span>
+      <span class="bar-t" style="--c:${a.c}"><span style="width:${a.share/22*100}%"></span></span>
+    </button>`).join("")}</div></div>`;
+  $("#chain").innerHTML = html;
+  for (const st of ["equip","mat"]){
+    $("#col-"+st).innerHTML = colHead(st) + `<div class="cards">${SEG.filter(s=>s.st===st).map(s=>segCard(s,4)).join("")}</div>`;
+  }
+  $("#legend").innerHTML = Object.entries(STAGES).map(([k,S])=>`<span style="--c:${cvar(k)}"><i></i>${S.name}</span>`).join("")
+    + `<span><span class="chip" style="background:var(--jp);color:#fff">企業<i style="color:#fff">JP</i></span> 国・地域コード</span>`;
+}
+
+/* --- drawer --- */
+const drawer = $("#drawer");
+function stepsUsing(segId){
+  const out = [];
+  PHASES.forEach(ph => ph.steps.forEach(s => { if (s.eq.includes(segId) || s.mat.includes(segId)) out.push(s); }));
+  return out;
+}
+function appsUsing(names){
+  const set = new Set(names);
+  return APPS.filter(a => a.chips.some(c => c[2].some(n => set.has(n))));
+}
+function openSeg(id){
+  const s = segById[id]; if (!s) return;
+  const S = STAGES[s.st];
+  $("#dwHead").style.setProperty("--c", cvar(s.st));
+  $("#dwPill").textContent = `${S.name} · ${S.en}`;
+  $("#dwTitle").textContent = s.name;
+  $("#dwEn").textContent = s.en;
+  const steps = stepsUsing(id);
+  const apps = appsUsing(s.p.map(p=>p[0]));
+  $("#dwBody").innerHTML = `
+    <p class="desc">${esc(s.desc)}</p>
+    <table class="pl"><thead><tr><th>企業</th><th>国・地域</th><th>役割・強み</th></tr></thead><tbody>
+    ${s.p.map(p=>`<tr><td class="n">${esc(p[0])}${p[3]&&p[1]==="JP"?`<small>${esc(p[3])}</small>`:""}</td><td><span class="cc ${p[1]}">${CC[p[1]]||p[1]}</span></td><td class="note">${esc(p[2])}</td></tr>`).join("")}
+    </tbody></table>
+    ${steps.length?`<div class="rel"><h4>関わる製造工程</h4>${steps.map(st=>`<button data-goto-step="${st.id}">${esc(st.name)} →</button>`).join("")}</div>`:""}
+    ${apps.length?`<div class="rel"><h4>この企業群がチップを供給する用途</h4>${apps.map(a=>`<button data-goto-app="${a.id}">${esc(a.name)} →</button>`).join("")}</div>`:""}`;
+  if (!drawer.open) drawer.showModal();
+  $("#dwBody").scrollTop = 0;
+}
+$("#dwClose").addEventListener("click", () => drawer.close());
+drawer.addEventListener("click", e => { if (e.target === drawer) drawer.close(); });
+
+/* --- process --- */
+let curStep = "s-expo";
+function renderPhases(){
+  let n = 0;
+  $("#phases").innerHTML = PHASES.map(ph => `
+    <div class="phase${ph.loop?" loop":""}">
+      <div class="phase-h"><span>${ph.name}</span>${ph.tag?`<span class="tag">${ph.tag}</span>`:""}</div>
+      <div class="steps" role="tablist" aria-label="${ph.name}">
+        ${ph.steps.map(s=>`<button class="step" role="tab" data-step="${s.id}" style="--c:var(${s.c})" aria-selected="${s.id===curStep}"><b>${++n}</b>${esc(s.name)}</button>`).join("")}
+      </div>
+    </div>`).join("");
+}
+const allSteps = PHASES.flatMap(p => p.steps);
+
+/* 工程ごとの簡易断面図 */
+function xsect(kind, c){
+  const base = `<rect x="20" y="96" width="380" height="24" fill="var(--line-2)"/><text x="30" y="113" font-size="11" fill="var(--ink-2)">Si基板</text>`;
+  const film = (y,h,f,o=1) => `<rect x="20" y="${y}" width="380" height="${h}" fill="${f}" opacity="${o}"/>`;
+  const pat = (y,h,f) => [40,120,200,280,360].map(x=>`<rect x="${x-20}" y="${y}" width="40" height="${h}" fill="${f}"/>`).join("");
+  const arrows = (col) => [70,150,230,310].map(x=>`<path d="M${x} 6 v26" stroke="${col}" stroke-width="2.2" marker-end="url(#xa)"/>`).join("");
+  const T = (t) => `<text x="210" y="138" text-anchor="middle" font-size="12" fill="var(--ink-2)">${t}</text>`;
+  let g = "";
+  switch(kind){
+    case "wafer": g = `<ellipse cx="210" cy="70" rx="150" ry="34" fill="url(#xw)" stroke="var(--ink-3)"/><ellipse cx="210" cy="62" rx="150" ry="34" fill="url(#xw)" stroke="var(--ink-3)"/>${T("単結晶インゴット → スライス → 鏡面研磨")}`; break;
+    case "mask": g = `<rect x="60" y="40" width="300" height="20" fill="#d9e4ef" stroke="var(--ink-3)"/>${[90,150,210,270,330].map(x=>`<rect x="${x-14}" y="40" width="28" height="8" fill="#2b3240"/>`).join("")}<path d="M100 6 v28 M180 6 v28 M260 6 v28" stroke="${c}" stroke-width="2" marker-end="url(#xa)"/><text x="330" y="22" font-size="11" fill="var(--ink-2)">電子ビーム描画</text>${T("石英ガラス + 遮光膜 = フォトマスク")}`; break;
+    case "dep": g = base + film(72,24,"#9fb7d1") + arrows(c) + `<text x="330" y="24" font-size="11" fill="var(--ink-2)">ガス/原子</text>` + T("ウェーハ全面に薄膜を堆積"); break;
+    case "coat": g = base + film(76,20,"#9fb7d1") + film(62,14,"#e7b84d") + `<path d="M210 8 v40" stroke="${c}" stroke-width="2.2" marker-end="url(#xa)"/><path d="M150 54 q60 -14 120 0" stroke="var(--ink-3)" fill="none" marker-end="url(#xa)"/>` + T("回転させながらレジストを均一に塗布"); break;
+    case "expo": g = base + film(76,20,"#9fb7d1") + film(62,14,"#e7b84d") + `<rect x="40" y="20" width="340" height="8" fill="#2b3240"/>${[80,160,240,320].map(x=>`<rect x="${x-16}" y="20" width="32" height="8" fill="var(--paper)"/><path d="M${x} 0 v18 M${x} 30 v28" stroke="${c}" stroke-width="2.4" marker-end="url(#xa)"/><rect x="${x-16}" y="62" width="32" height="14" fill="#c98a1a"/>`).join("")}` + T("マスクを通した光でパターンを焼き付け"); break;
+    case "dev": g = base + film(76,20,"#9fb7d1") + [40,120,200,280,360].map(x=>`<rect x="${x-24}" y="62" width="48" height="14" fill="#e7b84d"/>`).join("") + T("感光部分を溶かしてパターンが現れる"); break;
+    case "etch": g = base + [40,120,200,280,360].map(x=>`<rect x="${x-24}" y="76" width="48" height="20" fill="#9fb7d1"/><rect x="${x-24}" y="62" width="48" height="14" fill="#e7b84d"/>`).join("") + arrows(c) + `<text x="330" y="24" font-size="11" fill="var(--ink-2)">プラズマ</text>` + T("レジストのない部分の膜を削る"); break;
+    case "imp": g = base + [40,120,200,280,360].map(x=>`<rect x="${x-24}" y="76" width="48" height="20" fill="#9fb7d1"/>`).join("") + [80,160,240,320].map(x=>`<ellipse cx="${x}" cy="98" rx="18" ry="6" fill="${c}" opacity=".55"/>`).join("") + arrows(c) + `<text x="330" y="24" font-size="11" fill="var(--ink-2)">イオン</text>` + T("隙間から不純物を打ち込む"); break;
+    case "cmp": g = base + film(60,36,"#9fb7d1") + `<path d="M20 60 q40 -14 80 0 t80 0 t80 0 t80 0 t60 0" fill="#9fb7d1"/><rect x="20" y="30" width="380" height="14" rx="3" fill="var(--ink-3)"/><path d="M20 55 h380" stroke="${c}" stroke-width="2" stroke-dasharray="5 4"/>` + `<text x="210" y="26" text-anchor="middle" font-size="11" fill="var(--ink-2)">研磨パッド + スラリー</text>` + T("凸部を削って平らにする"); break;
+    case "clean": g = base + film(76,20,"#9fb7d1") + [60,110,170,230,290,350].map((x,i)=>`<circle cx="${x}" cy="${68-(i%2)*6}" r="4" fill="var(--ink-3)"/>`).join("") + `<path d="M40 40 q170 -30 340 0" stroke="${c}" stroke-width="2.2" fill="none" marker-end="url(#xa)"/>` + `<text x="210" y="22" text-anchor="middle" font-size="11" fill="var(--ink-2)">薬液・超純水</text>` + T("パーティクル・汚染を除去"); break;
+    case "insp": g = base + [40,120,200,280,360].map(x=>`<rect x="${x-24}" y="76" width="48" height="20" fill="#9fb7d1"/>`).join("") + `<circle cx="200" cy="44" r="22" fill="none" stroke="${c}" stroke-width="2.4"/><path d="M216 60 l18 18" stroke="${c}" stroke-width="3"/><path d="M110 70 h20" stroke="var(--jp)" stroke-width="2"/>` + T("寸法・膜厚・欠陥をチェック"); break;
+    case "probe": g = `<rect x="20" y="90" width="380" height="20" fill="var(--line-2)"/>${[60,140,220,300,380].map(x=>`<rect x="${x-30}" y="78" width="60" height="12" fill="#7fa6c9"/>`).join("")}<rect x="60" y="20" width="300" height="16" fill="var(--ink-3)"/>${[100,140,180,220,260,300].map(x=>`<path d="M${x} 36 L${x+8} 76" stroke="${c}" stroke-width="2"/>`).join("")}<text x="210" y="16" text-anchor="middle" font-size="11" fill="var(--ink-2)">プローブカード</text>` + T("針を当てて全チップを電気検査"); break;
+    case "dice": g = `<rect x="20" y="70" width="380" height="14" fill="var(--line-2)"/>${[95,175,255,335].map(x=>`<rect x="${x-2}" y="66" width="4" height="22" fill="var(--paper)"/>`).join("")}<circle cx="175" cy="38" r="26" fill="none" stroke="${c}" stroke-width="3"/><circle cx="175" cy="38" r="4" fill="${c}"/><rect x="20" y="88" width="380" height="8" fill="#c7d6a8"/><text x="400" y="110" text-anchor="end" font-size="11" fill="var(--ink-2)">ダイシングテープ</text>` + T("薄く削り、ブレードで切り分け"); break;
+    case "bond": g = `<rect x="40" y="90" width="340" height="16" rx="2" fill="#6f8f4a"/><rect x="90" y="50" width="110" height="26" fill="#7fa6c9"/><rect x="220" y="40" width="110" height="36" fill="#9a8fd1"/>${[100,120,140,160,180,230,250,270,290,310].map(x=>`<circle cx="${x}" cy="82" r="4" fill="${c}"/>`).join("")}<text x="145" y="67" text-anchor="middle" font-size="11" fill="#fff">ロジック</text><text x="275" y="62" text-anchor="middle" font-size="11" fill="#fff">HBM</text>` + T("バンプでチップを基板・インターポーザーに接合"); break;
+    case "mold": g = `<rect x="40" y="90" width="340" height="16" rx="2" fill="#6f8f4a"/><path d="M70 90 V44 q0 -8 8 -8 H342 q8 0 8 8 V90z" fill="#2b3240"/><rect x="130" y="62" width="160" height="22" fill="#7fa6c9" opacity=".5"/>` + T("樹脂で覆い、チップを保護"); break;
+    case "ft": g = `<rect x="140" y="40" width="140" height="56" rx="4" fill="#2b3240"/>${[155,175,195,215,235,255].map(x=>`<path d="M${x} 96 v12" stroke="var(--ink-3)" stroke-width="3"/>`).join("")}<path d="M300 68 h50" stroke="${c}" stroke-width="2.4" marker-end="url(#xa)"/><text x="360" y="72" font-size="13" font-weight="700" fill="${c}">PASS</text><text x="90" y="72" text-anchor="middle" font-size="11" fill="var(--ink-2)">-40℃〜150℃</text>` + T("温度を変えて試験し、選別して出荷"); break;
+  }
+  return `<svg class="xsect" viewBox="0 0 420 146" role="img" aria-label="工程の模式図">
+    <defs><marker id="xa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>
+    <linearGradient id="xw" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c9ced8"/><stop offset=".5" stop-color="#eef1f6"/><stop offset="1" stop-color="#a9b1bf"/></linearGradient></defs>${g}</svg>`;
+}
+function renderStep(){
+  const s = allSteps.find(x => x.id === curStep);
+  document.querySelectorAll(".step").forEach(b => b.setAttribute("aria-selected", b.dataset.step === curStep));
+  const c = getComputedStyle(document.documentElement).getPropertyValue(s.c).trim() || "#0e9488";
+  const grp = (ids, st, title) => ids.length ? `<div class="grp"><h4 style="--c:${cvar(st)}"><i></i>${title}</h4>
+    ${ids.map(id=>{const g=segById[id];return `<button class="sub-seg" data-seg="${id}"><div class="t">${esc(g.name)}<span>${g.p.length}社 · 詳細 →</span></div><div class="chips">${g.p.map(chipHTML).join("")}</div></button>`;}).join("")}</div>` : "";
+  $("#stepDetail").innerHTML = `
+    <div class="eyebrow" style="color:var(${s.c})">${esc(s.en)}</div>
+    <h3>${esc(s.name)}</h3>
+    ${xsect(s.x, c)}
+    <p class="what">${esc(s.what)}</p>
+    ${grp(s.eq, "equip", "使う製造装置")}
+    ${grp(s.mat, "mat", "使う材料・部材")}
+    <div class="point">${s.point}</div>`;
+  applyFilters();
+}
+
+/* --- apps --- */
+let curApp = "dc";
+function renderDonut(){
+  const R = 88, C = 2*Math.PI*R, total = APPS.reduce((a,b)=>a+b.share,0);
+  let off = 0;
+  const arcs = APPS.map(a => {
+    const len = a.share/total*C;
+    const el = `<circle class="arc" data-app="${a.id}" cx="120" cy="120" r="${R}" fill="none" stroke="${a.c}" stroke-width="30" stroke-dasharray="${Math.max(len-2,0)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 120 120)"><title>${a.name} 約${a.share}%</title></circle>`;
+    off += len; return el;
+  }).join("");
+  $("#donut").innerHTML = arcs + `<text id="dnum" x="120" y="122" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-size="34" font-weight="700" fill="var(--ink)"></text><text id="dlab" x="120" y="146" text-anchor="middle" font-size="12" fill="var(--ink-2)"></text>`;
+  $("#alist").innerHTML = APPS.map(a=>`<button class="arow" role="tab" data-app="${a.id}" style="--c:${a.c}"><i></i><span>${esc(a.name)}</span><em>約${a.share}%</em></button>`).join("");
+  $("#heat").innerHTML = `<thead><tr><th></th>${DEVICES.map(d=>`<th>${d}</th>`).join("")}</tr></thead><tbody>${APPS.map(a=>`<tr data-app="${a.id}"><th class="rh" style="--c:${a.c}"><i></i>${esc(a.name)}</th>${HEAT[a.id].map(v=>{const p=[6,30,58,88][v];return `<td style="--v:${p}" class="${v>=3?"w":""}">${["","○","◎","●"][v]}</td>`;}).join("")}</tr>`).join("")}</tbody>`;
+}
+function playerCC(name){
+  for (const s of SEG){ const p = s.p.find(p=>p[0]===name); if (p) return p[1]; }
+  return {"Mobileye":"IL"}[name] || "";
+}
+function renderApp(){
+  const a = APPS.find(x=>x.id===curApp);
+  document.querySelectorAll(".arow").forEach(b=>b.setAttribute("aria-selected", b.dataset.app===curApp));
+  document.querySelectorAll("#donut .arc").forEach(el=>{ el.classList.toggle("dim", el.dataset.app!==curApp); el.setAttribute("stroke-width", el.dataset.app===curApp?36:30); });
+  document.querySelectorAll("#heat tbody tr").forEach(tr=>tr.classList.toggle("sel", tr.dataset.app===curApp));
+  $("#dnum").textContent = `${a.share}%`;
+  $("#dlab").textContent = a.name;
+  $("#appDetail").style.setProperty("--c", a.c);
+  $("#appDetail").innerHTML = `
+    <div class="eyebrow" style="color:${a.c}">${esc(a.en)} · 需要の約${a.share}%</div>
+    <h3>${esc(a.name)}</h3>
+    <p class="lead2">${esc(a.lead)}</p>
+    <div class="chiprows">${a.chips.map(c=>`<div class="crow"><div class="t">${esc(c[0])}</div><div class="d">${esc(c[1])}</div><div class="chips">${c[2].map(n=>chipHTML([n, playerCC(n)])).join("")}</div></div>`).join("")}</div>
+    <div class="trend" style="--c:${a.c}">${a.trend}</div>`;
+  applyFilters();
+}
+
+/* --- choke points --- */
+function renderChoke(){
+  $("#chokes").innerHTML = CHOKE.map(k=>`
+    <div class="choke" style="--c:${cvar(k.st)}">
+      <div class="cat">${k.cat}</div>
+      <h3>${esc(k.t)}</h3>
+      <div class="big">${esc(k.who)}</div>
+      <div class="bar-t" role="img" aria-label="シェア ${k.label}"><span style="width:${k.v}%"></span></div>
+      <div style="font-size:12.5px;font-weight:700">${esc(k.label)}</div>
+      <p>${esc(k.d)}</p>
+    </div>`).join("");
+}
+
+/* --- japan --- */
+function renderJapan(){
+  const jp = new Set(), cards = [];
+  for (const st of ["ip","design","fab","back","system","equip","mat"]){
+    const segs = SEG.filter(x=>x.st===st);
+    const all = new Set(), jps = new Set(), rows = [];
+    segs.forEach(s => { s.p.forEach(p => { all.add(p[0]); if (p[1]==="JP"){ jps.add(p[0]); jp.add(p[0]); } });
+      const ps = s.p.filter(p=>p[1]==="JP"); if (ps.length) rows.push({s, ps}); });
+    if (!rows.length) continue;
+    const r = Math.round(jps.size/all.size*100);
+    cards.push(`<div class="jp-card" style="--c:${cvar(st)}">
+      <h3>${esc(STAGES[st].name)}<small>日本企業 ${jps.size} / 掲載 ${all.size}社 (${r}%)</small></h3>
+      <div class="jp-ratio" role="img" aria-label="日本企業の比率 ${r}%"><span style="width:${r}%"></span></div>
+      ${rows.map(({s,ps})=>`<div class="jp-row"><b>${esc(s.name)}</b><div class="chips">${ps.map(p=>`<span class="chip" data-cc="JP" data-k="${esc(norm(p[0]+" "+(p[3]||"")))}" title="${esc(p[2])}">${esc(p[0])}</span>`).join("")}</div></div>`).join("")}
+    </div>`);
+  }
+  $("#jpCount").textContent = jp.size;
+  $("#jpGrid").innerHTML = cards.join("");
+  const all = new Set(); SEG.forEach(s=>s.p.forEach(p=>all.add(p[0])));
+  $("#kpiPlayers").innerHTML = `${all.size}<small>社</small>`;
+}
+
+/* --- search & JP filter --- */
+let query = "";
+function applyFilters(){
+  const q = norm(query);
+  document.body.classList.toggle("searching", !!q);
+  document.querySelectorAll("[data-k]").forEach(el => el.classList.toggle("hit", !!q && el.dataset.k.includes(q)));
+  document.querySelectorAll(".seg").forEach(card => {
+    const m = !!q && (card.querySelector("[data-k].hit") || norm(card.textContent).includes(q));
+    card.classList.toggle("match", !!m);
+  });
+}
+function renderResults(){
+  const q = norm(query), box = $("#results");
+  if (!q){ box.innerHTML = ""; return; }
+  const hits = SEG.filter(s => s.p.some(p => norm(p[0]+" "+(p[3]||"")).includes(q)) || norm(s.name+s.en).includes(q));
+  if (!hits.length){ box.textContent = `「${query}」に一致する企業・セグメントはありません。`; return; }
+  const names = new Set(); hits.forEach(s=>s.p.forEach(p=>{ if (norm(p[0]+" "+(p[3]||"")).includes(q)) names.add(p[0]); }));
+  box.innerHTML = `<div>${names.size?`<b>${[...names].slice(0,4).map(esc).join("、")}</b>${names.size>4?" ほか":""} が登場する `:""}${hits.length}セグメント:</div>` +
+    hits.map(s=>`<span class="r" data-seg="${s.id}" role="button" tabindex="0" style="--c:${cvar(s.st)}"><i></i>${esc(STAGES[s.st].name)} / ${esc(s.name)}</span>`).join("");
+}
+$("#q").addEventListener("input", e => { query = e.target.value.trim(); applyFilters(); renderResults(); });
+$("#jpBtn").addEventListener("click", e => {
+  const on = e.currentTarget.getAttribute("aria-pressed") !== "true";
+  e.currentTarget.setAttribute("aria-pressed", on);
+  document.body.classList.toggle("jp", on);
+});
+
+/* --- delegated clicks --- */
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-seg],[data-app],[data-step],[data-goto-step],[data-goto-app]");
+  if (!t) return;
+  if (t.dataset.gotoStep){ drawer.close(); curStep = t.dataset.gotoStep; renderStep(); $("#process").scrollIntoView(); return; }
+  if (t.dataset.gotoApp){ drawer.close(); curApp = t.dataset.gotoApp; renderApp(); $("#apps").scrollIntoView(); return; }
+  if (t.dataset.step){ curStep = t.dataset.step; renderStep(); return; }
+  if (t.dataset.seg){ openSeg(t.dataset.seg); return; }
+  if (t.dataset.app){
+    curApp = t.dataset.app; renderApp();
+    if (t.closest("#chain")) $("#apps").scrollIntoView();
+  }
+});
+document.addEventListener("keydown", e => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches(".r[data-seg]")){ e.preventDefault(); openSeg(e.target.dataset.seg); }
+});
+
+/* --- theme --- */
+(function(){
+  const root = document.documentElement;
+  let saved = null; try { saved = localStorage.getItem("svc-theme"); } catch(_){}
+  if (saved) root.dataset.theme = saved;
+  $("#themeBtn").addEventListener("click", () => {
+    const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    root.dataset.theme = dark ? "light" : "dark";
+    try { localStorage.setItem("svc-theme", root.dataset.theme); } catch(_){}
+    renderStep();
+  });
+})();
+
+/* hero: 回路形成済みウェーハのダイ */
+(function(){
+  const g = document.getElementById("dies"); let h = "";
+  for (let y=-36; y<=28; y+=9) for (let x=-36; x<=28; x+=9){
+    if ((x+4.5)**2 + (y+4.5)**2 < 34**2) h += `<rect x="${x}" y="${y}" width="7" height="7" rx="1"/>`;
+  }
+  g.innerHTML = h;
+})();
+
+renderMap(); renderPhases(); renderStep(); renderDonut(); renderApp(); renderChoke(); renderJapan();
+</script>
+</body>
+</html>
